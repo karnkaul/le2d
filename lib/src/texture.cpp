@@ -1,0 +1,33 @@
+#include <common.hpp>
+#include <kvf/color.hpp>
+#include <kvf/image_bitmap.hpp>
+#include <kvf/util.hpp>
+#include <le2d/texture.hpp>
+
+namespace le {
+namespace {
+constexpr auto texture_ici() {
+	return kvf::vma::ImageCreateInfo{
+		.format = color_format_v,
+		.aspect = vk::ImageAspectFlagBits::eColor,
+		.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+		.flags = kvf::vma::ImageFlag::MipMapped,
+	};
+}
+} // namespace
+
+Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap)
+	: m_render_device(render_device), m_image(render_device, texture_ici(), kvf::util::to_vk_extent(bitmap.size)) {
+	if (bitmap.bytes.empty() || bitmap.size.x <= 0 || bitmap.size.y <= 0) { bitmap = white_bitmap_v; }
+	write(bitmap);
+}
+
+auto Texture::write(kvf::Bitmap const& bitmap) -> bool { return kvf::util::write_to(m_image, bitmap); }
+
+auto Texture::load_and_write(std::span<std::byte const> compressed_image) -> bool {
+	if (!m_image) { return false; }
+	auto const bitmap = kvf::ImageBitmap{compressed_image};
+	if (!bitmap.is_loaded()) { return false; }
+	return kvf::util::write_to(m_image, bitmap.bitmap());
+}
+} // namespace le
