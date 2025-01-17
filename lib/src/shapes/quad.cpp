@@ -2,23 +2,28 @@
 
 namespace le::shape {
 namespace {
-constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
+constexpr std::size_t lb_v{0};
+constexpr std::size_t rb_v{1};
+constexpr std::size_t rt_v{2};
+constexpr std::size_t lt_v{3};
 } // namespace
 
-auto Quad::get_rect() const -> kvf::Rect<> { return kvf::Rect<>{.lt = m_vertices[3].position, .rb = m_vertices[1].position}; }
+auto Quad::get_rect() const -> kvf::Rect<> { return kvf::Rect<>{.lt = m_vertices[lt_v].position, .rb = m_vertices[rb_v].position}; }
 
-void Quad::set_rect(kvf::Rect<> const& rect) {
-	m_vertices[0] = Vertex{.position = rect.bottom_left(), .uv = {0.0f, 1.0f}};
-	m_vertices[1] = Vertex{.position = rect.bottom_right(), .uv = {1.0f, 1.0f}};
-	m_vertices[2] = Vertex{.position = rect.top_right(), .uv = {1.0f, 0.0f}};
-	m_vertices[3] = Vertex{.position = rect.top_left(), .uv = {0.0f, 0.0f}};
+void Quad::set_rect(kvf::Rect<> const& rect, kvf::UvRect const& uv) {
+	m_vertices[lb_v] = Vertex{.position = rect.bottom_left(), .uv = uv.bottom_left()};
+	m_vertices[rb_v] = Vertex{.position = rect.bottom_right(), .uv = uv.bottom_right()};
+	m_vertices[rt_v] = Vertex{.position = rect.top_right(), .uv = uv.top_right()};
+	m_vertices[lt_v] = Vertex{.position = rect.top_left(), .uv = uv.top_left()};
 }
 
-auto Quad::primitive() const -> Primitive {
+auto Quad::get_uv() const -> kvf::UvRect { return {.lt = m_vertices[lt_v].uv, .rb = m_vertices[rb_v].uv}; }
+
+auto Quad::get_primitive() const -> Primitive {
 	return Primitive{
 		.vertices = m_vertices,
 		.indices = indices_v,
-		.texture = texture,
+		.texture = texture.get(),
 	};
 }
 } // namespace le::shape

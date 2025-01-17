@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
-#include <le2d/visitor.hpp>
+#include <klib/visitor.hpp>
+#include <kvf/ttf.hpp>
 #include <variant>
 
 namespace le {
@@ -14,7 +15,9 @@ struct Key {
 struct Focus {
 	bool in_focus;
 };
+
+using Codepoint = kvf::ttf::Codepoint;
 } // namespace event
 
-using Event = std::variant<event::Key, event::Focus>;
+using Event = std::variant<event::Key, event::Focus, event::Codepoint>;
 } // namespace le

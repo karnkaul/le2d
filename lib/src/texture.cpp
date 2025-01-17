@@ -22,6 +22,8 @@ Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bi
 	write(bitmap);
 }
 
+auto Texture::get_size() const -> glm::ivec2 { return kvf::util::to_glm_vec<int>(m_image.get_extent()); }
+
 auto Texture::write(kvf::Bitmap const& bitmap) -> bool { return kvf::util::write_to(m_image, bitmap); }
 
 auto Texture::load_and_write(std::span<std::byte const> compressed_image) -> bool {

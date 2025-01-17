@@ -5,6 +5,6 @@
 namespace le {
 template <typename Type>
 concept ShapeT = requires(Type const& t) {
-	{ t.primitive() } -> std::convertible_to<Primitive>;
+	{ t.get_primitive() } -> std::convertible_to<Primitive>;
 };
 } // namespace le

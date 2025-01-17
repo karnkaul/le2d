@@ -33,9 +33,10 @@ auto RenderWindow::create_window(glm::ivec2 const size, klib::CString const titl
 void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 	using namespace event;
 	static auto const push_event = [](GLFWwindow* window, Event const& event) { self(window).m_event_queue.push_back(event); };
+	glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) { push_event(window, Focus{.in_focus = in_focus == GLFW_TRUE}); });
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int /*scancode*/, int action, int mods) {
 		push_event(window, Key{.key = key, .action = action, .mods = mods});
 	});
-	glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) { push_event(window, event::Focus{.in_focus = in_focus == GLFW_TRUE}); });
+	glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) { push_event(window, Codepoint{codepoint}); });
 }
 } // namespace le

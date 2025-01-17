@@ -1,12 +1,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <klib/assert.hpp>
-#include <klib/flex_array.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/util.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/renderer.hpp>
 #include <le2d/resource_pool.hpp>
-#include <le2d/visitor.hpp>
 
 namespace le {
 namespace {
@@ -98,7 +96,14 @@ auto Renderer::set_render_area(kvf::UvRect const& n_rect) -> bool {
 	return true;
 }
 
-auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> instances, UserData const& user_data) -> bool {
+auto Renderer::set_user_data(UserDrawData const& user_data) -> bool {
+	if (!is_rendering()) { return false; }
+
+	m_user_data = user_data;
+	return true;
+}
+
+auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> instances) -> bool {
 	if (!is_rendering()) { return false; }
 	if (primitive.vertices.empty() || instances.empty()) { return true; }
 
@@ -123,11 +128,11 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	auto& instances_buffer = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, resource_pool.scratch_buffer.size());
 	if (!kvf::util::overwrite(instances_buffer, resource_pool.scratch_buffer)) { return false; }
 
-	auto& user_ssbo = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, user_data.ssbo.size());
-	kvf::util::overwrite(user_ssbo, user_data.ssbo);
+	auto& user_ssbo = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
+	kvf::util::overwrite(user_ssbo, m_user_data.ssbo);
 
 	auto const texture = get_image_sampler(resource_pool, primitive.texture);
-	auto const user_texture = get_image_sampler(resource_pool, user_data.texture);
+	auto const user_texture = get_image_sampler(resource_pool, m_user_data.texture);
 
 	auto dbis = std::array<vk::DescriptorBufferInfo, 3>{};
 	auto diis = std::array<vk::DescriptorImageInfo, 2>{};

@@ -44,4 +44,6 @@ auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const ->
 }
 
 auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
+
+auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
 } // namespace le

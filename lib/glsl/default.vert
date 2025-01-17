@@ -24,7 +24,7 @@ void main() {
 	const Instance instance = instances[gl_InstanceIndex];
 
 	out_uv = a_uv;
-	out_tint = a_color;
+	out_tint = a_color * instance.tint;
 
 	const vec4 v_pos = vec4(a_pos, 0.0, 1.0);
 	const vec4 world_pos = instance.mat_world * v_pos;

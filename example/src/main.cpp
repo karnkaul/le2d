@@ -3,18 +3,30 @@
 #include <kvf/time.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/context.hpp>
-#include <le2d/drawable.hpp>
+#include <le2d/drawables/input_text.hpp>
+#include <le2d/drawables/shape.hpp>
 #include <le2d/file_data_loader.hpp>
 #include <log.hpp>
 
 namespace le::example {
 namespace {
 struct App {
-	explicit App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_ci) {}
+	explicit App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_ci), m_font(m_context.create_font()) {}
 
 	void run() {
 		m_blocker = m_context.create_device_block();
-		create_texture();
+
+		create_textures();
+		load_font();
+
+		if (m_font.is_loaded()) {
+			auto const input_text_params = InputTextParams{
+				// .cursor_symbol = '_',
+				.cursor_color = kvf::magenta_v,
+			};
+			m_input_text.emplace(&m_font, input_text_params);
+			// m_input_text->instance.transform.position.y = -50.0f;
+		}
 
 		m_delta_time.reset();
 
@@ -42,26 +54,53 @@ struct App {
 		.framebuffer_samples = vk::SampleCountFlagBits::e2,
 	};
 
-	void create_texture() {
+	void load_font() {
+		auto bytes = std::vector<std::byte>{};
+		if (!m_context.get_data_loader().load_bytes(bytes, "font.ttf")) {
+			log::error("Failed to load font bytes: '{}'", "font.ttf");
+			return;
+		}
+
+		if (!m_font.load_face(std::move(bytes))) {
+			log::error("Failed to load font: '{}'", "font.ttf");
+			return;
+		}
+	}
+
+	void create_textures() {
 		auto pixels = kvf::ColorBitmap{glm::ivec2{2, 2}};
 		pixels[0, 0] = kvf::red_v;
-		pixels[0, 1] = kvf::green_v;
-		pixels[1, 0] = kvf::blue_v;
+		pixels[1, 0] = kvf::green_v;
+		pixels[0, 1] = kvf::blue_v;
 		pixels[1, 1] = kvf::white_v;
-		m_texture.emplace(m_context.create_texture(pixels.bitmap()));
-		m_texture->sampler.min_filter = m_texture->sampler.mag_filter = vk::Filter::eNearest;
-		m_quad.texture = &*m_texture;
+		auto texture = std::make_shared<Texture>(m_context.create_texture(pixels.bitmap()));
+		texture->sampler.min_filter = texture->sampler.mag_filter = vk::Filter::eNearest;
+		m_textures.push_back(std::move(texture));
+
+		pixels = kvf::ColorBitmap{glm::ivec2{2, 1}};
+		pixels[0, 0] = kvf::cyan_v;
+		pixels[1, 0] = kvf::yellow_v;
+		texture = std::make_shared<Texture>(m_context.create_texture(pixels.bitmap()));
+		texture->sampler = m_textures.back()->sampler;
+		m_textures.push_back(std::move(texture));
 	}
 
 	void tick(kvf::Seconds const dt) {
 		process_events();
 
-		auto dxy = glm::vec2{};
-		if (m_held_keys.left) { dxy.x += -1.0f; }
-		if (m_held_keys.right) { dxy.x += 1.0f; }
-		if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
-		m_render_view.position.x += 100.0f * dxy.x * dt.count();
-		m_render_view.orientation += 10.0f * dt.count();
+		if (!m_input_text || !m_input_text->is_interactive()) {
+			auto dxy = glm::vec2{};
+			if (m_held_keys.left) { dxy.x += -1.0f; }
+			if (m_held_keys.right) { dxy.x += 1.0f; }
+			if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
+			m_render_view.position.x += 100.0f * dxy.x * dt.count();
+			// m_render_view.orientation += 10.0f * dt.count();
+		}
+
+		if (m_input_text) {
+			m_input_text->tick(dt);
+			m_input_text->instance.transform.position.x = -0.5f * m_input_text->get_size().x;
+		}
 	}
 
 	void render(Renderer& renderer) const {
@@ -74,24 +113,11 @@ struct App {
 		renderer.set_render_area(n_viewport);
 		renderer.view = m_render_view;
 
-		m_quad.draw(renderer);
-
-		n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
-		renderer.set_render_area(n_viewport);
-		renderer.view = {};
-		renderer.view.scale = glm::vec2{0.25f};
-		m_quad.draw(renderer);
+		if (m_input_text) { m_input_text->draw(renderer); }
 	}
 
 	void process_events() {
-		auto const on_release = [this](int const key) {
-			switch (key) {
-			case GLFW_KEY_ESCAPE: m_context.shutdown();
-			default: break;
-			}
-		};
-
-		auto const visitor = SubVisitor{
+		auto const visitor = klib::SubVisitor{
 			[&](event::Key const& key) {
 				if (key.key == GLFW_KEY_LEFT) {
 					switch (key.action) {
@@ -105,7 +131,18 @@ struct App {
 					case GLFW_RELEASE: m_held_keys.right = false; break;
 					}
 				}
-				if (key.action == GLFW_RELEASE && key.mods == 0) { on_release(key.key); }
+
+				if (key.action == GLFW_RELEASE && key.key == GLFW_KEY_W && key.mods == GLFW_MOD_CONTROL) { m_context.shutdown(); }
+
+				if (m_input_text) {
+					m_input_text->on_key(key);
+					if (key.key == GLFW_KEY_ENTER && key.action == GLFW_PRESS && key.mods == 0) { m_input_text->set_interactive(true); }
+					if (key.key == GLFW_KEY_ESCAPE && key.action == GLFW_PRESS && key.mods == 0) { m_input_text->set_interactive(false); }
+				}
+			},
+
+			[&](event::Codepoint const codepoint) {
+				if (m_input_text) { m_input_text->on_codepoint(codepoint); }
 			},
 		};
 
@@ -114,8 +151,9 @@ struct App {
 
 	Context m_context;
 
-	std::optional<Texture> m_texture{};
-	Quad m_quad{};
+	Font m_font;
+	std::optional<drawable::InputText> m_input_text{};
+	std::vector<std::shared_ptr<Texture const>> m_textures{};
 
 	kvf::DeltaTime m_delta_time{};
 	HeldKeys m_held_keys{};

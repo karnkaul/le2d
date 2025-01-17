@@ -26,8 +26,9 @@ class Renderer {
 	auto set_line_width(float width) -> bool;
 	auto set_shader(Shader const& shader) -> bool;
 	auto set_render_area(kvf::UvRect const& n_rect) -> bool;
+	auto set_user_data(UserDrawData const& user_data) -> bool;
 
-	auto draw(Primitive const& primitive, std::span<RenderInstance const> instances, UserData const& user_data = {}) -> bool;
+	auto draw(Primitive const& primitive, std::span<RenderInstance const> instances) -> bool;
 
 	[[nodiscard]] auto is_rendering() const -> bool { return m_pass != nullptr; }
 	auto end_render() -> kvf::RenderTarget;
@@ -45,6 +46,7 @@ class Renderer {
 
 	Shader const* m_shader{};
 	vk::Viewport m_viewport{};
+	UserDrawData m_user_data{};
 
 	vk::Pipeline m_pipeline{};
 	float m_line_width{1.0f};
