@@ -1,5 +1,4 @@
 #include <klib/assert.hpp>
-#include <le2d/line_geometry.hpp>
 #include <le2d/line_input.hpp>
 
 namespace le {
@@ -48,12 +47,19 @@ void LineInput::update() {
 	if (m_line.empty()) {
 		m_cursor_x = 0.0f;
 		m_cursor = 0;
+		m_size = {};
 		return;
 	}
 
-	auto line_geometry = LineGeometry{.atlas = m_atlas};
-	line_geometry.write_line(m_vertices, m_glyph_layouts, m_line);
-	m_next_glyph_x = line_geometry.position.x;
+	m_glyph_layouts.clear();
+	auto const line_layout = kvf::ttf::LineLayout{
+		.face = m_atlas->get_face(),
+		.glyphs = m_atlas->get_glyphs(),
+		.use_tofu = true,
+	};
+	m_next_glyph_x = line_layout.generate(m_glyph_layouts, m_line).x;
+	m_size = kvf::ttf::glyph_bounds(m_glyph_layouts).size();
+	write_glyphs(m_vertices, m_glyph_layouts);
 	update_cursor_x();
 }
 

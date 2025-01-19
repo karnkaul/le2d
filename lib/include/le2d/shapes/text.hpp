@@ -21,8 +21,8 @@ class Text {
 	explicit Text(gsl::not_null<Font*> font) : m_font(font) {}
 
 	[[nodiscard]] auto get_font() const -> Font& { return *m_font; }
-
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
+	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
 
 	void set_string(std::string_view line, Params const& params = {});
 

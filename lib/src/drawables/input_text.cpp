@@ -1,20 +1,17 @@
 #include <GLFW/glfw3.h>
 #include <le2d/drawables/input_text.hpp>
-#include <le2d/line_geometry.hpp>
 #include <cmath>
 
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
 	: m_line_input(font, params.height), m_cursor(font), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
-	auto const cursor_symbol = std::string_view{&params.cursor_symbol, 1};
-	auto const rect = LineGeometry{.atlas = &get_atlas()}.line_bounds(m_glyph_layouts, cursor_symbol);
-
 	auto const text_params = TextParams{
 		.height = m_line_input.get_height(),
 		.expand = TextExpand::eRight,
 	};
 	m_cursor.set_string({&params.cursor_symbol, 1}, text_params);
 
+	auto const rect = kvf::ttf::glyph_bounds(m_cursor.get_glyph_layouts());
 	m_cursor_offset_x = -rect.lt.x;
 }
 
@@ -89,7 +86,7 @@ void InputText::draw(Renderer& renderer) const {
 }
 
 void InputText::update() {
-	m_size = LineGeometry{.atlas = &get_atlas()}.line_bounds(m_glyph_layouts, get_string()).size();
+	m_size = m_line_input.get_size();
 	reset_blink();
 }
 

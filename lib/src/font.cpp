@@ -1,5 +1,7 @@
 #include <klib/assert.hpp>
+#include <kvf/is_positive.hpp>
 #include <le2d/font.hpp>
+#include <le2d/shapes/quad.hpp>
 #include <algorithm>
 
 namespace le {
@@ -51,3 +53,13 @@ auto Font::get_atlas(TextHeight height) -> FontAtlas& {
 	return it->second;
 }
 } // namespace le
+
+void le::write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 const position) {
+	for (auto const& layout : glyphs) {
+		if (!kvf::is_positive(layout.glyph->size)) { continue; }
+
+		auto const rect = layout.glyph->rect(position + layout.baseline);
+		auto const quad = shape::Quad{rect, layout.glyph->uv_rect};
+		out.append(quad.get_vertices(), shape::Quad::indices_v);
+	}
+}

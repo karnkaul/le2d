@@ -1,6 +1,7 @@
 #pragma once
 #include <kvf/ttf.hpp>
 #include <le2d/texture.hpp>
+#include <le2d/vertex_array.hpp>
 #include <unordered_map>
 
 namespace le {
@@ -47,4 +48,6 @@ class Font {
 	kvf::ttf::Typeface m_face;
 	std::unordered_map<TextHeight, FontAtlas> m_atlases{};
 };
+
+void write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 position = {});
 } // namespace le
