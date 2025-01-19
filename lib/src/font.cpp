@@ -13,8 +13,7 @@ auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height
 	if (!face->is_loaded()) { return false; }
 
 	height = clamp(height);
-	face->set_height(std::uint32_t(height));
-	auto ttf_atlas = face->build_atlas();
+	auto ttf_atlas = face->build_atlas(std::uint32_t(height));
 	if (!m_texture.write(ttf_atlas.bitmap.bitmap())) { return false; }
 
 	m_face = face;
@@ -24,11 +23,17 @@ auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height
 	return true;
 }
 
-auto FontAtlas::get_face() const -> kvf::ttf::Typeface const* {
-	if (m_face == nullptr) { return {}; }
-	m_face->set_height(std::uint32_t(m_height));
-	return m_face;
+auto FontAtlas::push_layouts(std::vector<GlyphLayout>& out, std::string_view const line, bool const use_tofu) const -> glm::vec2 {
+	if (m_face == nullptr || !m_face->is_loaded()) { return {}; }
+	auto const input = kvf::ttf::LineLInput{
+		.line = line,
+		.glyphs = m_glyphs,
+		.height = std::uint32_t(m_height),
+	};
+	return m_face->push_layouts(out, input, use_tofu);
 }
+
+auto FontAtlas::get_face() const -> kvf::ttf::Typeface const* { return m_face; }
 
 Font::Font(gsl::not_null<kvf::RenderDevice*> render_device, std::vector<std::byte> bytes) : m_render_device(render_device) { load_face(std::move(bytes)); }
 
@@ -55,6 +60,7 @@ auto Font::get_atlas(TextHeight height) -> FontAtlas& {
 } // namespace le
 
 void le::write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 const position) {
+	out.reserve(glyphs.size() * shape::Quad::vertex_count_v, glyphs.size() * shape::Quad::indices_v.size());
 	for (auto const& layout : glyphs) {
 		if (!kvf::is_positive(layout.glyph->size)) { continue; }
 

@@ -20,7 +20,10 @@ void InputText::set_interactive(bool const interactive) {
 	if (is_interactive()) { reset_blink(); }
 }
 
-void InputText::set_string(std::string line) { m_line_input.set_string(std::move(line)); }
+void InputText::set_string(std::string line) {
+	m_line_input.set_string(std::move(line));
+	update();
+}
 
 void InputText::write(char const ch) {
 	m_line_input.write(ch);

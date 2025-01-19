@@ -41,8 +41,7 @@ void LineInput::set_cursor(int const cursor) {
 void LineInput::move_cursor(int const delta) { set_cursor(get_cursor() + delta); }
 
 void LineInput::update() {
-	m_vertices.vertices.clear();
-	m_vertices.indices.clear();
+	m_vertices.clear();
 
 	if (m_line.empty()) {
 		m_cursor_x = 0.0f;
@@ -52,12 +51,7 @@ void LineInput::update() {
 	}
 
 	m_glyph_layouts.clear();
-	auto const line_layout = kvf::ttf::LineLayout{
-		.face = m_atlas->get_face(),
-		.glyphs = m_atlas->get_glyphs(),
-		.use_tofu = true,
-	};
-	m_next_glyph_x = line_layout.generate(m_glyph_layouts, m_line).x;
+	m_next_glyph_x = m_atlas->push_layouts(m_glyph_layouts, m_line).x;
 	m_size = kvf::ttf::glyph_bounds(m_glyph_layouts).size();
 	write_glyphs(m_vertices, m_glyph_layouts);
 	update_cursor_x();

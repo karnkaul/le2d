@@ -14,6 +14,7 @@ enum struct TextHeight : std::uint8_t {
 class FontAtlas {
   public:
 	using Glyph = kvf::ttf::Glyph;
+	using GlyphLayout = kvf::ttf::GlyphLayout;
 
 	[[nodiscard]] static auto clamp(TextHeight height) -> TextHeight;
 
@@ -25,6 +26,8 @@ class FontAtlas {
 	[[nodiscard]] auto get_texture() const -> Texture const& { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_height; }
 	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const*;
+
+	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view line, bool use_tofu = true) const -> glm::vec2;
 
   private:
 	kvf::ttf::Typeface* m_face{};

@@ -8,6 +8,7 @@
 namespace le::shape {
 class Quad {
   public:
+	static constexpr std::size_t vertex_count_v{4};
 	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
 
 	static constexpr auto rect_v = kvf::Rect<>::from_size(glm::vec2{200.0f});
@@ -28,7 +29,7 @@ class Quad {
 	std::shared_ptr<ITexture const> texture{};
 
   private:
-	std::array<Vertex, 4> m_vertices{};
+	std::array<Vertex, vertex_count_v> m_vertices{};
 };
 
 static_assert(ShapeT<Quad>);
