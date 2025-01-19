@@ -35,10 +35,12 @@ class LineInput : public klib::Polymorphic {
 
 	gsl::not_null<FontAtlas*> m_atlas;
 
+	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	VertexArray m_vertices{};
 
 	std::string m_line{};
 	int m_cursor{};
 	float m_cursor_x{};
+	float m_next_glyph_x{};
 };
 } // namespace le

@@ -52,6 +52,7 @@ class InputText : public IDrawable {
 	void update();
 	void reset_blink();
 
+	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	LineInput m_line_input;
 	shape::Text m_cursor;
 	kvf::Color m_cursor_color;

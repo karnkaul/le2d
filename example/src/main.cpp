@@ -21,6 +21,7 @@ struct App {
 
 		if (m_font.is_loaded()) {
 			auto const input_text_params = InputTextParams{
+				.height = TextHeight{120},
 				// .cursor_symbol = '_',
 				.cursor_color = kvf::magenta_v,
 			};

@@ -31,6 +31,7 @@ class Text {
   private:
 	Font* m_font;
 
+	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	VertexArray m_vertices{};
 	Texture const* m_texture{};
 	glm::vec2 m_size{};

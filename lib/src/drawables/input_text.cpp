@@ -6,14 +6,16 @@
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
 	: m_line_input(font, params.height), m_cursor(font), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
+	auto const cursor_symbol = std::string_view{&params.cursor_symbol, 1};
+	auto const rect = LineGeometry{.atlas = &get_atlas()}.line_bounds(m_glyph_layouts, cursor_symbol);
+
 	auto const text_params = TextParams{
 		.height = m_line_input.get_height(),
 		.expand = TextExpand::eRight,
 	};
-	auto const cursor_symbol = std::string_view{&params.cursor_symbol, 1};
-	auto const rect = LineGeometry{.glyphs = get_atlas().get_glyphs()}.line_bounds(cursor_symbol);
-	m_cursor_offset_x = -rect.lt.x;
 	m_cursor.set_string({&params.cursor_symbol, 1}, text_params);
+
+	m_cursor_offset_x = -rect.lt.x;
 }
 
 void InputText::set_interactive(bool const interactive) {
@@ -87,7 +89,7 @@ void InputText::draw(Renderer& renderer) const {
 }
 
 void InputText::update() {
-	m_size = LineGeometry{.glyphs = get_atlas().get_glyphs()}.line_bounds(get_string()).size();
+	m_size = LineGeometry{.atlas = &get_atlas()}.line_bounds(m_glyph_layouts, get_string()).size();
 	reset_blink();
 }
 

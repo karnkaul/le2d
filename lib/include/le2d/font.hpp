@@ -18,13 +18,15 @@ class FontAtlas {
 
 	explicit FontAtlas(gsl::not_null<kvf::RenderDevice*> render_device);
 
-	auto build(kvf::ttf::Typeface& face, TextHeight height) -> bool;
+	auto build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height) -> bool;
 
 	[[nodiscard]] auto get_glyphs() const -> std::span<Glyph const> { return m_glyphs; }
 	[[nodiscard]] auto get_texture() const -> Texture const& { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_height; }
+	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const*;
 
   private:
+	kvf::ttf::Typeface* m_face{};
 	Texture m_texture;
 	std::vector<Glyph> m_glyphs{};
 	TextHeight m_height{};

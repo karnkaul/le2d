@@ -8,6 +8,7 @@ LineInput::LineInput(gsl::not_null<Font*> font, TextHeight const height) : m_atl
 void LineInput::set_string(std::string line) {
 	if (m_line == line) { return; }
 	m_line = std::move(line);
+	m_cursor = int(m_line.size());
 	update();
 }
 
@@ -34,14 +35,8 @@ void LineInput::delete_front() {
 }
 
 void LineInput::set_cursor(int const cursor) {
-	auto const new_idx = std::clamp(int(cursor), 0, int(m_line.size()));
-	if (new_idx == m_cursor) { return; }
-	m_cursor = new_idx;
-	if (m_cursor == 0) {
-		m_cursor_x = 0.0f;
-	} else {
-		update_cursor_x();
-	}
+	m_cursor = cursor;
+	update_cursor_x();
 }
 
 void LineInput::move_cursor(int const delta) { set_cursor(get_cursor() + delta); }
@@ -56,22 +51,22 @@ void LineInput::update() {
 		return;
 	}
 
-	m_cursor = std::clamp(m_cursor, 0, int(m_line.size()));
-	auto writer = LineGeometry{.glyphs = m_atlas->get_glyphs()};
-
-	auto const left = std::string_view{m_line}.substr(0, std::size_t(m_cursor));
-	if (!left.empty()) { writer.write_line(m_vertices, left); }
-	m_cursor_x = writer.position.x;
-	if (m_cursor == int(m_line.size())) { return; }
-
-	auto const right = std::string_view{m_line}.substr(std::size_t(m_cursor));
-	writer.write_line(m_vertices, right);
+	auto line_geometry = LineGeometry{.atlas = m_atlas};
+	line_geometry.write_line(m_vertices, m_glyph_layouts, m_line);
+	m_next_glyph_x = line_geometry.position.x;
+	update_cursor_x();
 }
 
 void LineInput::update_cursor_x() {
-	auto const left = std::string_view{m_line}.substr(0, std::size_t(m_cursor));
-	if (left.empty()) { m_cursor_x = 0.0f; }
-	auto const writer = LineGeometry{.glyphs = m_atlas->get_glyphs()};
-	m_cursor_x = writer.next_glyph_position(left).x;
+	m_cursor = std::clamp(m_cursor, 0, int(m_line.size()));
+	if (m_cursor == 0) {
+		m_cursor_x = 0.0f;
+		return;
+	}
+	if (m_cursor == int(m_line.size())) {
+		m_cursor_x = m_next_glyph_x;
+		return;
+	}
+	m_cursor_x = m_glyph_layouts.at(std::size_t(m_cursor)).baseline.x;
 }
 } // namespace le

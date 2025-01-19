@@ -1,37 +1,38 @@
 #include <kvf/is_positive.hpp>
+#include <le2d/font.hpp>
 #include <le2d/line_geometry.hpp>
 #include <le2d/shapes/quad.hpp>
 
 namespace le {
 namespace {
-using GlyphIterator = kvf::ttf::GlyphIterator;
+using LineLayout = kvf::ttf::LineLayout;
 
-[[nodiscard]] auto to_iterator(LineGeometry const& line_geometry) {
-	return GlyphIterator{
-		.glyphs = line_geometry.glyphs,
+[[nodiscard]] auto to_layout(LineGeometry const& line_geometry) {
+	return LineLayout{
+		.face = line_geometry.atlas->get_face(),
+		.glyphs = line_geometry.atlas->get_glyphs(),
 		.use_tofu = line_geometry.use_tofu,
 	};
 }
 } // namespace
 
-auto LineGeometry::line_bounds(std::string_view const line) const -> kvf::Rect<> {
-	auto ret = to_iterator(*this).line_bounds(line);
-	ret.lt += position;
-	ret.rb += position;
-	return ret;
+auto LineGeometry::line_bounds(std::vector<GlyphLayout>& buf, std::string_view const line) const -> kvf::Rect<> {
+	buf.clear();
+	buf.reserve(line.size());
+	to_layout(*this).generate(buf, line, position);
+	return kvf::ttf::glyph_bounds(buf);
 }
 
-auto LineGeometry::next_glyph_position(std::string_view const line) const -> glm::vec2 { return position + to_iterator(*this).next_glyph_position(line); }
+void LineGeometry::write_line(VertexArray& out, std::vector<GlyphLayout>& buf, std::string_view const line) {
+	buf.clear();
+	buf.reserve(line.size());
+	position = to_layout(*this).generate(buf, line, position);
+	for (auto const& entry : buf) {
+		if (!kvf::is_positive(entry.glyph->size)) { continue; }
 
-void LineGeometry::write_line(VertexArray& out, std::string_view const line) {
-	auto iterator = to_iterator(*this);
-	iterator.iterate(line, [&](GlyphIterator::Entry const& entry) {
-		if (kvf::is_positive(entry.glyph->size)) {
-			auto const rect = entry.glyph->rect(position);
-			auto const quad = shape::Quad{rect, entry.glyph->uv_rect};
-			out.append(quad.get_vertices(), shape::Quad::indices_v);
-		}
-		position = GlyphIterator::advance(position, entry);
-	});
+		auto const rect = entry.glyph->rect(entry.baseline);
+		auto const quad = shape::Quad{rect, entry.glyph->uv_rect};
+		out.append(quad.get_vertices(), shape::Quad::indices_v);
+	}
 }
 } // namespace le

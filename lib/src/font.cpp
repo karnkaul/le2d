@@ -7,18 +7,25 @@ auto FontAtlas::clamp(TextHeight const height) -> TextHeight { return std::clamp
 
 FontAtlas::FontAtlas(gsl::not_null<kvf::RenderDevice*> render_device) : m_texture(render_device) {}
 
-auto FontAtlas::build(kvf::ttf::Typeface& face, TextHeight height) -> bool {
-	if (!face.is_loaded()) { return false; }
+auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height) -> bool {
+	if (!face->is_loaded()) { return false; }
 
 	height = clamp(height);
-	face.set_height(std::uint32_t(height));
-	auto ttf_atlas = face.build_atlas();
+	face->set_height(std::uint32_t(height));
+	auto ttf_atlas = face->build_atlas();
 	if (!m_texture.write(ttf_atlas.bitmap.bitmap())) { return false; }
 
+	m_face = face;
 	m_height = height;
 	m_glyphs = std::move(ttf_atlas.glyphs);
 
 	return true;
+}
+
+auto FontAtlas::get_face() const -> kvf::ttf::Typeface const* {
+	if (m_face == nullptr) { return {}; }
+	m_face->set_height(std::uint32_t(m_height));
+	return m_face;
 }
 
 Font::Font(gsl::not_null<kvf::RenderDevice*> render_device, std::vector<std::byte> bytes) : m_render_device(render_device) { load_face(std::move(bytes)); }
@@ -38,7 +45,7 @@ auto Font::get_atlas(TextHeight height) -> FontAtlas& {
 	auto it = m_atlases.find(height);
 	if (it == m_atlases.end()) {
 		auto atlas = FontAtlas{m_render_device};
-		atlas.build(m_face, height);
+		atlas.build(&m_face, height);
 		it = m_atlases.insert({height, std::move(atlas)}).first;
 	}
 	return it->second;

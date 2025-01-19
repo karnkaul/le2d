@@ -4,15 +4,17 @@
 #include <string_view>
 
 namespace le {
+class FontAtlas;
+
 struct LineGeometry {
 	using Codepoint = kvf::ttf::Codepoint;
 	using Glyph = kvf::ttf::Glyph;
+	using GlyphLayout = kvf::ttf::GlyphLayout;
 
-	[[nodiscard]] auto line_bounds(std::string_view line) const -> kvf::Rect<>;
-	[[nodiscard]] auto next_glyph_position(std::string_view line) const -> glm::vec2;
-	void write_line(VertexArray& out, std::string_view line);
+	[[nodiscard]] auto line_bounds(std::vector<GlyphLayout>& buf, std::string_view line) const -> kvf::Rect<>;
+	void write_line(VertexArray& out, std::vector<GlyphLayout>& buf, std::string_view line);
 
-	std::span<Glyph const> glyphs{};
+	gsl::not_null<FontAtlas const*> atlas;
 	glm::vec2 position{};
 	bool use_tofu{true};
 };

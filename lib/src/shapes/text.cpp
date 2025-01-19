@@ -9,10 +9,10 @@ void Text::set_string(std::string_view const line, Params const& params) {
 	if (line.empty() || !m_font->is_loaded()) { return; }
 
 	auto& atlas = m_font->get_atlas(params.height);
-	auto line_geometry = LineGeometry{.glyphs = atlas.get_glyphs()};
+	auto line_geometry = LineGeometry{.atlas = &atlas};
 	m_texture = &atlas.get_texture();
 
-	auto const rect = line_geometry.line_bounds(line);
+	auto const rect = line_geometry.line_bounds(m_glyph_layouts, line);
 	m_size = rect.size();
 	switch (params.expand) {
 	case TextExpand::eBoth: line_geometry.position.x -= 0.5f * m_size.x; break;
@@ -20,7 +20,7 @@ void Text::set_string(std::string_view const line, Params const& params) {
 	default: break;
 	}
 
-	line_geometry.write_line(m_vertices, line);
+	line_geometry.write_line(m_vertices, m_glyph_layouts, line);
 }
 
 auto Text::get_primitive() const -> Primitive {
