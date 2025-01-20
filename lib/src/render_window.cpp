@@ -4,6 +4,10 @@
 #include <le2d/render_window.hpp>
 
 namespace le {
+namespace {
+constexpr auto to_focus(int const f) { return f == GLFW_TRUE ? event::Focus::True : event::Focus::False; }
+} // namespace
+
 RenderWindow::RenderWindow(glm::ivec2 const size, klib::CString const title) : m_window(create_window(size, title)), m_render_device(m_window.get()) {}
 
 auto RenderWindow::framebuffer_size() const -> glm::ivec2 { return kvf::util::to_glm_vec<int>(m_render_device.get_framebuffer_extent()); }
@@ -33,10 +37,12 @@ auto RenderWindow::create_window(glm::ivec2 const size, klib::CString const titl
 void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 	using namespace event;
 	static auto const push_event = [](GLFWwindow* window, Event const& event) { self(window).m_event_queue.push_back(event); };
-	glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) { push_event(window, Focus{.in_focus = in_focus == GLFW_TRUE}); });
+	glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) { push_event(window, to_focus(in_focus)); });
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int /*scancode*/, int action, int mods) {
 		push_event(window, Key{.key = key, .action = action, .mods = mods});
 	});
 	glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) { push_event(window, Codepoint{codepoint}); });
+	glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowResize{x, y}); });
+	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::FramebufferResize{x, y}); });
 }
 } // namespace le

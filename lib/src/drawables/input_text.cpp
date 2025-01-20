@@ -40,6 +40,11 @@ void InputText::delete_front() {
 	update();
 }
 
+void InputText::clear() {
+	m_line_input.set_string({});
+	update();
+}
+
 void InputText::set_cursor(int const cursor) {
 	m_line_input.set_cursor(cursor);
 	update();

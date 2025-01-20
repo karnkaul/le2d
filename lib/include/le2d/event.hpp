@@ -12,12 +12,18 @@ struct Key {
 	int mods;
 };
 
-struct Focus {
-	bool in_focus;
-};
+enum class Focus : bool { False, True };
 
 using Codepoint = kvf::ttf::Codepoint;
+
+struct FramebufferResize : glm::ivec2 {
+	using glm::ivec2::ivec2;
+};
+
+struct WindowResize : glm::ivec2 {
+	using glm::ivec2::ivec2;
+};
 } // namespace event
 
-using Event = std::variant<event::Key, event::Focus, event::Codepoint>;
+using Event = std::variant<event::Key, event::Focus, event::Codepoint, event::FramebufferResize, event::WindowResize>;
 } // namespace le

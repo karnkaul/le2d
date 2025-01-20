@@ -2,6 +2,7 @@
 #include <kvf/color_bitmap.hpp>
 #include <kvf/time.hpp>
 #include <le2d/build_version.hpp>
+#include <le2d/console.hpp>
 #include <le2d/context.hpp>
 #include <le2d/drawables/input_text.hpp>
 #include <le2d/drawables/shape.hpp>
@@ -19,14 +20,29 @@ struct App {
 		create_textures();
 		load_font();
 
+		m_quad.texture = m_textures[0];
+
 		if (m_font.is_loaded()) {
-			auto const input_text_params = InputTextParams{
-				.height = TextHeight{120},
-				// .cursor_symbol = '_',
-				.cursor_color = kvf::magenta_v,
+			auto const cci = console::TerminalCreateInfo{
+				.framebuffer_size = m_context.get_render_window().framebuffer_size(),
+				.input_text = InputTextParams{.height = TextHeight{20}, .cursor_color = kvf::magenta_v},
+				.buffer_size = 64,
 			};
-			m_input_text.emplace(&m_font, input_text_params);
-			// m_input_text->instance.transform.position.y = -50.0f;
+			m_terminal.emplace(&m_font, cci);
+			auto opacity = [this](console::Stream& stream) {
+				auto const value = stream.next_arg();
+				if (value.empty()) {
+					stream.println(std::format("{}", m_terminal->get_opacity()));
+					return;
+				}
+				auto const fvalue = console::to_f32(value, -1.0f);
+				if (fvalue < 0.0f) {
+					stream.printerr(std::format("invalid opacity value: '{}'", value));
+					return;
+				}
+				m_terminal->set_opacity(fvalue);
+			};
+			m_terminal->add_command("opacity", opacity);
 		}
 
 		m_delta_time.reset();
@@ -89,7 +105,7 @@ struct App {
 	void tick(kvf::Seconds const dt) {
 		process_events();
 
-		if (!m_input_text || !m_input_text->is_interactive()) {
+		if (!m_terminal || !m_terminal->is_active()) {
 			auto dxy = glm::vec2{};
 			if (m_held_keys.left) { dxy.x += -1.0f; }
 			if (m_held_keys.right) { dxy.x += 1.0f; }
@@ -98,10 +114,7 @@ struct App {
 			// m_render_view.orientation += 10.0f * dt.count();
 		}
 
-		if (m_input_text) {
-			m_input_text->tick(dt);
-			m_input_text->instance.transform.position.x = -0.5f * m_input_text->get_size().x;
-		}
+		if (m_terminal) { m_terminal->tick(dt); }
 	}
 
 	void render(Renderer& renderer) const {
@@ -113,8 +126,17 @@ struct App {
 		// n_viewport.rb.x = 0.5f;
 		renderer.set_render_area(n_viewport);
 		renderer.view = m_render_view;
+		m_quad.draw(renderer);
 
-		if (m_input_text) { m_input_text->draw(renderer); }
+		// if (m_input_text) { m_input_text->draw(renderer); }
+
+		n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
+		renderer.set_render_area(n_viewport);
+		renderer.view = {};
+		renderer.view.scale = glm::vec2{0.25f};
+		m_quad.draw(renderer);
+
+		if (m_terminal) { m_terminal->draw(renderer); }
 	}
 
 	void process_events() {
@@ -135,15 +157,15 @@ struct App {
 
 				if (key.action == GLFW_RELEASE && key.key == GLFW_KEY_W && key.mods == GLFW_MOD_CONTROL) { m_context.shutdown(); }
 
-				if (m_input_text) {
-					m_input_text->on_key(key);
-					if (key.key == GLFW_KEY_ENTER && key.action == GLFW_PRESS && key.mods == 0) { m_input_text->set_interactive(true); }
-					if (key.key == GLFW_KEY_ESCAPE && key.action == GLFW_PRESS && key.mods == 0) { m_input_text->set_interactive(false); }
-				}
+				if (m_terminal) { m_terminal->on_key(key); }
 			},
 
 			[&](event::Codepoint const codepoint) {
-				if (m_input_text) { m_input_text->on_codepoint(codepoint); }
+				if (m_terminal) { m_terminal->on_codepoint(codepoint); }
+			},
+
+			[&](event::FramebufferResize const resize) {
+				if (m_terminal) { m_terminal->on_resize(resize); }
 			},
 		};
 
@@ -153,12 +175,14 @@ struct App {
 	Context m_context;
 
 	Font m_font;
-	std::optional<drawable::InputText> m_input_text{};
 	std::vector<std::shared_ptr<Texture const>> m_textures{};
+	drawable::Quad m_quad{};
 
 	kvf::DeltaTime m_delta_time{};
 	HeldKeys m_held_keys{};
 	Transform m_render_view{};
+
+	std::optional<console::Terminal> m_terminal{};
 
 	kvf::DeviceBlock m_blocker;
 };

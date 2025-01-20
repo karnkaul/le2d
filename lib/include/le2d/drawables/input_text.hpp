@@ -21,6 +21,7 @@ class InputText : public IDrawable {
 	explicit InputText(gsl::not_null<Font*> font, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
+	[[nodiscard]] auto get_font() const -> Font& { return m_cursor.get_font(); }
 	[[nodiscard]] auto get_atlas() const -> FontAtlas& { return m_line_input.get_atlas(); }
 
 	[[nodiscard]] auto is_interactive() const -> bool { return m_interactive; }
@@ -31,6 +32,7 @@ class InputText : public IDrawable {
 	void write(char ch);
 	void backspace();
 	void delete_front();
+	void clear();
 
 	[[nodiscard]] auto get_cursor() const -> int { return m_line_input.get_cursor(); }
 	void set_cursor(int cursor);
