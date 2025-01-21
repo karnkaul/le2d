@@ -1,10 +1,11 @@
 #include <GLFW/glfw3.h>
 #include <klib/assert.hpp>
 #include <klib/concepts.hpp>
+#include <klib/str_to_num.hpp>
+#include <kvf/util.hpp>
 #include <le2d/console.hpp>
 #include <le2d/drawables/shape.hpp>
 #include <algorithm>
-#include <charconv>
 #include <deque>
 
 namespace le::console {
@@ -47,6 +48,25 @@ constexpr auto get_next_arg(std::string_view& out_arg, std::string_view& out_rem
 	return true;
 }
 
+constexpr auto longest_match(std::span<std::string_view const> candidates, std::string_view const current) {
+	if (candidates.size() < 2) { return current; }
+	auto const source = candidates.front();
+	auto ret = std::string_view{source}.substr(0, current.size());
+	auto const is_match = [&](std::size_t const index) {
+		for (std::size_t i = 1; i < candidates.size(); ++i) {
+			auto const candidate = candidates[i];
+			if (index >= candidate.size()) { return false; }
+			if (candidate[index] != source[index]) { return false; }
+		}
+		return true;
+	};
+	for (auto index = ret.size(); index < source.size(); ++index) {
+		if (!is_match(index)) { break; }
+		ret = source.substr(0, index + 1);
+	}
+	return ret;
+}
+
 template <klib::NumberT T>
 auto to_num(std::string_view str, T const fallback) -> T {
 	auto ret = T{};
@@ -57,7 +77,10 @@ auto to_num(std::string_view str, T const fallback) -> T {
 } // namespace
 
 struct Terminal::Impl {
-	explicit Impl(Font& font, CreateInfo const& info) : m_info(info), m_input(&font, info.input_text) { setup(font); }
+	explicit Impl(Font& font, CreateInfo const& info) : m_info(info), m_input(&font, info.input_text) {
+		setup(font);
+		add_builtins();
+	}
 
 	void resize() {
 		auto const width = m_info.framebuffer_size.x;
@@ -86,18 +109,9 @@ struct Terminal::Impl {
 		m_cmd_indices.insert_or_assign(name, index);
 	}
 
-	void print(std::string_view const line, kvf::Color const color) {
-		auto& text = m_buffer.emplace_front(&m_input.get_font());
-		text.set_string(line, m_text_params);
-		text.instance.tint = color;
-		text.instance.transform.position.x = -0.5f * m_info.framebuffer_size.x + m_info.x_pad;
-		while (m_buffer.size() > m_info.buffer_size) { m_buffer.pop_back(); }
-		update_buffer_positions();
-	}
+	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.instance.tint.to_srgb(); }
 
-	void println(std::string_view const line) { print(line, m_info.text_colors.output); }
-
-	void printerr(std::string_view const line) { print(line, m_info.text_colors.error); }
+	void set_background(kvf::Color const color) { m_background.instance.tint = color.to_linear(); }
 
 	void on_resize(event::FramebufferResize const size) {
 		if (!kvf::is_positive(size)) { return; }
@@ -117,6 +131,7 @@ struct Terminal::Impl {
 				switch (key.key) {
 				case GLFW_KEY_UP: cycle_up(); break;
 				case GLFW_KEY_DOWN: cycle_down(); break;
+				case GLFW_KEY_TAB: autocomplete(); break;
 				}
 			}
 		}
@@ -138,7 +153,6 @@ struct Terminal::Impl {
 			m_render_view.position.y = std::max(m_render_view.position.y, m_hide_y);
 		}
 		m_input.tick(dt);
-		m_background.instance.tint.w = kvf::Color::to_u8(opacity);
 	}
 
 	void draw(Renderer& renderer) const {
@@ -156,8 +170,6 @@ struct Terminal::Impl {
 		m_input.draw(renderer);
 		renderer.view = old_view;
 	}
-
-	float opacity{0.8f};
 
   private:
 	struct StreamImpl : Stream {
@@ -181,7 +193,7 @@ struct Terminal::Impl {
 
 	void setup(Font& font) {
 		m_separator.instance.tint = m_info.separator.color;
-		m_background.instance.tint = kvf::GlmColor{0x11, 0x05, 0x11, kvf::Color::to_u8(opacity)};
+		m_background.instance.tint = kvf::GlmColor{0x11, 0x05, 0x11, kvf::Color::to_u8(0.8f)};
 		m_input.set_interactive(false);
 		m_info.text_colors.output = m_info.text_colors.output.to_linear();
 		m_info.text_colors.error = m_info.text_colors.error.to_linear();
@@ -196,6 +208,50 @@ struct Terminal::Impl {
 		resize();
 		m_render_view.position.y = m_hide_y;
 	}
+
+	void add_builtins() {
+		add_command("help", [this](Stream& /*unused*/) { print_help(); });
+
+		auto cmd_opacity = [this](Stream& stream) {
+			auto const value = stream.next_arg();
+			if (value.empty()) {
+				stream.println(std::format("{}", kvf::Color::to_f32(m_background.instance.tint.w)));
+				return;
+			}
+			auto const fvalue = klib::str_to_num(value, -1.0f);
+			if (fvalue < 0.0f) {
+				stream.printerr(std::format("invalid opacity value: '{}'", value));
+				return;
+			}
+			m_background.instance.tint.w = kvf::Color::to_u8(fvalue);
+		};
+		add_command("opacity", cmd_opacity);
+
+		auto cmd_background = [this](Stream& stream) {
+			auto const value = stream.next_arg();
+			if (value.empty()) {
+				auto const srgb = m_background.instance.tint.to_srgb();
+				auto const str = kvf::util::to_hex_string(srgb);
+				stream.println(std::format("{}", str));
+				return;
+			}
+			m_background.instance.tint = kvf::util::color_from_hex(value).to_linear();
+		};
+		add_command("background", cmd_background);
+	}
+
+	void print(std::string_view const line, kvf::Color const color) {
+		auto& text = m_buffer.emplace_front(&m_input.get_font());
+		text.set_string(line, m_text_params);
+		text.instance.tint = color;
+		text.instance.transform.position.x = -0.5f * m_info.framebuffer_size.x + m_info.x_pad;
+		while (m_buffer.size() > m_info.buffer_size) { m_buffer.pop_back(); }
+		update_buffer_positions();
+	}
+
+	void println(std::string_view const line) { print(line, m_info.text_colors.output); }
+
+	void printerr(std::string_view const line) { print(line, m_info.text_colors.error); }
 
 	void print_help() {
 		if (m_commands.empty()) {
@@ -237,10 +293,6 @@ struct Terminal::Impl {
 		auto stream = StreamImpl{*this, text};
 		auto const cmd = stream.next_arg();
 		if (cmd.empty()) { return; }
-		if (cmd == "help") {
-			print_help();
-			return;
-		}
 
 		if (auto const it = m_cmd_indices.find(cmd); it != m_cmd_indices.end()) {
 			m_commands.at(it->second)(stream);
@@ -281,6 +333,32 @@ struct Terminal::Impl {
 		m_input.set_string(m_history.at(*m_history_index));
 	}
 
+	void autocomplete() {
+		auto prefix = m_input.get_string();
+		if (prefix.empty() || prefix.find_first_of(' ') != std::string_view::npos) { return; }
+		auto const candidates = [&] {
+			auto ret = std::vector<std::string_view>{};
+			ret.reserve(m_cmd_indices.size());
+			for (auto const& [name, _] : m_cmd_indices) {
+				if (!name.starts_with(prefix)) { continue; }
+				ret.push_back(name);
+			}
+			return ret;
+		}();
+		if (candidates.empty()) { return; }
+		if (candidates.size() == 1) {
+			auto const name = candidates.front();
+			m_input.set_string(std::format("{} ", name));
+			return;
+		}
+		prefix = longest_match(candidates, prefix);
+		m_input.set_string(std::string{prefix});
+		for (auto const candidate : candidates) {
+			auto const line = std::format("  {}", candidate);
+			println(line);
+		}
+	}
+
 	CreateInfo m_info;
 	TextParams m_text_params;
 
@@ -316,14 +394,14 @@ auto Terminal::is_active() const -> bool {
 	return m_impl->is_active();
 }
 
-auto Terminal::get_opacity() const -> float {
-	if (!m_impl) { return -1.0f; }
-	return m_impl->opacity;
+auto Terminal::get_background() const -> kvf::Color {
+	if (!m_impl) { return {}; }
+	return m_impl->get_background();
 }
 
-void Terminal::set_opacity(float const value) {
+void Terminal::set_background(kvf::Color const color) {
 	if (!m_impl) { return; }
-	m_impl->opacity = std::clamp(value, 0.0f, 1.0f);
+	m_impl->set_background(color);
 }
 
 void Terminal::on_resize(event::FramebufferResize const size) {
@@ -351,7 +429,3 @@ void Terminal::draw(Renderer& renderer) const {
 	m_impl->draw(renderer);
 }
 } // namespace le::console
-
-auto le::console::to_f32(std::string_view str, float const fallback) -> float { return to_num(str, fallback); }
-auto le::console::to_i64(std::string_view str, std::int64_t const fallback) -> std::int64_t { return to_num(str, fallback); }
-auto le::console::to_u64(std::string_view str, std::uint64_t const fallback) -> std::uint64_t { return to_num(str, fallback); }

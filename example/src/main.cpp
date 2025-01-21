@@ -29,20 +29,8 @@ struct App {
 				.buffer_size = 64,
 			};
 			m_terminal.emplace(&m_font, cci);
-			auto opacity = [this](console::Stream& stream) {
-				auto const value = stream.next_arg();
-				if (value.empty()) {
-					stream.println(std::format("{}", m_terminal->get_opacity()));
-					return;
-				}
-				auto const fvalue = console::to_f32(value, -1.0f);
-				if (fvalue < 0.0f) {
-					stream.printerr(std::format("invalid opacity value: '{}'", value));
-					return;
-				}
-				m_terminal->set_opacity(fvalue);
-			};
-			m_terminal->add_command("opacity", opacity);
+
+			m_terminal->add_command("opa", [](console::Stream&) {});
 		}
 
 		m_delta_time.reset();
