@@ -21,6 +21,7 @@ class LineInput : public klib::Polymorphic {
 	[[nodiscard]] auto get_texture() const -> Texture const& { return get_atlas().get_texture(); }
 
 	void set_string(std::string line);
+	void append(std::string_view str);
 
 	void write(char ch);
 	void backspace();

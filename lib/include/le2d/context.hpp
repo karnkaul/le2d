@@ -5,11 +5,24 @@
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
+#include <variant>
 
 namespace le {
+struct WindowInfo {
+	glm::ivec2 size{600};
+	klib::CString title;
+	bool decorated{true};
+};
+
+struct FullscreenInfo {
+	klib::CString title;
+	GLFWmonitor* target{nullptr};
+};
+
+using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
+
 struct ContextCreateInfo {
-	glm::ivec2 window_size;
-	klib::CString window_title;
+	WindowCreateInfo window;
 	struct {
 		Uri vertex;
 		Uri fragment;

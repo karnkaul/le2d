@@ -26,6 +26,11 @@ void InputText::set_string(std::string line) {
 	update();
 }
 
+void InputText::append(std::string_view str) {
+	m_line_input.append(str);
+	update();
+}
+
 void InputText::write(char const ch) {
 	m_line_input.write(ch);
 	update();
@@ -61,6 +66,13 @@ void InputText::on_key(event::Key const& key) {
 	case GLFW_KEY_END: cursor_end(); break;
 	case GLFW_KEY_BACKSPACE: backspace(); break;
 	case GLFW_KEY_DELETE: delete_front(); break;
+	}
+
+	if (key.mods == GLFW_MOD_CONTROL) {
+		switch (key.key) {
+		case GLFW_KEY_C: glfwSetClipboardString(nullptr, get_string().data()); break;
+		case GLFW_KEY_V: append(glfwGetClipboardString(nullptr)); break;
+		}
 	}
 }
 

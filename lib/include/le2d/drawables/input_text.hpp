@@ -29,6 +29,7 @@ class InputText : public IDrawable {
 
 	[[nodiscard]] auto get_string() const -> std::string_view { return m_line_input.get_string(); }
 	void set_string(std::string line);
+	void append(std::string_view str);
 	void write(char ch);
 	void backspace();
 	void delete_front();

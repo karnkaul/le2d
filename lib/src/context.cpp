@@ -2,8 +2,18 @@
 #include <log.hpp>
 
 namespace le {
+namespace {
+auto create_window(WindowCreateInfo const& create_info) {
+	struct Visitor {
+		auto operator()(WindowInfo const& info) const { return RenderWindow{info.size, info.title, info.decorated}; }
+		auto operator()(FullscreenInfo const& info) const { return RenderWindow{info.title, info.target}; }
+	};
+	return std::visit(Visitor{}, create_info);
+}
+} // namespace
+
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
-	: m_data_loader(data_loader), m_window(create_info.window_size, create_info.window_title), m_resource_pool(&m_window.get_render_device()),
+	: m_data_loader(data_loader), m_window(create_window(create_info.window)), m_resource_pool(&m_window.get_render_device()),
 	  m_pass(&m_window.get_render_device(), &m_resource_pool, create_info.framebuffer_samples) {
 	auto const& shader = create_info.default_shader;
 	m_resource_pool.default_shader = create_shader(shader.vertex, shader.fragment);

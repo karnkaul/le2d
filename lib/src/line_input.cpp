@@ -7,7 +7,14 @@ LineInput::LineInput(gsl::not_null<Font*> font, TextHeight const height) : m_atl
 void LineInput::set_string(std::string line) {
 	if (m_line == line) { return; }
 	m_line = std::move(line);
-	m_cursor = int(m_line.size());
+	set_cursor(int(m_line.size()));
+	update();
+}
+
+void LineInput::append(std::string_view const str) {
+	if (str.empty()) { return; }
+	m_line.append(str);
+	set_cursor(int(m_line.size()));
 	update();
 }
 

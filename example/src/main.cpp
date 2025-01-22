@@ -53,8 +53,8 @@ struct App {
 	};
 
 	inline static auto const context_ci = ContextCreateInfo{
-		.window_size = {1280, 720},
-		.window_title = "le2d example",
+		.window = WindowInfo{.size = {1280, 720}, .title = "le2d example"},
+		// .window = FullscreenInfo{.title = "le2d example"},
 		.default_shader = {.vertex = "default.vert", .fragment = "default.frag"},
 		.framebuffer_samples = vk::SampleCountFlagBits::e2,
 	};

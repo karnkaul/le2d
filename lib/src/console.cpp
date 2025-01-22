@@ -192,15 +192,17 @@ struct Terminal::Impl {
 	};
 
 	void setup(Font& font) {
-		m_separator.instance.tint = m_info.separator.color;
-		m_background.instance.tint = kvf::GlmColor{0x11, 0x05, 0x11, kvf::Color::to_u8(0.8f)};
 		m_input.set_interactive(false);
+
+		m_separator.instance.tint = m_info.separator.color;
+		m_background.instance.tint = kvf::Color{0x111111cc}.to_linear();
+
 		m_info.text_colors.output = m_info.text_colors.output.to_linear();
 		m_info.text_colors.error = m_info.text_colors.error.to_linear();
-
 		m_info.input_text.height = m_input.get_atlas().get_height();
 		m_info.y_speed = std::abs(m_info.y_speed);
-		m_text_params.height = this->m_info.input_text.height;
+
+		m_text_params.height = m_info.input_text.height;
 		m_text_params.expand = TextExpand::eRight;
 
 		m_caret.create(font.get_atlas(m_info.input_text.height), m_info.caret);
