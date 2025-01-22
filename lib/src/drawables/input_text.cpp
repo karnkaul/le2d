@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <le2d/drawables/input_text.hpp>
 #include <cmath>
+#include <numbers>
 
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
