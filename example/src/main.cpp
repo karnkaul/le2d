@@ -180,7 +180,7 @@ struct App {
 auto main(int argc, char** argv) -> int {
 	auto const file = klib::log::File{"le2d-debug.log"};
 	try {
-		auto const arg0 = [&] -> std::string_view {
+		auto const arg0 = [&]() -> std::string_view {
 			if (argc < 1) { return {}; }
 			return *argv;
 		}();
