@@ -30,7 +30,7 @@ struct App {
 			};
 			m_terminal.emplace(&m_font, cci);
 
-			m_terminal->add_command("opa", [](console::Stream&) {});
+			m_terminal->add_command("quit", [this](console::Stream&) { m_context.shutdown(); });
 		}
 
 		m_delta_time.reset();
