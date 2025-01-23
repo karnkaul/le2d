@@ -29,7 +29,7 @@ void write_instances(std::vector<std::byte>& out, std::span<RenderInstance const
 	for (auto const& in : instances) {
 		auto const instance = Std430Instance{
 			.transform = in.transform.to_model(),
-			.tint = in.tint.to_vec4(),
+			.tint = in.tint.to_linear(),
 		};
 		KLIB_ASSERT(write_span.size() >= sizeof(instance));
 		std::memcpy(write_span.data(), &instance, sizeof(instance));

@@ -109,9 +109,9 @@ struct Terminal::Impl {
 		m_cmd_indices.insert_or_assign(name, index);
 	}
 
-	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.instance.tint.to_srgb(); }
+	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.instance.tint; }
 
-	void set_background(kvf::Color const color) { m_background.instance.tint = color.to_linear(); }
+	void set_background(kvf::Color const color) { m_background.instance.tint = color; }
 
 	void on_resize(event::FramebufferResize const size) {
 		if (!kvf::is_positive(size)) { return; }
@@ -195,10 +195,10 @@ struct Terminal::Impl {
 		m_input.set_interactive(false);
 
 		m_separator.instance.tint = m_info.separator.color;
-		m_background.instance.tint = kvf::Color{0x111111cc}.to_linear();
+		m_background.instance.tint = kvf::Color{0x111111cc};
 
-		m_info.text_colors.output = m_info.text_colors.output.to_linear();
-		m_info.text_colors.error = m_info.text_colors.error.to_linear();
+		m_info.text_colors.output = m_info.text_colors.output;
+		m_info.text_colors.error = m_info.text_colors.error;
 		m_info.input_text.height = m_input.get_atlas().get_height();
 		m_info.y_speed = std::abs(m_info.y_speed);
 
@@ -227,19 +227,20 @@ struct Terminal::Impl {
 			}
 			m_background.instance.tint.w = kvf::Color::to_u8(fvalue);
 		};
-		add_command("opacity", cmd_opacity);
+		add_command("console.opacity", cmd_opacity);
 
 		auto cmd_background = [this](Stream& stream) {
 			auto const value = stream.next_arg();
 			if (value.empty()) {
-				auto const srgb = m_background.instance.tint.to_srgb();
+				auto const tmp = kvf::util::to_hex_string(m_background.instance.tint);
+				auto const srgb = m_background.instance.tint;
 				auto const str = kvf::util::to_hex_string(srgb);
 				stream.println(std::format("{}", str));
 				return;
 			}
-			m_background.instance.tint = kvf::util::color_from_hex(value).to_linear();
+			m_background.instance.tint = kvf::util::color_from_hex(value);
 		};
-		add_command("background", cmd_background);
+		add_command("console.background", cmd_background);
 	}
 
 	void print(std::string_view const line, kvf::Color const color) {
