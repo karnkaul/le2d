@@ -29,7 +29,7 @@ using Command = std::move_only_function<void(Stream& stream)>;
 struct TerminalCreateInfo {
 	struct {
 		std::size_t history{32};
-		std::size_t buffer{32};
+		std::size_t buffer{128};
 	} storage{};
 
 	struct {

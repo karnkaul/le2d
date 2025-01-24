@@ -144,6 +144,8 @@ struct Terminal::Impl {
 				case GLFW_KEY_UP: cycle_up(); break;
 				case GLFW_KEY_DOWN: cycle_down(); break;
 				case GLFW_KEY_TAB: autocomplete(); break;
+				case GLFW_KEY_PAGE_UP: page_up(); break;
+				case GLFW_KEY_PAGE_DOWN: page_down(); break;
 				}
 			}
 		}
@@ -156,7 +158,7 @@ struct Terminal::Impl {
 		stop_cycling();
 	}
 
-	void on_scroll(event::Scroll const scroll) { set_buffer_dy(m_buffer_dy + (m_info.motion.scroll_speed * scroll.y)); }
+	void on_scroll(event::Scroll const scroll) { move_buffer_dy(m_info.motion.scroll_speed * scroll.y); }
 
 	void tick(kvf::Seconds const dt) {
 		if (m_active) {
@@ -263,7 +265,11 @@ struct Terminal::Impl {
 		auto const scissor_y = (0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y;
 		auto scissor = vk::Rect2D{vk::Offset2D{}, vk::Extent2D{std::uint32_t(m_framebuffer_size.x), std::uint32_t(scissor_y)}};
 		renderer.command_buffer().setScissor(0, scissor);
-		for (auto const& text : m_buffer) { text.draw(renderer); }
+		for (auto const& text : m_buffer) {
+			auto const text_y = text.instance.transform.position.y - m_buffer_dy;
+			if (text_y > 0.5f * m_framebuffer_size.y) { break; }
+			text.draw(renderer);
+		}
 		renderer.view.position.y -= m_buffer_dy;
 		scissor.extent.height = std::uint32_t(m_framebuffer_size.y);
 		renderer.command_buffer().setScissor(0, scissor);
@@ -304,13 +310,15 @@ struct Terminal::Impl {
 		}
 	}
 
-	void set_buffer_dy(float const dy) {
+	void move_buffer_dy(float const dy) { set_buffer_dy(m_buffer_dy + dy); }
+
+	void set_buffer_dy(float const value) {
 		auto const max_dy = m_buffer_height - (0.5f * m_framebuffer_size.y);
 		if (max_dy < 0.0f) {
 			m_buffer_dy = 0.0f;
 			return;
 		}
-		m_buffer_dy = std::clamp(dy, 0.0f, max_dy);
+		m_buffer_dy = std::clamp(value, 0.0f, max_dy);
 	}
 
 	void on_enter() {
@@ -397,6 +405,10 @@ struct Terminal::Impl {
 			println(line);
 		}
 	}
+
+	void page_up() { move_buffer_dy(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+
+	void page_down() { move_buffer_dy(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
 
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
