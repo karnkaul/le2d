@@ -24,11 +24,9 @@ struct App {
 
 		if (m_font.is_loaded()) {
 			auto const cci = console::TerminalCreateInfo{
-				.framebuffer_size = m_context.get_render_window().framebuffer_size(),
-				.input_text = InputTextParams{.height = TextHeight{20}, .cursor_color = kvf::magenta_v},
-				.buffer_size = 64,
+				.style = {.text_height = TextHeight{20}},
 			};
-			m_terminal.emplace(&m_font, cci);
+			m_terminal.emplace(&m_font, m_context.get_render_window().framebuffer_size(), cci);
 
 			m_terminal->add_command("quit", [this](console::Stream&) { m_context.shutdown(); });
 		}

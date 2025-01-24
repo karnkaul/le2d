@@ -4,6 +4,7 @@
 #include <klib/str_to_num.hpp>
 #include <kvf/util.hpp>
 #include <le2d/console.hpp>
+#include <le2d/drawables/input_text.hpp>
 #include <le2d/drawables/shape.hpp>
 #include <algorithm>
 #include <deque>
@@ -77,21 +78,31 @@ auto to_num(std::string_view str, T const fallback) -> T {
 } // namespace
 
 struct Terminal::Impl {
-	explicit Impl(Font& font, CreateInfo const& info) : m_info(info), m_input(&font, info.input_text) {
+	static constexpr auto to_input_text_params(CreateInfo const& in) {
+		return InputTextParams{
+			.height = in.style.text_height,
+			.cursor_symbol = in.style.cursor,
+			.cursor_color = in.colors.cursor,
+			.blink_period = in.motion.blink_period,
+		};
+	}
+
+	explicit Impl(Font& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
+		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)) {
 		setup(font);
 		add_builtins();
 	}
 
 	void resize() {
-		auto const width = m_info.framebuffer_size.x;
-		m_background.set_rect(kvf::Rect<>::from_size({width, 0.5f * m_info.framebuffer_size.y}));
-		m_separator.set_rect(kvf::Rect<>::from_size({width, m_info.separator.height}));
-		m_separator.instance.transform.position.y = -0.5f * m_background.get_size().y + 1.5f * float(m_info.input_text.height);
-		m_caret.instance.transform.position = -0.5f * m_background.get_size() + glm::vec2{m_info.x_pad, 0.5f * float(m_info.input_text.height)};
+		auto const width = m_framebuffer_size.x;
+		m_background.set_rect(kvf::Rect<>::from_size({width, 0.5f * m_framebuffer_size.y}));
+		m_separator.set_rect(kvf::Rect<>::from_size({width, m_info.style.separator_height}));
+		m_separator.instance.transform.position.y = -0.5f * m_background.get_size().y + 1.5f * float(m_info.style.text_height);
+		m_caret.instance.transform.position = -0.5f * m_background.get_size() + glm::vec2{m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
 		m_input.instance.transform.position = m_caret.instance.transform.position;
 		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -m_info.framebuffer_size.y;
-		m_show_y = -0.25f * m_info.framebuffer_size.y;
+		m_hide_y = -m_framebuffer_size.y;
+		m_show_y = -0.25f * m_framebuffer_size.y;
 		update_buffer_positions();
 	}
 
@@ -115,7 +126,7 @@ struct Terminal::Impl {
 
 	void on_resize(event::FramebufferResize const size) {
 		if (!kvf::is_positive(size)) { return; }
-		m_info.framebuffer_size = size;
+		m_framebuffer_size = size;
 		resize();
 	}
 
@@ -144,12 +155,16 @@ struct Terminal::Impl {
 		stop_cycling();
 	}
 
+	void on_scroll(event::Scroll const scroll) {
+		//
+	}
+
 	void tick(kvf::Seconds const dt) {
 		if (m_active) {
-			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.y_speed * dt.count(); }
+			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::min(m_render_view.position.y, m_show_y);
 		} else {
-			if (m_render_view.position.y > m_hide_y) { m_render_view.position.y -= m_info.y_speed * dt.count(); }
+			if (m_render_view.position.y > m_hide_y) { m_render_view.position.y -= m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::max(m_render_view.position.y, m_hide_y);
 		}
 		m_input.tick(dt);
@@ -194,18 +209,16 @@ struct Terminal::Impl {
 	void setup(Font& font) {
 		m_input.set_interactive(false);
 
-		m_separator.instance.tint = m_info.separator.color;
+		m_separator.instance.tint = m_info.colors.separator;
 		m_background.instance.tint = kvf::Color{0x111111cc};
 
-		m_info.text_colors.output = m_info.text_colors.output;
-		m_info.text_colors.error = m_info.text_colors.error;
-		m_info.input_text.height = m_input.get_atlas().get_height();
-		m_info.y_speed = std::abs(m_info.y_speed);
+		m_info.style.text_height = m_input.get_atlas().get_height();
+		m_info.style.y_speed = std::abs(m_info.style.y_speed);
 
-		m_text_params.height = m_info.input_text.height;
+		m_text_params.height = m_info.style.text_height;
 		m_text_params.expand = TextExpand::eRight;
 
-		m_caret.create(font.get_atlas(m_info.input_text.height), m_info.caret);
+		m_caret.create(font.get_atlas(m_info.style.text_height), m_info.style.caret);
 
 		resize();
 		m_render_view.position.y = m_hide_y;
@@ -247,14 +260,14 @@ struct Terminal::Impl {
 		auto& text = m_buffer.emplace_front(&m_input.get_font());
 		text.set_string(line, m_text_params);
 		text.instance.tint = color;
-		text.instance.transform.position.x = -0.5f * m_info.framebuffer_size.x + m_info.x_pad;
-		while (m_buffer.size() > m_info.buffer_size) { m_buffer.pop_back(); }
+		text.instance.transform.position.x = -0.5f * m_framebuffer_size.x + m_info.style.x_pad;
+		while (m_buffer.size() > m_info.storage.buffer) { m_buffer.pop_back(); }
 		update_buffer_positions();
 	}
 
-	void println(std::string_view const line) { print(line, m_info.text_colors.output); }
+	void println(std::string_view const line) { print(line, m_info.colors.output); }
 
-	void printerr(std::string_view const line) { print(line, m_info.text_colors.error); }
+	void printerr(std::string_view const line) { print(line, m_info.colors.error); }
 
 	void print_help() {
 		if (m_commands.empty()) {
@@ -273,7 +286,7 @@ struct Terminal::Impl {
 		pos.y = m_separator.instance.transform.position.y + 10.0f;
 		for (auto& text : m_buffer) {
 			text.instance.transform.position = pos;
-			pos.y += m_info.line_spacing * float(m_info.input_text.height);
+			pos.y += m_info.style.line_spacing * float(m_info.style.text_height);
 		}
 	}
 
@@ -283,10 +296,10 @@ struct Terminal::Impl {
 
 		stop_cycling();
 		m_history.emplace_front(text);
-		while (m_history.size() > m_info.history_size) { m_history.pop_back(); }
+		while (m_history.size() > m_info.storage.history) { m_history.pop_back(); }
 
-		auto const line = std::format("{} {}", m_info.caret, text);
-		print(line, m_info.text_colors.input);
+		auto const line = std::format("{} {}", m_info.style.caret, text);
+		print(line, m_info.colors.input);
 		try_run(text);
 
 		m_input.clear();
@@ -363,6 +376,7 @@ struct Terminal::Impl {
 	}
 
 	CreateInfo m_info;
+	glm::vec2 m_framebuffer_size;
 	TextParams m_text_params;
 
 	std::vector<Command> m_commands{};
@@ -385,7 +399,8 @@ struct Terminal::Impl {
 
 void Terminal::Deleter::operator()(Impl* ptr) const noexcept { std::default_delete<Impl>{}(ptr); }
 
-Terminal::Terminal(gsl::not_null<Font*> font, CreateInfo const& create_info) : m_impl(new Impl{*font, create_info}) {}
+Terminal::Terminal(gsl::not_null<Font*> font, glm::vec2 const framebuffer_size, CreateInfo const& create_info)
+	: m_impl(new Impl{*font, framebuffer_size, create_info}) {}
 
 void Terminal::add_command(std::string_view const name, Command command) {
 	if (!m_impl) { return; }
@@ -420,6 +435,11 @@ void Terminal::on_key(event::Key const& key) {
 void Terminal::on_codepoint(event::Codepoint codepoint) {
 	if (!m_impl) { return; }
 	m_impl->on_codepoint(codepoint);
+}
+
+void Terminal::on_scroll(event::Scroll scroll) {
+	if (!m_impl) { return; }
+	m_impl->on_scroll(scroll);
 }
 
 void Terminal::tick(kvf::Seconds const dt) {
