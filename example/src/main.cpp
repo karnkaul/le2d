@@ -154,6 +154,10 @@ struct App {
 				if (m_terminal) { m_terminal->resize(resize); }
 			},
 
+			[&](event::CursorPos const& cursor_pos) {
+				if (m_terminal) { m_terminal->on_cursor_move(cursor_pos); }
+			},
+
 			[&](event::Scroll const scroll) {
 				if (m_terminal) { m_terminal->on_scroll(scroll); }
 			},

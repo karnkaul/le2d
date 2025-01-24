@@ -73,6 +73,7 @@ class Terminal : public IDrawable {
 
 	void on_key(event::Key const& key);
 	void on_codepoint(event::Codepoint codepoint);
+	void on_cursor_move(event::CursorPos const& cursor_pos);
 	void on_scroll(event::Scroll scroll);
 
 	void tick(kvf::Seconds dt);

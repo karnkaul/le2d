@@ -18,10 +18,10 @@ constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size)
 	return fb_size / w_size;
 }
 
-constexpr auto to_fb_coords(glm::vec2 const w_size, glm::vec2 const fb_size, glm::vec2 const window_coords) -> glm::vec2 {
-	auto ret = to_display_ratio(w_size, fb_size) * window_coords;
-	ret.x -= 0.5f * fb_size.x;
-	ret.y = 0.5f * fb_size.y - ret.y;
+constexpr auto to_normalized(glm::vec2 const w_size, glm::vec2 const window_coords) -> glm::vec2 {
+	auto ret = window_coords / w_size;
+	ret.x -= 0.5f;
+	ret.y = 0.5f - ret.y;
 	return ret;
 }
 } // namespace
@@ -99,7 +99,7 @@ void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 void RenderWindow::on_cursor_pos(glm::vec2 const window_coords) {
 	auto const event = event::CursorPos{
 		.window = window_coords,
-		.framebuffer = to_fb_coords(window_size(), framebuffer_size(), window_coords),
+		.normalized = to_normalized(window_size(), window_coords),
 	};
 	m_event_queue.emplace_back(event);
 }

@@ -158,7 +158,12 @@ struct Terminal::Impl {
 		stop_cycling();
 	}
 
-	void on_scroll(event::Scroll const scroll) { move_buffer_dy(m_info.motion.scroll_speed * scroll.y); }
+	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
+
+	void on_scroll(event::Scroll const scroll) {
+		if ((m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
+		move_buffer_dy(m_info.motion.scroll_speed * scroll.y);
+	}
 
 	void tick(kvf::Seconds const dt) {
 		if (m_active) {
@@ -412,6 +417,7 @@ struct Terminal::Impl {
 
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
+	glm::vec2 m_n_cursor_pos{};
 	TextParams m_text_params;
 
 	std::vector<Command> m_commands{};
@@ -439,53 +445,25 @@ void Terminal::Deleter::operator()(Impl* ptr) const noexcept { std::default_dele
 Terminal::Terminal(gsl::not_null<Font*> font, glm::vec2 const framebuffer_size, CreateInfo const& create_info)
 	: m_impl(new Impl{*font, framebuffer_size, create_info}) {}
 
-void Terminal::add_command(std::string_view const name, Command command) {
-	if (!m_impl) { return; }
-	m_impl->add_command(name, std::move(command));
-}
+void Terminal::add_command(std::string_view const name, Command command) { m_impl->add_command(name, std::move(command)); }
 
-auto Terminal::is_active() const -> bool {
-	if (!m_impl) { return false; }
-	return m_impl->is_active();
-}
+auto Terminal::is_active() const -> bool { return m_impl->is_active(); }
 
-auto Terminal::get_background() const -> kvf::Color {
-	if (!m_impl) { return {}; }
-	return m_impl->get_background();
-}
+auto Terminal::get_background() const -> kvf::Color { return m_impl->get_background(); }
 
-void Terminal::set_background(kvf::Color const color) {
-	if (!m_impl) { return; }
-	m_impl->set_background(color);
-}
+void Terminal::set_background(kvf::Color const color) { m_impl->set_background(color); }
 
-void Terminal::resize(glm::ivec2 const framebuffer_size) {
-	if (!m_impl) { return; }
-	m_impl->resize(framebuffer_size);
-}
+void Terminal::resize(glm::ivec2 const framebuffer_size) { m_impl->resize(framebuffer_size); }
 
-void Terminal::on_key(event::Key const& key) {
-	if (!m_impl) { return; }
-	m_impl->on_key(key);
-}
+void Terminal::on_key(event::Key const& key) { m_impl->on_key(key); }
 
-void Terminal::on_codepoint(event::Codepoint codepoint) {
-	if (!m_impl) { return; }
-	m_impl->on_codepoint(codepoint);
-}
+void Terminal::on_codepoint(event::Codepoint codepoint) { m_impl->on_codepoint(codepoint); }
 
-void Terminal::on_scroll(event::Scroll scroll) {
-	if (!m_impl) { return; }
-	m_impl->on_scroll(scroll);
-}
+void Terminal::on_cursor_move(event::CursorPos const& cursor_pos) { m_impl->on_cursor_move(cursor_pos); }
 
-void Terminal::tick(kvf::Seconds const dt) {
-	if (!m_impl) { return; }
-	m_impl->tick(dt);
-}
+void Terminal::on_scroll(event::Scroll scroll) { m_impl->on_scroll(scroll); }
 
-void Terminal::draw(Renderer& renderer) const {
-	if (!m_impl) { return; }
-	m_impl->draw(renderer);
-}
+void Terminal::tick(kvf::Seconds const dt) { m_impl->tick(dt); }
+
+void Terminal::draw(Renderer& renderer) const { m_impl->draw(renderer); }
 } // namespace le::console

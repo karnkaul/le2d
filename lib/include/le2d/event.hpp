@@ -30,7 +30,7 @@ struct WindowPos : glm::ivec2 {
 
 struct CursorPos {
 	glm::vec2 window{};
-	glm::vec2 framebuffer{};
+	glm::vec2 normalized{};
 };
 
 struct Key {
