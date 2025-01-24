@@ -97,12 +97,13 @@ struct Terminal::Impl {
 		auto const width = m_framebuffer_size.x;
 		m_background.set_rect(kvf::Rect<>::from_size({width, 0.5f * m_framebuffer_size.y}));
 		m_separator.set_rect(kvf::Rect<>::from_size({width, m_info.style.separator_height}));
-		m_separator.instance.transform.position.y = -0.5f * m_background.get_size().y + 1.5f * float(m_info.style.text_height);
-		m_caret.instance.transform.position = -0.5f * m_background.get_size() + glm::vec2{m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
+		m_background.instance.transform.position.y = 0.5f * m_background.get_size().y;
+		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
+		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
 		m_input.instance.transform.position = m_caret.instance.transform.position;
 		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -m_framebuffer_size.y;
-		m_show_y = -0.25f * m_framebuffer_size.y;
+		m_hide_y = -0.5f * m_framebuffer_size.y;
+		m_show_y = 0.0f;
 		update_buffer_positions();
 	}
 
@@ -124,9 +125,9 @@ struct Terminal::Impl {
 
 	void set_background(kvf::Color const color) { m_background.instance.tint = color; }
 
-	void on_resize(event::FramebufferResize const size) {
-		if (!kvf::is_positive(size)) { return; }
-		m_framebuffer_size = size;
+	void resize(glm::vec2 const framebuffer_size) {
+		if (!kvf::is_positive(framebuffer_size)) { return; }
+		m_framebuffer_size = framebuffer_size;
 		resize();
 	}
 
@@ -155,9 +156,7 @@ struct Terminal::Impl {
 		stop_cycling();
 	}
 
-	void on_scroll(event::Scroll const scroll) {
-		//
-	}
+	void on_scroll(event::Scroll const scroll) { set_buffer_dy(m_buffer_dy + (m_info.motion.scroll_speed * scroll.y)); }
 
 	void tick(kvf::Seconds const dt) {
 		if (m_active) {
@@ -175,11 +174,7 @@ struct Terminal::Impl {
 		renderer.set_render_area(kvf::uv_rect_v);
 		auto const old_view = std::exchange(renderer.view, m_render_view);
 		m_background.draw(renderer);
-		auto const scissor_y = 0.5f * m_background.get_size().y;
-		for (auto const& text : m_buffer) {
-			if (text.instance.transform.position.y > scissor_y) { break; }
-			text.draw(renderer);
-		}
+		draw_buffer(renderer);
 		m_separator.draw(renderer);
 		m_caret.draw(renderer);
 		m_input.draw(renderer);
@@ -206,6 +201,12 @@ struct Terminal::Impl {
 		std::string_view m_args;
 	};
 
+	[[nodiscard]] auto first_line_pos() const -> glm::vec2 {
+		auto ret = glm::vec2{m_caret.instance.transform.position.x};
+		ret.y = m_separator.instance.transform.position.y + 0.5f * float(m_info.style.text_height);
+		return ret;
+	}
+
 	void setup(Font& font) {
 		m_input.set_interactive(false);
 
@@ -213,7 +214,8 @@ struct Terminal::Impl {
 		m_background.instance.tint = kvf::Color{0x111111cc};
 
 		m_info.style.text_height = m_input.get_atlas().get_height();
-		m_info.style.y_speed = std::abs(m_info.style.y_speed);
+		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
+		m_info.motion.scroll_speed = std::abs(m_info.motion.scroll_speed);
 
 		m_text_params.height = m_info.style.text_height;
 		m_text_params.expand = TextExpand::eRight;
@@ -256,6 +258,17 @@ struct Terminal::Impl {
 		add_command("console.background", cmd_background);
 	}
 
+	void draw_buffer(Renderer& renderer) const {
+		renderer.view.position.y += m_buffer_dy;
+		auto const scissor_y = (0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y;
+		auto scissor = vk::Rect2D{vk::Offset2D{}, vk::Extent2D{std::uint32_t(m_framebuffer_size.x), std::uint32_t(scissor_y)}};
+		renderer.command_buffer().setScissor(0, scissor);
+		for (auto const& text : m_buffer) { text.draw(renderer); }
+		renderer.view.position.y -= m_buffer_dy;
+		scissor.extent.height = std::uint32_t(m_framebuffer_size.y);
+		renderer.command_buffer().setScissor(0, scissor);
+	}
+
 	void print(std::string_view const line, kvf::Color const color) {
 		auto& text = m_buffer.emplace_front(&m_input.get_font());
 		text.set_string(line, m_text_params);
@@ -282,12 +295,22 @@ struct Terminal::Impl {
 	}
 
 	void update_buffer_positions() {
-		auto pos = glm::vec2{m_caret.instance.transform.position.x};
-		pos.y = m_separator.instance.transform.position.y + 10.0f;
+		m_buffer_height = {};
+		auto pos = first_line_pos();
 		for (auto& text : m_buffer) {
 			text.instance.transform.position = pos;
+			m_buffer_height = pos.y + float(m_info.style.text_height);
 			pos.y += m_info.style.line_spacing * float(m_info.style.text_height);
 		}
+	}
+
+	void set_buffer_dy(float const dy) {
+		auto const max_dy = m_buffer_height - (0.5f * m_framebuffer_size.y);
+		if (max_dy < 0.0f) {
+			m_buffer_dy = 0.0f;
+			return;
+		}
+		m_buffer_dy = std::clamp(dy, 0.0f, max_dy);
 	}
 
 	void on_enter() {
@@ -392,6 +415,8 @@ struct Terminal::Impl {
 	float m_hide_y{};
 	float m_show_y{};
 	Transform m_render_view{};
+	float m_buffer_height{};
+	float m_buffer_dy{};
 	bool m_active{};
 
 	std::optional<std::size_t> m_history_index{};
@@ -422,9 +447,9 @@ void Terminal::set_background(kvf::Color const color) {
 	m_impl->set_background(color);
 }
 
-void Terminal::on_resize(event::FramebufferResize const size) {
+void Terminal::resize(glm::ivec2 const framebuffer_size) {
 	if (!m_impl) { return; }
-	m_impl->on_resize(size);
+	m_impl->resize(framebuffer_size);
 }
 
 void Terminal::on_key(event::Key const& key) {

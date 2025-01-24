@@ -151,7 +151,11 @@ struct App {
 			},
 
 			[&](event::FramebufferResize const resize) {
-				if (m_terminal) { m_terminal->on_resize(resize); }
+				if (m_terminal) { m_terminal->resize(resize); }
+			},
+
+			[&](event::Scroll const scroll) {
+				if (m_terminal) { m_terminal->on_scroll(scroll); }
 			},
 		};
 

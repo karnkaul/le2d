@@ -43,6 +43,7 @@ struct TerminalCreateInfo {
 
 	struct {
 		float slide_speed{4000.0f};
+		float scroll_speed{30.0f};
 		kvf::Seconds blink_period{1s};
 	} motion{};
 
@@ -68,7 +69,8 @@ class Terminal : public IDrawable {
 	[[nodiscard]] auto get_background() const -> kvf::Color;
 	void set_background(kvf::Color color);
 
-	void on_resize(event::FramebufferResize size);
+	void resize(glm::ivec2 framebuffer_size);
+
 	void on_key(event::Key const& key);
 	void on_codepoint(event::Codepoint codepoint);
 	void on_scroll(event::Scroll scroll);

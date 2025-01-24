@@ -33,6 +33,8 @@ class Renderer {
 	[[nodiscard]] auto is_rendering() const -> bool { return m_pass != nullptr; }
 	auto end_render() -> kvf::RenderTarget;
 
+	[[nodiscard]] auto command_buffer() const -> vk::CommandBuffer { return m_cmd; }
+
 	explicit operator bool() const { return is_rendering(); }
 
 	Transform view{};
