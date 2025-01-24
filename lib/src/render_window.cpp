@@ -17,13 +17,6 @@ constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size)
 	if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
 	return fb_size / w_size;
 }
-
-constexpr auto to_normalized(glm::vec2 const w_size, glm::vec2 const window_coords) -> glm::vec2 {
-	auto ret = window_coords / w_size;
-	ret.x -= 0.5f;
-	ret.y = 0.5f - ret.y;
-	return ret;
-}
 } // namespace
 
 RenderWindow::RenderWindow(glm::ivec2 const size, klib::CString const title, bool const decorated)
@@ -96,10 +89,10 @@ void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 	glfwSetScrollCallback(window, [](GLFWwindow* window, double x, double y) { push_event(window, event::Scroll{x, y}); });
 }
 
-void RenderWindow::on_cursor_pos(glm::vec2 const window_coords) {
+void RenderWindow::on_cursor_pos(window::vec2 const pos) {
 	auto const event = event::CursorPos{
-		.window = window_coords,
-		.normalized = to_normalized(window_size(), window_coords),
+		.window = pos,
+		.normalized = pos.to_ndc(window_size()),
 	};
 	m_event_queue.emplace_back(event);
 }

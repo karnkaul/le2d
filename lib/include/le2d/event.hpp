@@ -2,6 +2,7 @@
 #include <glm/vec2.hpp>
 #include <klib/visitor.hpp>
 #include <kvf/ttf.hpp>
+#include <le2d/vector_space.hpp>
 #include <span>
 #include <string>
 #include <variant>
@@ -24,13 +25,13 @@ struct WindowResize : glm::ivec2 {
 	using glm::ivec2::ivec2;
 };
 
-struct WindowPos : glm::ivec2 {
-	using glm::ivec2::ivec2;
+struct WindowPos : window::ivec2 {
+	using window::ivec2::ivec2;
 };
 
 struct CursorPos {
-	glm::vec2 window{};
-	glm::vec2 normalized{};
+	window::vec2 window{};
+	ndc::vec2 normalized{};
 };
 
 struct Key {

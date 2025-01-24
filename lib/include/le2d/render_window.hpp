@@ -38,7 +38,7 @@ class RenderWindow {
 
 	static void set_glfw_callbacks(GLFWwindow* window);
 
-	void on_cursor_pos(glm::vec2 window_coords);
+	void on_cursor_pos(window::vec2 pos);
 	void on_drop(int count, char const** paths);
 
 	kvf::UniqueWindow m_window;

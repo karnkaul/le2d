@@ -417,7 +417,7 @@ struct Terminal::Impl {
 
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
-	glm::vec2 m_n_cursor_pos{};
+	ndc::vec2 m_n_cursor_pos{};
 	TextParams m_text_params;
 
 	std::vector<Command> m_commands{};
