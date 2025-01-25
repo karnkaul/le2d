@@ -43,6 +43,8 @@ class Font {
 	[[nodiscard]] auto is_loaded() const -> bool { return m_face.is_loaded(); }
 	auto load_face(std::vector<std::byte> font_bytes) -> bool;
 
+	[[nodiscard]] auto get_name() const -> klib::CString { return m_face.get_name(); }
+
 	[[nodiscard]] auto get_atlas(TextHeight height) -> FontAtlas&;
 
   private:

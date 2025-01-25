@@ -68,6 +68,8 @@ struct App {
 			log::error("Failed to load font: '{}'", "font.ttf");
 			return;
 		}
+
+		log::debug("Font '{}' loaded from 'font.ttf'", m_font.get_name().as_view());
 	}
 
 	void create_textures() {
