@@ -27,7 +27,7 @@ class FontAtlas {
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_height; }
 	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const*;
 
-	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view line, bool use_tofu = true) const -> glm::vec2;
+	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view text, float n_line_height = 1.5f, bool use_tofu = true) const -> glm::vec2;
 
   private:
 	kvf::ttf::Typeface* m_face{};

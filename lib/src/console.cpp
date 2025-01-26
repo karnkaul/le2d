@@ -36,6 +36,61 @@ struct Caret {
 	}
 };
 
+struct Line {
+	std::string text{};
+	kvf::Color color{};
+};
+
+struct Buffer {
+	explicit Buffer(FontAtlas& atlas, std::size_t const limit, float n_line_height) : m_atlas(atlas), m_limit(limit), m_n_line_height(n_line_height) {}
+
+	void push(std::string text, kvf::Color color) {
+		m_lines.push_front(Line{.text = std::move(text), .color = color});
+		while (m_lines.size() > m_limit) { m_lines.pop_back(); }
+		generate();
+	}
+
+	[[nodiscard]] auto get_height() const -> float { return m_height; }
+
+	void draw(Renderer& renderer) const {
+		auto const primitive = Primitive{
+			.vertices = m_verts.vertices,
+			.indices = m_verts.indices,
+			.texture = &m_atlas.get_texture(),
+		};
+		auto const instance = RenderInstance{.transform = {.position = position}};
+		renderer.draw(primitive, {&instance, 1});
+	}
+
+	glm::vec2 position{};
+
+  private:
+	void generate() {
+		m_verts.clear();
+		m_height = 0.0f;
+
+		auto pos = glm::vec2{};
+		for (auto const& line : m_lines) {
+			m_layouts.clear();
+			m_atlas.push_layouts(m_layouts, line.text);
+			write_glyphs(m_verts, m_layouts, pos, line.color);
+			pos.x = 0.0f;
+			pos.y += m_n_line_height * float(m_atlas.get_height());
+			m_height = pos.y;
+		}
+	}
+
+	FontAtlas& m_atlas;
+	std::size_t m_limit;
+	float m_n_line_height;
+
+	std::deque<Line> m_lines{};
+
+	std::vector<kvf::ttf::GlyphLayout> m_layouts{};
+	VertexArray m_verts{};
+	float m_height{};
+};
+
 constexpr auto get_next_arg(std::string_view& out_arg, std::string_view& out_remain) -> bool {
 	if (out_remain.empty()) { return false; }
 	auto const i = out_remain.find_first_of(' ');
@@ -88,23 +143,10 @@ struct Terminal::Impl {
 	}
 
 	explicit Impl(Font& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
-		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)) {
+		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)),
+		  m_buffer(font.get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(font);
 		add_builtins();
-	}
-
-	void resize() {
-		auto const width = m_framebuffer_size.x;
-		m_background.create({width, 0.5f * m_framebuffer_size.y});
-		m_separator.create({width, m_info.style.separator_height});
-		m_background.instance.transform.position.y = 0.5f * m_background.get_size().y;
-		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
-		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
-		m_input.instance.transform.position = m_caret.instance.transform.position;
-		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -0.5f * m_framebuffer_size.y;
-		m_show_y = 0.0f;
-		update_buffer_positions();
 	}
 
 	void toggle_active() {
@@ -162,7 +204,7 @@ struct Terminal::Impl {
 
 	void on_scroll(event::Scroll const scroll) {
 		if ((m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
-		move_buffer_dy(m_info.motion.scroll_speed * scroll.y);
+		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
 	}
 
 	void tick(kvf::Seconds const dt) {
@@ -207,12 +249,6 @@ struct Terminal::Impl {
 		Impl& m_terminal;
 		std::string_view m_args;
 	};
-
-	[[nodiscard]] auto first_line_pos() const -> glm::vec2 {
-		auto ret = glm::vec2{m_caret.instance.transform.position.x};
-		ret.y = m_separator.instance.transform.position.y + 0.5f * float(m_info.style.text_height);
-		return ret;
-	}
 
 	void setup(Font& font) {
 		m_input.set_interactive(false);
@@ -265,29 +301,32 @@ struct Terminal::Impl {
 		add_command("console.background", cmd_background);
 	}
 
+	void resize() {
+		auto const width = m_framebuffer_size.x;
+		m_background.create({width, 0.5f * m_framebuffer_size.y});
+		m_separator.create({width, m_info.style.separator_height});
+		m_background.instance.transform.position.y = 0.5f * m_background.get_size().y;
+		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
+		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
+		m_input.instance.transform.position = m_caret.instance.transform.position;
+		m_input.instance.transform.position.x += m_caret.text_x;
+		m_hide_y = -0.5f * m_framebuffer_size.y;
+		m_show_y = 0.0f;
+		m_buffer_max_y = m_separator.instance.transform.position.y + 0.5f * float(m_info.style.text_height);
+		m_buffer.position.x = m_caret.instance.transform.position.x;
+		set_buffer_y(m_buffer.position.y);
+	}
+
 	void draw_buffer(Renderer& renderer) const {
-		renderer.view.position.y += m_buffer_dy;
 		auto const scissor_y = (0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y;
 		auto scissor = vk::Rect2D{vk::Offset2D{}, vk::Extent2D{std::uint32_t(m_framebuffer_size.x), std::uint32_t(scissor_y)}};
 		renderer.command_buffer().setScissor(0, scissor);
-		for (auto const& text : m_buffer) {
-			auto const text_y = text.instance.transform.position.y - m_buffer_dy;
-			if (text_y > 0.5f * m_framebuffer_size.y) { break; }
-			text.draw(renderer);
-		}
-		renderer.view.position.y -= m_buffer_dy;
+		m_buffer.draw(renderer);
 		scissor.extent.height = std::uint32_t(m_framebuffer_size.y);
 		renderer.command_buffer().setScissor(0, scissor);
 	}
 
-	void print(std::string_view const line, kvf::Color const color) {
-		auto& text = m_buffer.emplace_front(&m_input.get_font());
-		text.set_string(line, m_text_params);
-		text.instance.tint = color;
-		text.instance.transform.position.x = -0.5f * m_framebuffer_size.x + m_info.style.x_pad;
-		while (m_buffer.size() > m_info.storage.buffer) { m_buffer.pop_back(); }
-		update_buffer_positions();
-	}
+	void print(std::string_view const line, kvf::Color const color) { m_buffer.push(std::string{line}, color); }
 
 	void println(std::string_view const line) { print(line, m_info.colors.output); }
 
@@ -305,25 +344,15 @@ struct Terminal::Impl {
 		}
 	}
 
-	void update_buffer_positions() {
-		m_buffer_height = {};
-		auto pos = first_line_pos();
-		for (auto& text : m_buffer) {
-			text.instance.transform.position = pos;
-			m_buffer_height = pos.y + float(m_info.style.text_height);
-			pos.y += m_info.style.line_spacing * float(m_info.style.text_height);
-		}
-	}
+	void move_buffer_y(float const dy) { set_buffer_y(m_buffer.position.y + dy); }
 
-	void move_buffer_dy(float const dy) { set_buffer_dy(m_buffer_dy + dy); }
-
-	void set_buffer_dy(float const value) {
-		auto const max_dy = m_buffer_height - (0.5f * m_framebuffer_size.y);
+	void set_buffer_y(float const value) {
+		auto const max_dy = m_buffer.get_height() - (0.5f * m_framebuffer_size.y);
 		if (max_dy < 0.0f) {
-			m_buffer_dy = 0.0f;
+			m_buffer.position.y = m_buffer_max_y;
 			return;
 		}
-		m_buffer_dy = std::clamp(value, 0.0f, max_dy);
+		m_buffer.position.y = std::clamp(value, -max_dy, m_buffer_max_y);
 	}
 
 	void on_enter() {
@@ -411,9 +440,9 @@ struct Terminal::Impl {
 		}
 	}
 
-	void page_up() { move_buffer_dy(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_up() { move_buffer_y(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
 
-	void page_down() { move_buffer_dy(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_down() { move_buffer_y(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
 
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
@@ -424,17 +453,16 @@ struct Terminal::Impl {
 	std::unordered_map<std::string_view, std::size_t> m_cmd_indices{};
 
 	std::deque<std::string> m_history{};
-	std::deque<drawable::Text> m_buffer{};
 	drawable::Quad m_background{};
 	drawable::Quad m_separator{};
 	Caret m_caret{};
 	drawable::InputText m_input;
+	Buffer m_buffer;
 
 	float m_hide_y{};
 	float m_show_y{};
+	float m_buffer_max_y{};
 	Transform m_render_view{};
-	float m_buffer_height{};
-	float m_buffer_dy{};
 	bool m_active{};
 
 	std::optional<std::size_t> m_history_index{};

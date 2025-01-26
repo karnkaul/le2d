@@ -23,12 +23,13 @@ auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height
 	return true;
 }
 
-auto FontAtlas::push_layouts(std::vector<GlyphLayout>& out, std::string_view const line, bool const use_tofu) const -> glm::vec2 {
+auto FontAtlas::push_layouts(std::vector<GlyphLayout>& out, std::string_view const text, float const n_line_height, bool const use_tofu) const -> glm::vec2 {
 	if (m_face == nullptr || !m_face->is_loaded()) { return {}; }
 	auto const input = kvf::ttf::TextInput{
-		.text = line,
+		.text = text,
 		.glyphs = m_glyphs,
 		.height = std::uint32_t(m_height),
+		.n_line_height = n_line_height,
 	};
 	return m_face->push_layouts(out, input, use_tofu);
 }
