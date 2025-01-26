@@ -25,8 +25,8 @@ auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height
 
 auto FontAtlas::push_layouts(std::vector<GlyphLayout>& out, std::string_view const line, bool const use_tofu) const -> glm::vec2 {
 	if (m_face == nullptr || !m_face->is_loaded()) { return {}; }
-	auto const input = kvf::ttf::LineLInput{
-		.line = line,
+	auto const input = kvf::ttf::TextInput{
+		.text = line,
 		.glyphs = m_glyphs,
 		.height = std::uint32_t(m_height),
 	};
@@ -59,14 +59,14 @@ auto Font::get_atlas(TextHeight height) -> FontAtlas& {
 }
 } // namespace le
 
-void le::write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 const position) {
+void le::write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 const position, kvf::Color const color) {
 	out.reserve(glyphs.size() * shape::Quad::vertex_count_v, glyphs.size() * shape::Quad::indices_v.size());
 	for (auto const& layout : glyphs) {
 		if (!kvf::is_positive(layout.glyph->size)) { continue; }
 
 		auto const quad_params = QuadParams{
 			.rect = layout.glyph->rect(position + layout.baseline),
-			.color = kvf::white_v,
+			.color = color,
 			.uv = layout.glyph->uv_rect,
 		};
 		auto const quad = shape::Quad{quad_params};
