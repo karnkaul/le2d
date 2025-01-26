@@ -5,21 +5,32 @@
 #include <array>
 #include <memory>
 
-namespace le::shape {
+namespace le {
+struct QuadParams {
+	kvf::Rect<> rect{kvf::Rect<>::from_size(glm::vec2{200.0f})};
+	kvf::Color color{kvf::white_v};
+	kvf::UvRect uv{kvf::uv_rect_v};
+};
+
+namespace shape {
 class Quad {
   public:
+	using Params = QuadParams;
+
 	static constexpr std::size_t vertex_count_v{4};
 	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
 
 	static constexpr auto rect_v = kvf::Rect<>::from_size(glm::vec2{200.0f});
 
-	explicit Quad(kvf::Rect<> const& rect = rect_v, kvf::UvRect const& uv = kvf::uv_rect_v) { set_rect(rect, uv); }
+	explicit Quad(Params const& params = {}) { create(params); }
 
-	void set_rect(kvf::Rect<> const& rect, kvf::UvRect const& uv = kvf::uv_rect_v);
+	void create(glm::vec2 size) { create(Params{.rect = kvf::Rect<>::from_size(size)}); }
+	void create(QuadParams const& params);
 
 	[[nodiscard]] auto get_rect() const -> kvf::Rect<>;
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return get_rect().size(); }
 	[[nodiscard]] auto get_origin() const -> glm::vec2 { return get_rect().center(); }
+	[[nodiscard]] auto get_color() const -> kvf::Color { return get_vertices().front().color; }
 	[[nodiscard]] auto get_uv() const -> kvf::UvRect;
 
 	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const, 4> { return m_vertices; }
@@ -33,4 +44,5 @@ class Quad {
 };
 
 static_assert(ShapeT<Quad>);
-} // namespace le::shape
+} // namespace shape
+} // namespace le

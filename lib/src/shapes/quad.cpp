@@ -10,11 +10,11 @@ constexpr std::size_t lt_v{3};
 
 auto Quad::get_rect() const -> kvf::Rect<> { return kvf::Rect<>{.lt = m_vertices[lt_v].position, .rb = m_vertices[rb_v].position}; }
 
-void Quad::set_rect(kvf::Rect<> const& rect, kvf::UvRect const& uv) {
-	m_vertices[lb_v] = Vertex{.position = rect.bottom_left(), .uv = uv.bottom_left()};
-	m_vertices[rb_v] = Vertex{.position = rect.bottom_right(), .uv = uv.bottom_right()};
-	m_vertices[rt_v] = Vertex{.position = rect.top_right(), .uv = uv.top_right()};
-	m_vertices[lt_v] = Vertex{.position = rect.top_left(), .uv = uv.top_left()};
+void Quad::create(Params const& params) {
+	m_vertices[lb_v] = Vertex{.position = params.rect.bottom_left(), .color = params.color.to_linear(), .uv = params.uv.bottom_left()};
+	m_vertices[rb_v] = Vertex{.position = params.rect.bottom_right(), .color = params.color.to_linear(), .uv = params.uv.bottom_right()};
+	m_vertices[rt_v] = Vertex{.position = params.rect.top_right(), .color = params.color.to_linear(), .uv = params.uv.top_right()};
+	m_vertices[lt_v] = Vertex{.position = params.rect.top_left(), .color = params.color.to_linear(), .uv = params.uv.top_left()};
 }
 
 auto Quad::get_uv() const -> kvf::UvRect { return {.lt = m_vertices[lt_v].uv, .rb = m_vertices[rb_v].uv}; }

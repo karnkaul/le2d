@@ -95,8 +95,8 @@ struct Terminal::Impl {
 
 	void resize() {
 		auto const width = m_framebuffer_size.x;
-		m_background.set_rect(kvf::Rect<>::from_size({width, 0.5f * m_framebuffer_size.y}));
-		m_separator.set_rect(kvf::Rect<>::from_size({width, m_info.style.separator_height}));
+		m_background.create({width, 0.5f * m_framebuffer_size.y});
+		m_separator.create({width, m_info.style.separator_height});
 		m_background.instance.transform.position.y = 0.5f * m_background.get_size().y;
 		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
 		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};

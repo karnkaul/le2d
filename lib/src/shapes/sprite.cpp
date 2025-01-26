@@ -36,7 +36,7 @@ void Sprite::update(glm::vec2 const base_size, glm::vec2 const origin, kvf::UvRe
 		auto const tile_size = n_size * glm::vec2{m_quad.texture->get_size()};
 		return kvf::aspect_resize(base_size, tile_size, m_aspect);
 	}();
-	auto const rect = kvf::Rect<>::from_size(size, origin);
-	m_quad.set_rect(rect, uv);
+	auto const quad_params = QuadParams{.rect = kvf::Rect<>::from_size(size, origin), .uv = uv};
+	m_quad.create(quad_params);
 }
 } // namespace le::shape
