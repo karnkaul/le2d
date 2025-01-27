@@ -1,12 +1,12 @@
 #include <le2d/shapes/text.hpp>
 
 namespace le::shape {
-void Text::set_string(std::string_view const line, Params const& params) {
+void Text::set_string(Font& font, std::string_view const line, Params const& params) {
 	m_size = {};
 	m_vertices.clear();
-	if (!m_font->is_loaded()) { return; }
+	if (!font.is_loaded()) { return; }
 
-	auto& atlas = m_font->get_atlas(params.height);
+	auto& atlas = font.get_atlas(params.height);
 	m_texture = &atlas.get_texture();
 
 	m_glyph_layouts.clear();

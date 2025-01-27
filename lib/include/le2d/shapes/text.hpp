@@ -18,19 +18,18 @@ class Text {
   public:
 	using Params = TextParams;
 
-	explicit Text(gsl::not_null<Font*> font) : m_font(font) {}
+	Text() = default;
 
-	[[nodiscard]] auto get_font() const -> Font& { return *m_font; }
+	explicit Text(Font& font, std::string_view line, Params const& params = {}) { set_string(font, line, params); }
+
+	void set_string(Font& font, std::string_view line, Params const& params = {});
+
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
-
-	void set_string(std::string_view line, Params const& params = {});
 
 	[[nodiscard]] auto get_primitive() const -> Primitive;
 
   private:
-	Font* m_font;
-
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	VertexArray m_vertices{};
 	Texture const* m_texture{};

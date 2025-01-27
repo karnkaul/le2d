@@ -1,3 +1,4 @@
+#include <klib/args/parse.hpp>
 #include <klib/version_str.hpp>
 #include <kvf/color_bitmap.hpp>
 #include <kvf/time.hpp>
@@ -188,14 +189,19 @@ struct App {
 auto main(int argc, char** argv) -> int {
 	auto const file = klib::log::File{"le2d-debug.log"};
 	try {
-		auto const arg0 = [&]() -> std::string_view {
-			if (argc < 1) { return {}; }
-			return *argv;
-		}();
-		auto const assets_dir = le::FileDataLoader::upfind("assets", arg0);
+		auto force_x11 = false;
+		auto const args = std::array{
+			klib::args::flag(force_x11, "x,force-x11", "force X11 instead of Wayland (Linux)"),
+		};
+		auto const parse_result = klib::args::parse(args, argc, argv);
+		if (parse_result.early_return()) { return parse_result.get_return_code(); }
+
+		auto const assets_dir = le::FileDataLoader::upfind("assets", *argv);
 		auto const data_loader = le::FileDataLoader{assets_dir};
 
 		le::example::log::info("le2d {}", klib::to_string(le::build_version_v));
+
+		if (force_x11) { glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); }
 		le::example::App{&data_loader}.run();
 	} catch (std::exception const& e) {
 		le::example::log::error("PANIC: {}", e.what());

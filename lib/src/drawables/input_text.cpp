@@ -5,12 +5,12 @@
 
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
-	: m_line_input(font, params.height), m_cursor(font), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
+	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
 	auto const text_params = TextParams{
 		.height = m_line_input.get_height(),
 		.expand = TextExpand::eRight,
 	};
-	m_cursor.set_string({&params.cursor_symbol, 1}, text_params);
+	m_cursor.set_string(*font, {&params.cursor_symbol, 1}, text_params);
 
 	auto const rect = kvf::ttf::glyph_bounds(m_cursor.get_glyph_layouts());
 	m_cursor_offset_x = -rect.lt.x;
