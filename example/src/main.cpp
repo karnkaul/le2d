@@ -29,7 +29,10 @@ struct App {
 			};
 			m_terminal.emplace(&m_font, m_context.get_render_window().framebuffer_size(), cci);
 
-			m_terminal->add_command("quit", [this](console::Stream&) { m_context.shutdown(); });
+			m_terminal->add_command("quit", "shutdown app", [this](console::Printer& printer) {
+				printer.println("quitting");
+				m_context.shutdown();
+			});
 		}
 
 		m_delta_time.reset();
@@ -71,6 +74,8 @@ struct App {
 		}
 
 		log::debug("Font '{}' loaded from 'font.ttf'", m_font.get_name().as_view());
+
+		m_text.set_string(m_font, "hello there\ntesting multi-line text\ndoes it work?");
 	}
 
 	void create_textures() {
@@ -118,6 +123,7 @@ struct App {
 		m_quad.draw(renderer);
 
 		// if (m_input_text) { m_input_text->draw(renderer); }
+		m_text.draw(renderer);
 
 		n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
 		renderer.set_render_area(n_viewport);
@@ -181,6 +187,8 @@ struct App {
 
 	std::optional<console::Terminal> m_terminal{};
 
+	drawable::Text m_text{};
+
 	kvf::DeviceBlock m_blocker;
 };
 } // namespace
@@ -190,13 +198,15 @@ auto main(int argc, char** argv) -> int {
 	auto const file = klib::log::File{"le2d-debug.log"};
 	try {
 		auto force_x11 = false;
+		auto assets_dir = std::string{};
 		auto const args = std::array{
-			klib::args::flag(force_x11, "x,force-x11", "force X11 instead of Wayland (Linux)"),
+			klib::args::named_flag(force_x11, "x,force-x11", "force X11 instead of Wayland (Linux)"),
+			klib::args::positional_optional(assets_dir, "assets/", "assets directory"),
 		};
-		auto const parse_result = klib::args::parse(args, argc, argv);
+		auto const parse_result = klib::args::parse_main(args, argc, argv);
 		if (parse_result.early_return()) { return parse_result.get_return_code(); }
 
-		auto const assets_dir = le::FileDataLoader::upfind("assets", *argv);
+		if (assets_dir.empty()) { assets_dir = le::FileDataLoader::upfind("assets", *argv); }
 		auto const data_loader = le::FileDataLoader{assets_dir};
 
 		le::example::log::info("le2d {}", klib::to_string(le::build_version_v));

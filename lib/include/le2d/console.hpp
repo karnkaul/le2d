@@ -1,4 +1,6 @@
 #pragma once
+#include <klib/args/arg.hpp>
+#include <klib/args/printer.hpp>
 #include <kvf/color.hpp>
 #include <kvf/time.hpp>
 #include <le2d/drawables/drawable.hpp>
@@ -16,15 +18,16 @@ class Font;
 namespace le::console {
 class Terminal;
 
-class Stream : public klib::Polymorphic {
-  public:
-	virtual auto next_arg(std::string_view& out) -> bool = 0;
-	virtual auto next_arg() -> std::string_view = 0;
+using Printer = klib::args::IPrinter;
 
-	virtual void println(std::string_view line) = 0;
-	virtual void printerr(std::string_view line) = 0;
+class Command : public klib::Polymorphic {
+  public:
+	[[nodiscard]] virtual auto get_name() const -> std::string_view = 0;
+	[[nodiscard]] virtual auto get_description() const -> std::string_view { return {}; }
+	[[nodiscard]] virtual auto get_args() const -> std::span<klib::args::Arg const> { return {}; }
+
+	virtual void execute(Printer& printer) = 0;
 };
-using Command = std::move_only_function<void(Stream& stream)>;
 
 struct TerminalCreateInfo {
 	struct {
@@ -56,15 +59,19 @@ struct TerminalCreateInfo {
 	} colors{};
 };
 
-class Terminal : public IDrawable {
+class Terminal : public IDrawable, public Printer {
   public:
 	using CreateInfo = TerminalCreateInfo;
 
 	explicit Terminal(gsl::not_null<Font*> font, glm::vec2 framebuffer_size, CreateInfo const& info = {});
 
-	void add_command(std::string_view name, Command command);
+	void add_command(std::unique_ptr<Command> command);
+	void add_command(std::string_view name, std::string_view description, std::move_only_function<void(Printer&)> command);
 
 	[[nodiscard]] auto is_active() const -> bool;
+
+	void println(std::string_view text) final;
+	void printerr(std::string_view text) final;
 
 	[[nodiscard]] auto get_background() const -> kvf::Color;
 	void set_background(kvf::Color color);
