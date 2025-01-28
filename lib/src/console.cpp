@@ -7,8 +7,8 @@
 #include <le2d/console.hpp>
 #include <le2d/drawables/input_text.hpp>
 #include <le2d/drawables/shape.hpp>
+#include <le2d/shapes/text_buffer.hpp>
 #include <algorithm>
-#include <deque>
 #include <ranges>
 
 #include <print>
@@ -48,24 +48,15 @@ struct Line {
 struct Buffer {
 	struct Printer;
 
-	explicit Buffer(FontAtlas& atlas, std::size_t const limit, float n_line_height) : m_atlas(atlas), m_limit(limit), m_n_line_height(n_line_height) {}
+	explicit Buffer(FontAtlas& atlas, std::size_t const limit, float n_line_spacing) : m_text_buffer(&atlas, limit, n_line_spacing) {}
 
-	void push(std::string text, kvf::Color color) { push({&text, 1}, color); }
+	void push(std::string text, kvf::Color color) { m_text_buffer.push_front(std::move(text), color); }
+	void push(std::span<std::string> lines, kvf::Color color) { m_text_buffer.push_front(lines, color); }
 
-	void push(std::span<std::string> lines, kvf::Color color) {
-		for (auto& line : lines) { m_lines.push_front(Line{.text = std::move(line), .color = color}); }
-		while (m_lines.size() > m_limit) { m_lines.pop_back(); }
-		generate();
-	}
-
-	[[nodiscard]] auto get_height() const -> float { return m_height; }
+	[[nodiscard]] auto get_height() const -> float { return m_text_buffer.get_size().y; }
 
 	void draw(Renderer& renderer) const {
-		auto const primitive = Primitive{
-			.vertices = m_verts.vertices,
-			.indices = m_verts.indices,
-			.texture = &m_atlas.get_texture(),
-		};
+		auto const primitive = m_text_buffer.get_primitive();
 		auto const instance = RenderInstance{.transform = {.position = position}};
 		renderer.draw(primitive, {&instance, 1});
 	}
@@ -73,32 +64,7 @@ struct Buffer {
 	glm::vec2 position{};
 
   private:
-	void generate() {
-		m_verts.clear();
-		m_height = 0.0f;
-
-		auto pos = glm::vec2{};
-		for (auto const& line : m_lines) {
-			if (!line.text.empty()) {
-				m_layouts.clear();
-				m_atlas.push_layouts(m_layouts, line.text);
-				write_glyphs(m_verts, m_layouts, pos, line.color);
-			}
-			pos.x = 0.0f;
-			pos.y += m_n_line_height * float(m_atlas.get_height());
-			m_height = pos.y;
-		}
-	}
-
-	FontAtlas& m_atlas;
-	std::size_t m_limit;
-	float m_n_line_height;
-
-	std::deque<Line> m_lines{};
-
-	std::vector<kvf::ttf::GlyphLayout> m_layouts{};
-	VertexArray m_verts{};
-	float m_height{};
+	shape::TextBuffer m_text_buffer;
 };
 
 struct Buffer::Printer {
