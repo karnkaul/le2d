@@ -49,6 +49,8 @@ class Context {
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
+	[[nodiscard]] auto get_resource_pool() const -> ResourcePool const& { return m_resource_pool; }
+	[[nodiscard]] auto get_resource_pool() -> ResourcePool& { return m_resource_pool; }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window.event_queue(); }
@@ -73,7 +75,7 @@ class Context {
 	IDataLoader const* m_data_loader;
 
 	RenderWindow m_window;
-	mutable ResourcePool m_resource_pool;
+	ResourcePool m_resource_pool;
 	RenderPass m_pass;
 
 	float m_render_scale{1.0f};

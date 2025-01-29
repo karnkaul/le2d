@@ -14,7 +14,7 @@ auto create_window(WindowCreateInfo const& create_info) {
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_window(create_info.window)), m_resource_pool(&m_window.get_render_device()),
-	  m_pass(&m_window.get_render_device(), &m_resource_pool, create_info.framebuffer_samples) {
+	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
 	auto const& shader = create_info.default_shader;
 	m_resource_pool.default_shader = create_shader(shader.vertex, shader.fragment);
 	if (!m_resource_pool.default_shader) {
@@ -37,7 +37,7 @@ auto Context::next_frame() -> vk::CommandBuffer {
 auto Context::begin_render() -> Renderer {
 	if (!m_cmd) { return {}; }
 	glm::ivec2 const scaled_extent = glm::vec2{swapchain_size()} * m_render_scale;
-	return m_pass.begin_render(m_cmd, scaled_extent);
+	return m_pass.begin_render(m_resource_pool, m_cmd, scaled_extent);
 }
 
 void Context::present() {
@@ -49,9 +49,7 @@ auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Sha
 	return Shader{*m_data_loader, m_pass.get_render_device().get_device(), vertex, fragment};
 }
 
-auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass {
-	return RenderPass{&m_pass.get_render_device(), &m_resource_pool, samples};
-}
+auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
 auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
 
