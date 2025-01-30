@@ -11,8 +11,7 @@ auto const context_ci = ContextCreateInfo{
 };
 }
 
-App::App(gsl::not_null<IDataLoader const*> data_loader)
-	: m_context(data_loader, context_ci), m_main_font(m_context.create_font()), m_mono_font(m_context.create_font()) {}
+App::App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_ci) {}
 
 void App::run() {
 	m_blocker = m_context.create_device_block();
@@ -22,11 +21,11 @@ void App::run() {
 
 	m_quad.texture = &m_textures.front();
 
-	if (m_mono_font.is_loaded()) {
+	if (auto* mono_font = m_resources.get<Font>("mono.ttf")) {
 		auto const cci = console::TerminalCreateInfo{
 			.style = {.text_height = TextHeight{20}},
 		};
-		m_terminal.emplace(&m_mono_font, m_context.get_render_window().framebuffer_size(), cci);
+		m_terminal.emplace(mono_font, m_context.get_render_window().framebuffer_size(), cci);
 
 		m_terminal->add_command("quit", "shutdown app", [this](console::Printer& printer) {
 			printer.println("quitting");
@@ -48,26 +47,27 @@ void App::run() {
 }
 
 void App::load_fonts() {
-	load_font(m_main_font, "font.ttf");
-	load_font(m_mono_font, "mono.ttf");
+	load_font("font.ttf");
+	load_font("mono.ttf");
 
-	if (m_main_font.is_loaded()) { m_text.set_string(m_main_font, "multi-line text\ndemo. it works!"); }
+	if (auto* main_font = m_resources.get<Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
 }
 
-void App::load_font(Font& out, Uri const& uri) {
+void App::load_font(Uri const& uri) {
 	auto bytes = std::vector<std::byte>{};
 	if (!m_context.get_data_loader().load_bytes(bytes, uri)) {
 		log::error("Failed to load font bytes: '{}'", uri.get_string());
 		return;
 	}
 
-	out.load_face(std::move(bytes));
-	if (!out.is_loaded()) {
+	auto font = m_context.create_font(std::move(bytes));
+	if (!font.is_loaded()) {
 		log::error("Failed to load font: '{}'", uri.get_string());
 		return;
 	}
 
-	log::debug("Font '{}' loaded from '{}'", out.get_name().as_view(), uri.get_string());
+	log::debug("Font '{}' loaded from '{}'", font.get_name().as_view(), uri.get_string());
+	m_resources.insert(uri, std::move(font));
 }
 
 void App::create_textures() {

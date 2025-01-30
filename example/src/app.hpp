@@ -18,7 +18,7 @@ struct App {
 	};
 
 	void load_fonts();
-	void load_font(Font& out, Uri const& uri);
+	void load_font(Uri const& uri);
 	void create_textures();
 	void tick(kvf::Seconds dt);
 	void render(Renderer& renderer) const;
@@ -27,9 +27,6 @@ struct App {
 	Context m_context;
 
 	asset::ResourceMap m_resources{};
-
-	Font m_main_font;
-	Font m_mono_font;
 
 	std::vector<Texture> m_textures{};
 	drawable::Quad m_quad{};
