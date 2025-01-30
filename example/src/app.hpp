@@ -17,7 +17,8 @@ struct App {
 		bool right{};
 	};
 
-	void load_font();
+	void load_fonts();
+	void load_font(Font& out, Uri const& uri);
 	void create_textures();
 	void tick(kvf::Seconds dt);
 	void render(Renderer& renderer) const;
@@ -27,8 +28,10 @@ struct App {
 
 	asset::ResourceMap m_resources{};
 
-	Font m_font;
-	std::vector<std::shared_ptr<Texture const>> m_textures{};
+	Font m_main_font;
+	Font m_mono_font;
+
+	std::vector<Texture> m_textures{};
 	drawable::Quad m_quad{};
 
 	kvf::DeltaTime m_delta_time{};

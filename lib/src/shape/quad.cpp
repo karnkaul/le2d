@@ -23,7 +23,7 @@ auto Quad::get_primitive() const -> Primitive {
 	return Primitive{
 		.vertices = m_vertices,
 		.indices = indices_v,
-		.texture = texture.get(),
+		.texture = texture,
 	};
 }
 } // namespace le::shape

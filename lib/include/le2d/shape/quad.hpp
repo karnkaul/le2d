@@ -3,7 +3,6 @@
 #include <le2d/render_instance.hpp>
 #include <le2d/shape/shape.hpp>
 #include <array>
-#include <memory>
 
 namespace le {
 struct QuadParams {
@@ -37,7 +36,7 @@ class Quad {
 
 	[[nodiscard]] auto get_primitive() const -> Primitive;
 
-	std::shared_ptr<ITexture const> texture{};
+	ITexture const* texture{};
 
   private:
 	std::array<Vertex, vertex_count_v> m_vertices{};

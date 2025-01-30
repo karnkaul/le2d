@@ -11,21 +11,22 @@ auto const context_ci = ContextCreateInfo{
 };
 }
 
-App::App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_ci), m_font(m_context.create_font()) {}
+App::App(gsl::not_null<IDataLoader const*> data_loader)
+	: m_context(data_loader, context_ci), m_main_font(m_context.create_font()), m_mono_font(m_context.create_font()) {}
 
 void App::run() {
 	m_blocker = m_context.create_device_block();
 
 	create_textures();
-	load_font();
+	load_fonts();
 
-	m_quad.texture = m_textures[0];
+	m_quad.texture = &m_textures.front();
 
-	if (m_font.is_loaded()) {
+	if (m_mono_font.is_loaded()) {
 		auto const cci = console::TerminalCreateInfo{
 			.style = {.text_height = TextHeight{20}},
 		};
-		m_terminal.emplace(&m_font, m_context.get_render_window().framebuffer_size(), cci);
+		m_terminal.emplace(&m_mono_font, m_context.get_render_window().framebuffer_size(), cci);
 
 		m_terminal->add_command("quit", "shutdown app", [this](console::Printer& printer) {
 			printer.println("quitting");
@@ -46,21 +47,27 @@ void App::run() {
 	}
 }
 
-void App::load_font() {
+void App::load_fonts() {
+	load_font(m_main_font, "font.ttf");
+	load_font(m_mono_font, "mono.ttf");
+
+	if (m_main_font.is_loaded()) { m_text.set_string(m_main_font, "multi-line text\ndemo. it works!"); }
+}
+
+void App::load_font(Font& out, Uri const& uri) {
 	auto bytes = std::vector<std::byte>{};
-	if (!m_context.get_data_loader().load_bytes(bytes, "font.ttf")) {
-		log::error("Failed to load font bytes: '{}'", "font.ttf");
+	if (!m_context.get_data_loader().load_bytes(bytes, uri)) {
+		log::error("Failed to load font bytes: '{}'", uri.get_string());
 		return;
 	}
 
-	if (!m_font.load_face(std::move(bytes))) {
-		log::error("Failed to load font: '{}'", "font.ttf");
+	out.load_face(std::move(bytes));
+	if (!out.is_loaded()) {
+		log::error("Failed to load font: '{}'", uri.get_string());
 		return;
 	}
 
-	log::debug("Font '{}' loaded from 'font.ttf'", m_font.get_name().as_view());
-
-	m_text.set_string(m_font, "hello there\ntesting multi-line text\ndoes it work?");
+	log::debug("Font '{}' loaded from '{}'", out.get_name().as_view(), uri.get_string());
 }
 
 void App::create_textures() {
@@ -69,15 +76,15 @@ void App::create_textures() {
 	pixels[1, 0] = kvf::green_v;
 	pixels[0, 1] = kvf::blue_v;
 	pixels[1, 1] = kvf::white_v;
-	auto texture = std::make_shared<Texture>(m_context.create_texture(pixels.bitmap()));
-	texture->sampler.min_filter = texture->sampler.mag_filter = vk::Filter::eNearest;
+	auto texture = Texture{m_context.create_texture(pixels.bitmap())};
+	texture.sampler.min_filter = texture.sampler.mag_filter = vk::Filter::eNearest;
 	m_textures.push_back(std::move(texture));
 
 	pixels = kvf::ColorBitmap{glm::ivec2{2, 1}};
 	pixels[0, 0] = kvf::cyan_v;
 	pixels[1, 0] = kvf::yellow_v;
-	texture = std::make_shared<Texture>(m_context.create_texture(pixels.bitmap()));
-	texture->sampler = m_textures.back()->sampler;
+	texture = Texture{m_context.create_texture(pixels.bitmap())};
+	texture.sampler = m_textures.back().sampler;
 	m_textures.push_back(std::move(texture));
 }
 
