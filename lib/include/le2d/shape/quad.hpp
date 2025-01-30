@@ -1,7 +1,7 @@
 #pragma once
 #include <kvf/rect.hpp>
 #include <le2d/render_instance.hpp>
-#include <le2d/shapes/shape.hpp>
+#include <le2d/shape/shape.hpp>
 #include <array>
 #include <memory>
 

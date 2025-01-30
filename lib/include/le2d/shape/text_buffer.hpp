@@ -1,7 +1,7 @@
 #pragma once
 #include <le2d/font.hpp>
 #include <le2d/render_instance.hpp>
-#include <le2d/shapes/shape.hpp>
+#include <le2d/shape/shape.hpp>
 #include <le2d/vertex_array.hpp>
 #include <deque>
 #include <gsl/pointers>

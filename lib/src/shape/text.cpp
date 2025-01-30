@@ -1,4 +1,4 @@
-#include <le2d/shapes/text.hpp>
+#include <le2d/shape/text.hpp>
 
 namespace le::shape {
 void Text::set_string(Font& font, std::string_view const line, Params const& params) {

@@ -4,9 +4,17 @@
 #include <memory>
 #include <unordered_map>
 
-namespace le {
+namespace le::asset {
 class ResourceMap : public klib::Polymorphic {
   public:
+	ResourceMap(ResourceMap const&) = delete;
+	auto operator=(ResourceMap const&) = delete;
+
+	ResourceMap() = default;
+	ResourceMap(ResourceMap&&) = default;
+	auto operator=(ResourceMap&&) -> ResourceMap& = default;
+	~ResourceMap() = default;
+
 	template <typename Type>
 	void insert(Uri const& uri, std::shared_ptr<Type> asset) {
 		if (uri.get_hash() == 0 || !asset) { return; }
@@ -29,7 +37,11 @@ class ResourceMap : public klib::Polymorphic {
 		return std::dynamic_pointer_cast<Type>(it->second);
 	}
 
+	[[nodiscard]] auto asset_count() const -> std::size_t { return m_assets.size(); }
+
+	void clear() { m_assets.clear(); }
+
   private:
 	std::unordered_map<std::size_t, std::shared_ptr<void>> m_assets{};
 };
-} // namespace le
+} // namespace le::asset

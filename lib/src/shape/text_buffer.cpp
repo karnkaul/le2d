@@ -1,4 +1,4 @@
-#include <le2d/shapes/text_buffer.hpp>
+#include <le2d/shape/text_buffer.hpp>
 #include <algorithm>
 
 namespace le::shape {

@@ -1,7 +1,7 @@
 #pragma once
-#include <le2d/resource_pools/buffer_pool.hpp>
-#include <le2d/resource_pools/pipeline_pool.hpp>
-#include <le2d/resource_pools/sampler_pool.hpp>
+#include <le2d/resource_pool/buffer_pool.hpp>
+#include <le2d/resource_pool/pipeline_pool.hpp>
+#include <le2d/resource_pool/sampler_pool.hpp>
 #include <le2d/shader.hpp>
 #include <le2d/texture.hpp>
 #include <cstddef>

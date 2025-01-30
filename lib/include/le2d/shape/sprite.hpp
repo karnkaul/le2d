@@ -1,7 +1,7 @@
 #pragma once
 #include <klib/polymorphic.hpp>
 #include <kvf/aspect_resize.hpp>
-#include <le2d/shapes/quad.hpp>
+#include <le2d/shape/quad.hpp>
 
 namespace le::shape {
 class Sprite : public klib::Polymorphic {

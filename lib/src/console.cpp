@@ -5,9 +5,9 @@
 #include <klib/str_to_num.hpp>
 #include <kvf/util.hpp>
 #include <le2d/console.hpp>
-#include <le2d/drawables/input_text.hpp>
-#include <le2d/drawables/shape.hpp>
-#include <le2d/shapes/text_buffer.hpp>
+#include <le2d/drawable/input_text.hpp>
+#include <le2d/drawable/shape.hpp>
+#include <le2d/shape/text_buffer.hpp>
 #include <algorithm>
 #include <ranges>
 

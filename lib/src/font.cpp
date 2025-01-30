@@ -1,7 +1,7 @@
 #include <klib/assert.hpp>
 #include <kvf/is_positive.hpp>
 #include <le2d/font.hpp>
-#include <le2d/shapes/quad.hpp>
+#include <le2d/shape/quad.hpp>
 #include <algorithm>
 
 namespace le {

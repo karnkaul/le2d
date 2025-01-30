@@ -1,4 +1,4 @@
-#include <le2d/shapes/sprite.hpp>
+#include <le2d/shape/sprite.hpp>
 
 namespace le::shape {
 void Sprite::set_base_size(glm::vec2 const size) {

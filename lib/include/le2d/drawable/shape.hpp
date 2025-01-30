@@ -1,8 +1,8 @@
 #pragma once
-#include <le2d/drawables/drawable.hpp>
-#include <le2d/shapes/quad.hpp>
-#include <le2d/shapes/sprite.hpp>
-#include <le2d/shapes/text.hpp>
+#include <le2d/drawable/drawable.hpp>
+#include <le2d/shape/quad.hpp>
+#include <le2d/shape/sprite.hpp>
+#include <le2d/shape/text.hpp>
 
 namespace le::drawable {
 template <ShapeT Type>
