@@ -1,6 +1,10 @@
 #include <app.hpp>
 #include <log.hpp>
 
+#include <klib/task/queue.hpp>
+#include <le2d/asset/load_task.hpp>
+#include <le2d/asset/loaders.hpp>
+
 namespace le::example {
 namespace {
 auto const context_ci = ContextCreateInfo{
@@ -21,7 +25,7 @@ void App::run() {
 
 	m_quad.texture = &m_textures.front();
 
-	if (auto* mono_font = m_resources.get<Font>("mono.ttf")) {
+	if (auto* mono_font = m_asset_store.get<Font>("mono.ttf")) {
 		auto const cci = console::TerminalCreateInfo{
 			.style = {.text_height = TextHeight{20}},
 		};
@@ -47,27 +51,19 @@ void App::run() {
 }
 
 void App::load_fonts() {
-	load_font("font.ttf");
-	load_font("mono.ttf");
+	auto queue = klib::task::Queue{};
 
-	if (auto* main_font = m_resources.get<Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
-}
+	auto load_task = asset::LoadTask{&queue};
+	load_task.add_loader(std::make_unique<asset::FontLoader>(&m_context));
+	load_task.enqueue<Font>("font.ttf");
+	load_task.enqueue<Font>("mono.ttf");
 
-void App::load_font(Uri const& uri) {
-	auto bytes = std::vector<std::byte>{};
-	if (!m_context.get_data_loader().load_bytes(bytes, uri)) {
-		log::error("Failed to load font bytes: '{}'", uri.get_string());
-		return;
-	}
+	queue.enqueue(load_task);
 
-	auto font = m_context.create_font(std::move(bytes));
-	if (!font.is_loaded()) {
-		log::error("Failed to load font: '{}'", uri.get_string());
-		return;
-	}
+	auto const loaded = load_task.transfer_loaded(m_asset_store);
+	log::debug("{} assets loaded", loaded);
 
-	log::debug("Font '{}' loaded from '{}'", font.get_name().as_view(), uri.get_string());
-	m_resources.insert(uri, std::move(font));
+	if (auto* main_font = m_asset_store.get<Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
 }
 
 void App::create_textures() {

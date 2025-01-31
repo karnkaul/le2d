@@ -1,6 +1,6 @@
 #pragma once
 #include <kvf/time.hpp>
-#include <le2d/asset/resource_map.hpp>
+#include <le2d/asset/store.hpp>
 #include <le2d/console.hpp>
 #include <le2d/context.hpp>
 #include <le2d/drawable/shape.hpp>
@@ -18,7 +18,6 @@ struct App {
 	};
 
 	void load_fonts();
-	void load_font(Uri const& uri);
 	void create_textures();
 	void tick(kvf::Seconds dt);
 	void render(Renderer& renderer) const;
@@ -26,7 +25,7 @@ struct App {
 
 	Context m_context;
 
-	asset::ResourceMap m_resources{};
+	asset::Store m_asset_store{};
 
 	std::vector<Texture> m_textures{};
 	drawable::Quad m_quad{};
