@@ -1,4 +1,5 @@
 #pragma once
+#include <le2d/asset/load_task.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
 #include <le2d/render_pass.hpp>
@@ -70,6 +71,7 @@ class Context {
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
 	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
+	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
 	IDataLoader const* m_data_loader;

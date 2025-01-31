@@ -53,13 +53,11 @@ void App::run() {
 void App::load_fonts() {
 	auto queue = klib::task::Queue{};
 
-	auto load_task = asset::LoadTask{&queue, &m_context};
-	load_task.enqueue<Font>("font.ttf");
-	load_task.enqueue<Font>("mono.ttf");
+	auto load_task = m_context.create_asset_load_task(&queue);
+	load_task->enqueue<Font>("font.ttf");
+	load_task->enqueue<Font>("mono.ttf");
 
-	queue.enqueue(load_task);
-
-	auto const loaded = load_task.transfer_loaded(m_asset_store);
+	auto const loaded = load_task->transfer_loaded(m_asset_store);
 	log::debug("{} assets loaded", loaded);
 
 	if (auto* main_font = m_asset_store.get<Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }

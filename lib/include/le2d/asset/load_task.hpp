@@ -7,10 +7,7 @@
 #include <gsl/pointers>
 #include <vector>
 
-namespace le {
-class Context;
-
-namespace asset {
+namespace le::asset {
 struct LoadProgress {
 	std::uint64_t total{};
 	std::uint64_t completed{};
@@ -24,7 +21,6 @@ class LoadTask : public klib::task::Task {
 	using Queue = klib::task::Queue;
 
 	explicit LoadTask(gsl::not_null<Queue*> queue) : m_queue(queue) {}
-	explicit LoadTask(gsl::not_null<Queue*> queue, gsl::not_null<Context*> context);
 
 	void add_loader(std::unique_ptr<ILoader> loader);
 
@@ -68,5 +64,4 @@ class LoadTask : public klib::task::Task {
 	std::vector<Stage> m_stages{};
 	AtomicProgress m_progress{};
 };
-} // namespace asset
-} // namespace le
+} // namespace le::asset

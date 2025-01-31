@@ -1,3 +1,4 @@
+#include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
 
@@ -54,4 +55,11 @@ auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const ->
 auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
+
+auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
+	auto ret = std::make_unique<asset::LoadTask>(task_queue);
+	ret->add_loader(std::make_unique<asset::FontLoader>(this));
+	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
+	return ret;
+}
 } // namespace le

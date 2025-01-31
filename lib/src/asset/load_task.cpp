@@ -1,9 +1,6 @@
 #include <klib/assert.hpp>
 #include <klib/task/queue.hpp>
 #include <le2d/asset/load_task.hpp>
-#include <le2d/asset/loaders.hpp>
-#include <le2d/font.hpp>
-#include <le2d/texture.hpp>
 #include <log.hpp>
 
 namespace le::asset {
@@ -25,11 +22,6 @@ struct LoadTask::Task : klib::task::Task {
 };
 
 void LoadTask::Deleter::operator()(Task* ptr) const noexcept { std::default_delete<Task>{}(ptr); }
-
-LoadTask::LoadTask(gsl::not_null<Queue*> queue, gsl::not_null<Context*> context) : m_queue(queue) {
-	add_loader(std::make_unique<FontLoader>(context));
-	add_loader(std::make_unique<TextureLoader>(context));
-}
 
 void LoadTask::add_loader(std::unique_ptr<ILoader> loader) {
 	if (!loader) { return; }
