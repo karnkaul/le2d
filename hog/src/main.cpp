@@ -20,15 +20,15 @@ auto main(int argc, char** argv) -> int {
 		if (assets_dir.empty()) { assets_dir = le::FileDataLoader::upfind("assets", *argv); }
 		auto const data_loader = le::FileDataLoader{assets_dir};
 
-		le::example::log::info("le2d {}", klib::to_string(le::build_version_v));
+		hog::log::info("le2d {}", klib::to_string(le::build_version_v));
 
 		if (force_x11) { glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); }
-		le::example::App{&data_loader}.run();
+		hog::App{&data_loader}.run();
 	} catch (std::exception const& e) {
-		le::example::log::error("PANIC: {}", e.what());
+		hog::log::error("PANIC: {}", e.what());
 		return EXIT_FAILURE;
 	} catch (...) {
-		le::example::log::error("PANIC!");
+		hog::log::error("PANIC!");
 		return EXIT_FAILURE;
 	}
 }

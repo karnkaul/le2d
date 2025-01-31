@@ -5,17 +5,17 @@
 #include <le2d/asset/load_task.hpp>
 #include <le2d/asset/loaders.hpp>
 
-namespace le::example {
+namespace hog {
 namespace {
-auto const context_ci = ContextCreateInfo{
-	.window = WindowInfo{.size = {1280, 720}, .title = "le2d example"},
+auto const context_ci = le::ContextCreateInfo{
+	.window = le::WindowInfo{.size = {1280, 720}, .title = "le2d example"},
 	// .window = FullscreenInfo{.title = "le2d example"},
 	.default_shader = {.vertex = "default.vert", .fragment = "default.frag"},
 	.framebuffer_samples = vk::SampleCountFlagBits::e2,
 };
 }
 
-App::App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_ci) {}
+App::App(gsl::not_null<le::IDataLoader const*> data_loader) : m_context(data_loader, context_ci) {}
 
 void App::run() {
 	m_blocker = m_context.create_device_block();
@@ -25,13 +25,13 @@ void App::run() {
 
 	m_quad.texture = &m_textures.front();
 
-	if (auto* mono_font = m_asset_store.get<Font>("mono.ttf")) {
-		auto const cci = console::TerminalCreateInfo{
-			.style = {.text_height = TextHeight{20}},
+	if (auto* mono_font = m_asset_store.get<le::Font>("mono.ttf")) {
+		auto const cci = le::console::TerminalCreateInfo{
+			.style = {.text_height = le::TextHeight{20}},
 		};
 		m_terminal.emplace(mono_font, m_context.get_render_window().framebuffer_size(), cci);
 
-		m_terminal->add_command("quit", "shutdown app", [this](console::Printer& printer) {
+		m_terminal->add_command("quit", "shutdown app", [this](le::console::Printer& printer) {
 			printer.println("quitting");
 			m_context.shutdown();
 		});
@@ -54,15 +54,15 @@ void App::load_fonts() {
 	auto queue = klib::task::Queue{};
 
 	auto load_task = m_context.create_asset_load_task(&queue);
-	load_task->enqueue<Font>("font.ttf");
-	load_task->enqueue<Font>("mono.ttf");
+	load_task->enqueue<le::Font>("font.ttf");
+	load_task->enqueue<le::Font>("mono.ttf");
 
 	queue.enqueue(*load_task);
 
 	auto const loaded = load_task->transfer_loaded(m_asset_store);
 	log::debug("{} assets loaded", loaded);
 
-	if (auto* main_font = m_asset_store.get<Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
+	if (auto* main_font = m_asset_store.get<le::Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
 }
 
 void App::create_textures() {
@@ -71,14 +71,14 @@ void App::create_textures() {
 	pixels[1, 0] = kvf::green_v;
 	pixels[0, 1] = kvf::blue_v;
 	pixels[1, 1] = kvf::white_v;
-	auto texture = Texture{m_context.create_texture(pixels.bitmap())};
+	auto texture = le::Texture{m_context.create_texture(pixels.bitmap())};
 	texture.sampler.min_filter = texture.sampler.mag_filter = vk::Filter::eNearest;
 	m_textures.push_back(std::move(texture));
 
 	pixels = kvf::ColorBitmap{glm::ivec2{2, 1}};
 	pixels[0, 0] = kvf::cyan_v;
 	pixels[1, 0] = kvf::yellow_v;
-	texture = Texture{m_context.create_texture(pixels.bitmap())};
+	texture = le::Texture{m_context.create_texture(pixels.bitmap())};
 	texture.sampler = m_textures.back().sampler;
 	m_textures.push_back(std::move(texture));
 }
@@ -98,7 +98,7 @@ void App::tick(kvf::Seconds const dt) {
 	if (m_terminal) { m_terminal->tick(dt); }
 }
 
-void App::render(Renderer& renderer) const {
+void App::render(le::Renderer& renderer) const {
 	auto n_viewport = kvf::uv_rect_v;
 	auto const polygon_mode = vk::PolygonMode::eFill;
 	renderer.set_line_width(3.0f);
@@ -123,7 +123,7 @@ void App::render(Renderer& renderer) const {
 
 void App::process_events() {
 	auto const visitor = klib::SubVisitor{
-		[&](event::Key const& key) {
+		[&](le::event::Key const& key) {
 			if (key.key == GLFW_KEY_LEFT) {
 				switch (key.action) {
 				case GLFW_PRESS: m_held_keys.left = true; break;
@@ -142,23 +142,23 @@ void App::process_events() {
 			if (m_terminal) { m_terminal->on_key(key); }
 		},
 
-		[&](event::Codepoint const codepoint) {
+		[&](le::event::Codepoint const codepoint) {
 			if (m_terminal) { m_terminal->on_codepoint(codepoint); }
 		},
 
-		[&](event::FramebufferResize const resize) {
+		[&](le::event::FramebufferResize const resize) {
 			if (m_terminal) { m_terminal->resize(resize); }
 		},
 
-		[&](event::CursorPos const& cursor_pos) {
+		[&](le::event::CursorPos const& cursor_pos) {
 			if (m_terminal) { m_terminal->on_cursor_move(cursor_pos); }
 		},
 
-		[&](event::Scroll const scroll) {
+		[&](le::event::Scroll const scroll) {
 			if (m_terminal) { m_terminal->on_scroll(scroll); }
 		},
 	};
 
 	for (auto const& event : m_context.event_queue()) { std::visit(visitor, event); }
 }
-} // namespace le::example
+} // namespace hog
