@@ -14,7 +14,7 @@ class Base : public klib::Polymorphic {
 	std::type_index m_type;
 };
 
-template <std::movable AssetT>
+template <typename AssetT>
 class Wrap : public Base {
   public:
 	explicit Wrap(AssetT asset) : Base(typeid(AssetT)), asset(static_cast<AssetT&&>(asset)) {}
