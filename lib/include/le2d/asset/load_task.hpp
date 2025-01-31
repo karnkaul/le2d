@@ -3,6 +3,7 @@
 #include <klib/task/task.hpp>
 #include <le2d/asset/loader.hpp>
 #include <le2d/asset/store.hpp>
+#include <atomic>
 #include <gsl/pointers>
 #include <vector>
 
@@ -10,6 +11,14 @@ namespace le {
 class Context;
 
 namespace asset {
+struct LoadProgress {
+	std::uint64_t total{};
+	std::uint64_t completed{};
+	std::uint64_t failed{};
+
+	[[nodiscard]] constexpr auto succeeded() const -> std::uint64_t { return completed - failed; }
+};
+
 class LoadTask : public klib::task::Task {
   public:
 	using Queue = klib::task::Queue;
@@ -25,9 +34,21 @@ class LoadTask : public klib::task::Task {
 	}
 	void next_stage();
 
+	[[nodiscard]] auto get_progress() const -> LoadProgress { return m_progress.to_progress(); }
+
 	auto transfer_loaded(Store& store) -> std::uint64_t;
 
   private:
+	struct AtomicProgress {
+		std::uint64_t total{};
+		std::atomic_uint64_t completed{};
+		std::atomic_uint64_t failed{};
+
+		[[nodiscard]] auto to_progress() const -> LoadProgress;
+
+		void reset();
+	};
+
 	struct Task;
 	struct Deleter {
 		void operator()(Task* ptr) const noexcept;
@@ -45,6 +66,7 @@ class LoadTask : public klib::task::Task {
 	std::unordered_map<std::type_index, std::unique_ptr<ILoader>> m_loaders{};
 
 	std::vector<Stage> m_stages{};
+	AtomicProgress m_progress{};
 };
 } // namespace asset
 } // namespace le
