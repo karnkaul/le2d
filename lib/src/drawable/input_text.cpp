@@ -1,19 +1,19 @@
 #include <GLFW/glfw3.h>
-#include <le2d/drawables/input_text.hpp>
-#include <le2d/line_geometry.hpp>
+#include <le2d/drawable/input_text.hpp>
 #include <cmath>
+#include <numbers>
 
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
-	: m_line_input(font, params.height), m_cursor(font), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
+	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
 	auto const text_params = TextParams{
 		.height = m_line_input.get_height(),
 		.expand = TextExpand::eRight,
 	};
-	auto const cursor_symbol = std::string_view{&params.cursor_symbol, 1};
-	auto const rect = LineGeometry{.glyphs = get_atlas().get_glyphs()}.line_bounds(cursor_symbol);
+	m_cursor.set_string(*font, {&params.cursor_symbol, 1}, text_params);
+
+	auto const rect = kvf::ttf::glyph_bounds(m_cursor.get_glyph_layouts());
 	m_cursor_offset_x = -rect.lt.x;
-	m_cursor.set_string({&params.cursor_symbol, 1}, text_params);
 }
 
 void InputText::set_interactive(bool const interactive) {
@@ -21,7 +21,15 @@ void InputText::set_interactive(bool const interactive) {
 	if (is_interactive()) { reset_blink(); }
 }
 
-void InputText::set_string(std::string line) { m_line_input.set_string(std::move(line)); }
+void InputText::set_string(std::string line) {
+	m_line_input.set_string(std::move(line));
+	update();
+}
+
+void InputText::append(std::string_view str) {
+	m_line_input.append(str);
+	update();
+}
 
 void InputText::write(char const ch) {
 	m_line_input.write(ch);
@@ -35,6 +43,11 @@ void InputText::backspace() {
 
 void InputText::delete_front() {
 	m_line_input.delete_front();
+	update();
+}
+
+void InputText::clear() {
+	m_line_input.set_string({});
 	update();
 }
 
@@ -53,6 +66,13 @@ void InputText::on_key(event::Key const& key) {
 	case GLFW_KEY_END: cursor_end(); break;
 	case GLFW_KEY_BACKSPACE: backspace(); break;
 	case GLFW_KEY_DELETE: delete_front(); break;
+	}
+
+	if (key.mods == GLFW_MOD_CONTROL) {
+		switch (key.key) {
+		case GLFW_KEY_C: glfwSetClipboardString(nullptr, get_string().data()); break;
+		case GLFW_KEY_V: append(glfwGetClipboardString(nullptr)); break;
+		}
 	}
 }
 
@@ -87,7 +107,7 @@ void InputText::draw(Renderer& renderer) const {
 }
 
 void InputText::update() {
-	m_size = LineGeometry{.glyphs = get_atlas().get_glyphs()}.line_bounds(get_string()).size();
+	m_size = m_line_input.get_size();
 	reset_blink();
 }
 

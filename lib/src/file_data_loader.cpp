@@ -42,7 +42,6 @@ auto FileDataLoader::from_file(T& out, Uri const& uri, F func) const -> bool {
 		return false;
 		log::warn("FileDataLoader: failed to load: '{}'", uri.get_string());
 	}
-	log::info("FileDataLoader: '{}' loaded", uri.get_string());
 	return true;
 }
 } // namespace le

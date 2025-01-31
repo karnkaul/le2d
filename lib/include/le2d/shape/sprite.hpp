@@ -1,7 +1,7 @@
 #pragma once
 #include <klib/polymorphic.hpp>
 #include <kvf/aspect_resize.hpp>
-#include <le2d/shapes/quad.hpp>
+#include <le2d/shape/quad.hpp>
 
 namespace le::shape {
 class Sprite : public klib::Polymorphic {
@@ -21,8 +21,8 @@ class Sprite : public klib::Polymorphic {
 	[[nodiscard]] auto get_uv() const -> kvf::UvRect { return m_quad.get_uv(); }
 	void set_uv(kvf::UvRect const& uv);
 
-	[[nodiscard]] auto get_texture() const -> std::shared_ptr<ITexture const> const& { return m_quad.texture; }
-	void set_texture(std::shared_ptr<ITexture const> texture, kvf::UvRect const& uv = kvf::uv_rect_v);
+	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_quad.texture; }
+	void set_texture(ITexture const* texture, kvf::UvRect const& uv = kvf::uv_rect_v);
 
 	[[nodiscard]] auto get_resize_aspect() const -> kvf::ResizeAspect { return m_aspect; }
 	void set_resize_aspect(kvf::ResizeAspect aspect);

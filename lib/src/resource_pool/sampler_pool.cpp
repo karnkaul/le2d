@@ -1,6 +1,6 @@
 #include <klib/hash_combine.hpp>
 #include <kvf/render_device.hpp>
-#include <le2d/resource_pools/sampler_pool.hpp>
+#include <le2d/resource_pool/sampler_pool.hpp>
 #include <vulkan/vulkan_hash.hpp>
 
 namespace le {

@@ -8,6 +8,7 @@
 
 namespace le {
 class RenderPass;
+class ResourcePool;
 
 class Renderer {
   public:
@@ -20,7 +21,7 @@ class Renderer {
 
 	Renderer() = default;
 
-	explicit Renderer(RenderPass& render_pass, vk::CommandBuffer command_buffer);
+	explicit Renderer(RenderPass& render_pass, ResourcePool& resource_pool, vk::CommandBuffer command_buffer);
 	~Renderer() { end_render(); }
 
 	auto set_line_width(float width) -> bool;
@@ -33,6 +34,8 @@ class Renderer {
 	[[nodiscard]] auto is_rendering() const -> bool { return m_pass != nullptr; }
 	auto end_render() -> kvf::RenderTarget;
 
+	[[nodiscard]] auto command_buffer() const -> vk::CommandBuffer { return m_cmd; }
+
 	explicit operator bool() const { return is_rendering(); }
 
 	Transform view{};
@@ -42,6 +45,7 @@ class Renderer {
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
 	RenderPass* m_pass{};
+	ResourcePool* m_resource_pool{};
 	vk::CommandBuffer m_cmd{};
 
 	Shader const* m_shader{};

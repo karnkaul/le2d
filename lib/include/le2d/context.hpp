@@ -1,15 +1,29 @@
 #pragma once
+#include <le2d/asset/load_task.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
+#include <variant>
 
 namespace le {
+struct WindowInfo {
+	glm::ivec2 size{600};
+	klib::CString title;
+	bool decorated{true};
+};
+
+struct FullscreenInfo {
+	klib::CString title;
+	GLFWmonitor* target{nullptr};
+};
+
+using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
+
 struct ContextCreateInfo {
-	glm::ivec2 window_size;
-	klib::CString window_title;
+	WindowCreateInfo window;
 	struct {
 		Uri vertex;
 		Uri fragment;
@@ -36,6 +50,8 @@ class Context {
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
+	[[nodiscard]] auto get_resource_pool() const -> ResourcePool const& { return m_resource_pool; }
+	[[nodiscard]] auto get_resource_pool() -> ResourcePool& { return m_resource_pool; }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window.event_queue(); }
@@ -55,12 +71,13 @@ class Context {
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
 	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
+	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
 	IDataLoader const* m_data_loader;
 
 	RenderWindow m_window;
-	mutable ResourcePool m_resource_pool;
+	ResourcePool m_resource_pool;
 	RenderPass m_pass;
 
 	float m_render_scale{1.0f};

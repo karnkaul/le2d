@@ -27,7 +27,7 @@ auto Shader::load(IDataLoader const& data_loader, vk::Device const device, Uri c
 	smci.setCode(spirv);
 	auto frag = device.createShaderModuleUnique(smci);
 	if (!frag) {
-		log::error("Shader: failed to create Vertex Shader from: '{}'", fragment.get_string());
+		log::error("Shader: failed to create Fragment Shader from: '{}'", fragment.get_string());
 		return false;
 	}
 

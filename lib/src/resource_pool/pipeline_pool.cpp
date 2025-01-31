@@ -1,7 +1,7 @@
 #include <klib/hash_combine.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/util.hpp>
-#include <le2d/resource_pools/pipeline_pool.hpp>
+#include <le2d/resource_pool/pipeline_pool.hpp>
 #include <le2d/vertex.hpp>
 #include <vulkan/vulkan_hash.hpp>
 #include <ranges>

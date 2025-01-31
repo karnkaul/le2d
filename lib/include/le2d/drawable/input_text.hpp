@@ -1,9 +1,9 @@
 #pragma once
 #include <kvf/time.hpp>
-#include <le2d/drawables/drawable.hpp>
+#include <le2d/drawable/drawable.hpp>
 #include <le2d/event.hpp>
 #include <le2d/line_input.hpp>
-#include <le2d/shapes/text.hpp>
+#include <le2d/shape/text.hpp>
 
 namespace le {
 struct InputTextParams {
@@ -21,6 +21,7 @@ class InputText : public IDrawable {
 	explicit InputText(gsl::not_null<Font*> font, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
+	[[nodiscard]] auto get_font() const -> Font& { return *m_font; }
 	[[nodiscard]] auto get_atlas() const -> FontAtlas& { return m_line_input.get_atlas(); }
 
 	[[nodiscard]] auto is_interactive() const -> bool { return m_interactive; }
@@ -28,9 +29,11 @@ class InputText : public IDrawable {
 
 	[[nodiscard]] auto get_string() const -> std::string_view { return m_line_input.get_string(); }
 	void set_string(std::string line);
+	void append(std::string_view str);
 	void write(char ch);
 	void backspace();
 	void delete_front();
+	void clear();
 
 	[[nodiscard]] auto get_cursor() const -> int { return m_line_input.get_cursor(); }
 	void set_cursor(int cursor);
@@ -51,6 +54,8 @@ class InputText : public IDrawable {
   private:
 	void update();
 	void reset_blink();
+
+	gsl::not_null<Font*> m_font;
 
 	LineInput m_line_input;
 	shape::Text m_cursor;

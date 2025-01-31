@@ -29,7 +29,7 @@ void write_instances(std::vector<std::byte>& out, std::span<RenderInstance const
 	for (auto const& in : instances) {
 		auto const instance = Std430Instance{
 			.transform = in.transform.to_model(),
-			.tint = in.tint.to_vec4(),
+			.tint = in.tint.to_linear(),
 		};
 		KLIB_ASSERT(write_span.size() >= sizeof(instance));
 		std::memcpy(write_span.data(), &instance, sizeof(instance));
@@ -66,8 +66,9 @@ auto image_wds(vk::DescriptorImageInfo const& dii, vk::DescriptorSet set, std::u
 }
 } // namespace
 
-Renderer::Renderer(RenderPass& render_pass, vk::CommandBuffer const command_buffer)
-	: m_pass(&render_pass), m_cmd(command_buffer), m_shader(&render_pass.m_resource_pool->default_shader), m_viewport(render_pass.m_render_pass.viewport()) {
+Renderer::Renderer(RenderPass& render_pass, ResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
+	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->default_shader),
+	  m_viewport(render_pass.m_render_pass.viewport()) {
 	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) { end_render(); }
 }
 
@@ -109,30 +110,28 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	if (!bind_shader(primitive.topology)) { return false; }
 
-	auto& resource_pool = *m_pass->m_resource_pool;
-
 	auto descriptor_sets = std::array<vk::DescriptorSet, PipelinePool::set_count_v>{};
-	auto const set_layouts = resource_pool.pipelines.get_set_layouts();
+	auto const set_layouts = m_resource_pool->pipelines.get_set_layouts();
 	if (!m_pass->m_render_device->allocate_sets(descriptor_sets, set_layouts)) { return false; }
 
 	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
-	auto& vbo = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
+	auto& vbo = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
 	if (!kvf::util::overwrite(vbo, primitive.vertices)) { return false; }
 	if (!primitive.indices.empty() && !kvf::util::overwrite(vbo, primitive.indices, primitive.vertices.size_bytes())) { return false; }
 
-	auto& view_buffer = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
+	auto& view_buffer = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
 	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
 	if (!write_view_proj(view_buffer, view, render_area)) { return false; }
 
-	write_instances(resource_pool.scratch_buffer, instances);
-	auto& instances_buffer = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, resource_pool.scratch_buffer.size());
-	if (!kvf::util::overwrite(instances_buffer, resource_pool.scratch_buffer)) { return false; }
+	write_instances(m_resource_pool->scratch_buffer, instances);
+	auto& instances_buffer = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer.size());
+	if (!kvf::util::overwrite(instances_buffer, m_resource_pool->scratch_buffer)) { return false; }
 
-	auto& user_ssbo = resource_pool.buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
+	auto& user_ssbo = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
 	kvf::util::overwrite(user_ssbo, m_user_data.ssbo);
 
-	auto const texture = get_image_sampler(resource_pool, primitive.texture);
-	auto const user_texture = get_image_sampler(resource_pool, m_user_data.texture);
+	auto const texture = get_image_sampler(*m_resource_pool, primitive.texture);
+	auto const user_texture = get_image_sampler(*m_resource_pool, m_user_data.texture);
 
 	auto dbis = std::array<vk::DescriptorBufferInfo, 3>{};
 	auto diis = std::array<vk::DescriptorImageInfo, 2>{};
@@ -153,7 +152,7 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	m_cmd.setViewport(0, m_viewport);
 	m_cmd.setLineWidth(m_line_width);
-	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pass->m_resource_pool->pipelines.get_layout(), 0, descriptor_sets, {});
+	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->pipelines.get_layout(), 0, descriptor_sets, {});
 	m_cmd.bindVertexBuffers(0, vbo.get_buffer(), vk::DeviceSize{});
 	if (primitive.indices.empty()) {
 		auto const vertices = std::uint32_t(primitive.vertices.size());
@@ -185,7 +184,7 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 		.topology = topology,
 		.polygon_mode = polygon_mode,
 	};
-	auto const pipeline = m_pass->m_resource_pool->pipelines.allocate(info, *m_shader);
+	auto const pipeline = m_resource_pool->pipelines.allocate(info, *m_shader);
 	if (!pipeline) { return false; }
 
 	if (m_pipeline == pipeline) { return true; }
