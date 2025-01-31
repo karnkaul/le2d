@@ -5,39 +5,47 @@
 #include <log.hpp>
 
 namespace le::asset {
+namespace {
+auto load_bytes(Context const& context, std::string_view const type, Uri const& uri) -> std::vector<std::byte> {
+	auto ret = std::vector<std::byte>{};
+	if (!context.get_data_loader().load_bytes(ret, uri)) {
+		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type);
+		return {};
+	}
+	return ret;
+}
+
+template <typename T, typename F, typename... Args>
+auto try_load(Uri const& uri, std::string_view const type, T& t, F func, Args&&... args) {
+	if (!std::invoke(func, &t, std::forward<Args>(args)...)) {
+		log::warn("'{}' Failed to load {}", uri.get_string(), type);
+		return false;
+	}
+	return true;
+}
+
+template <typename T>
+auto to_wrap(Uri const& uri, std::string_view const type, T t) {
+	log::info("=='{}'== {} loaded", uri.get_string(), type);
+	return std::make_unique<Wrap<T>>(std::move(t));
+}
+} // namespace
+
 auto FontLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Font>> {
 	static constexpr std::string_view type_v{"Font"};
-	auto bytes = std::vector<std::byte>{};
-	if (!m_context->get_data_loader().load_bytes(bytes, uri)) {
-		log::warn("Failed to load {} bytes: '{}'", type_v, uri.get_string());
-		return {};
-	}
+	auto bytes = load_bytes(*m_context, type_v, uri);
 	if (bytes.empty()) { return {}; }
-	auto font = m_context->create_font(std::move(bytes));
-	if (!font.is_loaded()) {
-		log::warn("Failed to load {}: '{}'", type_v, uri.get_string());
-		return {};
-	}
-
-	log::info("=='{}'== {} '{}' loaded", uri.get_string(), type_v, font.get_name().as_view());
-	return std::make_unique<Wrap<Font>>(std::move(font));
+	auto font = m_context->create_font();
+	if (!try_load(uri, type_v, font, &Font::load_face, std::move(bytes))) { return {}; }
+	return to_wrap(uri, type_v, std::move(font));
 }
 
 auto TextureLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>> {
 	static constexpr std::string_view type_v{"Texture"};
-	auto bytes = std::vector<std::byte>{};
-	if (!m_context->get_data_loader().load_bytes(bytes, uri)) {
-		log::warn("Failed to load {} bytes: '{}'", type_v, uri.get_string());
-		return {};
-	}
+	auto const bytes = load_bytes(*m_context, type_v, uri);
 	if (bytes.empty()) { return {}; }
 	auto texture = m_context->create_texture();
-	if (!texture.load_and_write(bytes)) {
-		log::warn("Failed to load {}: '{}'", type_v, uri.get_string());
-		return {};
-	}
-
-	log::info("=='{}'== {} loaded", type_v, uri.get_string());
-	return std::make_unique<Wrap<Texture>>(std::move(texture));
+	if (!try_load(uri, type_v, texture, &Texture::load_and_write, bytes)) { return {}; }
+	return to_wrap(uri, type_v, std::move(texture));
 }
 } // namespace le::asset

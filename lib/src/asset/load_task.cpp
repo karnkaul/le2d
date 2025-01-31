@@ -1,6 +1,10 @@
 #include <klib/assert.hpp>
 #include <klib/task/queue.hpp>
 #include <le2d/asset/load_task.hpp>
+#include <le2d/asset/loaders.hpp>
+#include <le2d/font.hpp>
+#include <le2d/texture.hpp>
+#include <log.hpp>
 
 namespace le::asset {
 struct LoadTask::Task : klib::task::Task {
@@ -16,6 +20,11 @@ struct LoadTask::Task : klib::task::Task {
 };
 
 void LoadTask::Deleter::operator()(Task* ptr) const noexcept { std::default_delete<Task>{}(ptr); }
+
+LoadTask::LoadTask(gsl::not_null<Queue*> queue, gsl::not_null<Context*> context) : m_queue(queue) {
+	add_loader(std::make_unique<FontLoader>(context));
+	add_loader(std::make_unique<TextureLoader>(context));
+}
 
 void LoadTask::add_loader(std::unique_ptr<ILoader> loader) {
 	if (!loader) { return; }
@@ -37,14 +46,15 @@ auto LoadTask::transfer_loaded(Store& store) -> std::uint64_t {
 	return ret;
 }
 
-void LoadTask::enqueue(Uri uri, std::type_index const type) {
-	if (uri.get_string().empty()) { return; }
+auto LoadTask::enqueue(Uri uri, std::type_index const type) -> bool {
+	if (uri.get_string().empty()) { return false; }
 	auto const it = m_loaders.find(type);
 	if (it == m_loaders.end()) {
-		// TODO: warn
-		return;
+		log::warn("No Loader registered for type: {} ({})", type.name(), type.hash_code());
+		return false;
 	}
 	push_task(*it->second, std::move(uri));
+	return true;
 }
 
 void LoadTask::next_stage() { m_stages.emplace_back(); }
@@ -58,12 +68,6 @@ void LoadTask::execute() {
 		m_queue->fork_join(tasks);
 		tasks.clear();
 	}
-}
-
-auto LoadTask::get_loader(std::type_index type) const -> ILoader const* {
-	auto const it = m_loaders.find(type);
-	if (it == m_loaders.end()) { return {}; }
-	return it->second.get();
 }
 
 void LoadTask::push_task(ILoader const& loader, Uri uri) {

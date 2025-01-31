@@ -53,8 +53,7 @@ void App::run() {
 void App::load_fonts() {
 	auto queue = klib::task::Queue{};
 
-	auto load_task = asset::LoadTask{&queue};
-	load_task.add_loader(std::make_unique<asset::FontLoader>(&m_context));
+	auto load_task = asset::LoadTask{&queue, &m_context};
 	load_task.enqueue<Font>("font.ttf");
 	load_task.enqueue<Font>("mono.ttf");
 

@@ -6,20 +6,23 @@
 #include <gsl/pointers>
 #include <vector>
 
-namespace le::asset {
+namespace le {
+class Context;
+
+namespace asset {
 class LoadTask : public klib::task::Task {
   public:
 	using Queue = klib::task::Queue;
 
 	explicit LoadTask(gsl::not_null<Queue*> queue) : m_queue(queue) {}
+	explicit LoadTask(gsl::not_null<Queue*> queue, gsl::not_null<Context*> context);
 
 	void add_loader(std::unique_ptr<ILoader> loader);
 
 	template <typename Type>
-	void enqueue(Uri uri) {
-		enqueue(std::move(uri), typeid(Type));
+	auto enqueue(Uri uri) -> bool {
+		return enqueue(std::move(uri), typeid(Type));
 	}
-
 	void next_stage();
 
 	auto transfer_loaded(Store& store) -> std::uint64_t;
@@ -34,8 +37,7 @@ class LoadTask : public klib::task::Task {
 
 	void execute() final;
 
-	void enqueue(Uri uri, std::type_index type);
-	[[nodiscard]] auto get_loader(std::type_index type) const -> ILoader const*;
+	auto enqueue(Uri uri, std::type_index type) -> bool;
 	void push_task(ILoader const& loader, Uri uri);
 
 	Queue* m_queue;
@@ -44,4 +46,5 @@ class LoadTask : public klib::task::Task {
 
 	std::vector<Stage> m_stages{};
 };
-} // namespace le::asset
+} // namespace asset
+} // namespace le
