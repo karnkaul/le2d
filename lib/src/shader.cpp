@@ -3,38 +3,31 @@
 #include <log.hpp>
 
 namespace le {
-Shader::Shader(IDataLoader const& data_loader, vk::Device device, Uri const& vertex, Uri const& fragment) { load(data_loader, device, vertex, fragment); }
+namespace {
+[[nodiscard]] auto compute_hash(SpirV const& vert, SpirV const& frag) {
+	auto ret = std::size_t{};
+	auto const compute = [&](SpirV const& spir_v) {
+		for (auto const u32 : spir_v.code) { klib::hash_combine(ret, u32); }
+	};
+	compute(vert);
+	compute(frag);
+	return ret;
+}
+} // namespace
 
-auto Shader::load(IDataLoader const& data_loader, vk::Device const device, Uri const& vertex, Uri const& fragment) -> bool {
-	auto spirv = std::vector<std::uint32_t>{};
-	auto smci = vk::ShaderModuleCreateInfo{};
+Shader::Shader(vk::Device device, SpirV const& vertex, SpirV const& fragment) { load(device, vertex, fragment); }
 
-	if (!data_loader.load_spirv(spirv, vertex)) {
-		log::error("Shader: failed to load Vertex Shader SPIR-V: '{}'", vertex.get_string());
-		return false;
-	}
-	smci.setCode(spirv);
-	auto vert = device.createShaderModuleUnique(smci);
-	if (!vert) {
-		log::error("Shader: failed to create Vertex Shader from: '{}'", vertex.get_string());
-		return false;
-	}
-
-	if (!data_loader.load_spirv(spirv, fragment)) {
-		log::error("Shader: failed to load Fragment Shader SPIR-V: '{}'", fragment.get_string());
-		return false;
-	}
-	smci.setCode(spirv);
-	auto frag = device.createShaderModuleUnique(smci);
-	if (!frag) {
-		log::error("Shader: failed to create Fragment Shader from: '{}'", fragment.get_string());
-		return false;
-	}
+auto Shader::load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool {
+	auto smci = std::array<vk::ShaderModuleCreateInfo, 2>{};
+	smci[0].setCode(vertex.code);
+	smci[1].setCode(fragment.code);
+	auto vert = device.createShaderModuleUnique(smci[0]);
+	auto frag = device.createShaderModuleUnique(smci[1]);
+	if (!vert || !frag) { return false; }
 
 	m_vertex = std::move(vert);
 	m_fragment = std::move(frag);
-	m_hash = klib::make_combined_hash(vertex.get_hash(), fragment.get_hash());
-	log::info("Shader: loaded '{}' / '{}'", vertex.get_string(), fragment.get_string());
+	m_hash = compute_hash(vertex, fragment);
 
 	return true;
 }

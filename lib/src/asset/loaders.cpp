@@ -31,6 +31,16 @@ auto to_wrap(Uri const& uri, std::string_view const type, T t) {
 }
 } // namespace
 
+auto SpirVLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<SpirV>> {
+	static constexpr std::string_view type_v{"SpirV"};
+	auto ret = std::vector<std::uint32_t>{};
+	if (!m_context->get_data_loader().load_spirv(ret, uri)) {
+		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
+		return {};
+	}
+	return to_wrap(uri, type_v, SpirV{.code = std::move(ret)});
+}
+
 auto FontLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Font>> {
 	static constexpr std::string_view type_v{"Font"};
 	auto bytes = load_bytes(*m_context, type_v, uri);

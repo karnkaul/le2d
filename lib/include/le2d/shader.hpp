@@ -1,6 +1,5 @@
 #pragma once
-#include <le2d/data_loader.hpp>
-#include <le2d/uri.hpp>
+#include <le2d/asset/spir_v.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace le {
@@ -13,9 +12,9 @@ class Shader {
 
 	Shader() = default;
 
-	explicit Shader(IDataLoader const& data_loader, vk::Device device, Uri const& vertex, Uri const& fragment);
+	explicit Shader(vk::Device device, SpirV const& vertex, SpirV const& fragment);
 
-	auto load(IDataLoader const& data_loader, vk::Device device, Uri const& vertex, Uri const& fragment) -> bool;
+	auto load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool;
 
 	[[nodiscard]] auto is_loaded() const -> bool { return m_vertex && m_fragment; }
 	[[nodiscard]] auto get_modules() const -> Modules { return Modules{.vertex = *m_vertex, .fragment = *m_fragment}; }

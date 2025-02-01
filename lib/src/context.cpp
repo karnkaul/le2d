@@ -47,7 +47,11 @@ void Context::present() {
 }
 
 auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Shader {
-	return Shader{*m_data_loader, m_pass.get_render_device().get_device(), vertex, fragment};
+	auto const loader = asset::SpirVLoader{this};
+	auto const vert = loader.load(vertex);
+	auto const frag = loader.load(fragment);
+	if (!vert || !frag) { return {}; }
+	return Shader{m_pass.get_render_device().get_device(), vert->asset, frag->asset};
 }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
@@ -58,6 +62,7 @@ auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { ret
 
 auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
 	auto ret = std::make_unique<asset::LoadTask>(task_queue);
+	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
 	return ret;

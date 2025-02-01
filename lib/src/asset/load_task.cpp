@@ -23,12 +23,6 @@ struct LoadTask::Task : klib::task::Task {
 
 void LoadTask::Deleter::operator()(Task* ptr) const noexcept { std::default_delete<Task>{}(ptr); }
 
-void LoadTask::add_loader(std::unique_ptr<ILoader> loader) {
-	if (!loader) { return; }
-	auto const type = loader->get_type();
-	m_loaders.insert_or_assign(type, std::move(loader));
-}
-
 auto LoadTask::transfer_loaded(Store& store) -> std::uint64_t {
 	if (is_busy()) { wait(); }
 	auto ret = std::uint64_t{};
@@ -44,7 +38,12 @@ auto LoadTask::transfer_loaded(Store& store) -> std::uint64_t {
 	return ret;
 }
 
-auto LoadTask::enqueue(Uri uri, std::type_index const type) -> bool {
+void LoadTask::add_loader(std::type_index const type, std::unique_ptr<ILoader> loader) {
+	if (!loader) { return; }
+	m_loaders.insert_or_assign(type, std::move(loader));
+}
+
+auto LoadTask::enqueue(std::type_index const type, Uri uri) -> bool {
 	if (uri.get_string().empty()) { return false; }
 	auto const it = m_loaders.find(type);
 	if (it == m_loaders.end()) {
