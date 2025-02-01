@@ -15,8 +15,6 @@ enum class WindowFocus : bool { False, True };
 
 enum class CursorFocus : bool { False, True };
 
-using Codepoint = kvf::ttf::Codepoint;
-
 struct FramebufferResize : glm::ivec2 {
 	using glm::ivec2::ivec2;
 };
@@ -33,6 +31,8 @@ struct CursorPos {
 	window::vec2 window{};
 	ndc::vec2 normalized{};
 };
+
+using Codepoint = kvf::ttf::Codepoint;
 
 struct Key {
 	int key;
@@ -55,7 +55,7 @@ struct Drop {
 };
 
 using Event =
-	std::variant<WindowClose, WindowFocus, CursorFocus, Codepoint, FramebufferResize, WindowResize, WindowPos, CursorPos, Key, MouseButton, Scroll, Drop>;
+	std::variant<WindowClose, WindowFocus, CursorFocus, FramebufferResize, WindowResize, WindowPos, CursorPos, Codepoint, Key, MouseButton, Scroll, Drop>;
 } // namespace event
 
 using Event = event::Event;

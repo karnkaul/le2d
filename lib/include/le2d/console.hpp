@@ -36,7 +36,7 @@ struct TerminalCreateInfo {
 	} storage{};
 
 	struct {
-		TextHeight text_height{TextHeight::Default};
+		TextHeight text_height{TextHeight{20}};
 		float line_spacing{1.1f};
 		float separator_height{2.0f};
 		float x_pad{15.0f};
