@@ -23,6 +23,8 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	}
 }
 
+auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
+
 auto Context::set_render_scale(float const scale) -> bool {
 	if (scale < min_render_scale_v || scale > max_render_scale_v) { return false; }
 	m_render_scale = scale;
@@ -35,10 +37,10 @@ auto Context::next_frame() -> vk::CommandBuffer {
 	return m_cmd;
 }
 
-auto Context::begin_render() -> Renderer {
+auto Context::begin_render(kvf::Color const clear) -> Renderer {
 	if (!m_cmd) { return {}; }
-	glm::ivec2 const scaled_extent = glm::vec2{swapchain_size()} * m_render_scale;
-	return m_pass.begin_render(m_resource_pool, m_cmd, scaled_extent);
+	m_pass.set_clear_color(clear);
+	return m_pass.begin_render(m_resource_pool, m_cmd, framebuffer_size());
 }
 
 void Context::present() {

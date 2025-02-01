@@ -3,6 +3,7 @@
 #include <le2d/context.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
+#include <scene/switcher.hpp>
 
 namespace hog::scene {
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
@@ -24,6 +25,8 @@ void Lab::on_event(le::event::Key const key) {
 		case GLFW_RELEASE: m_held_keys.right = false; break;
 		}
 	}
+
+	if (key.key == GLFW_KEY_ESCAPE && key.action == GLFW_RELEASE && key.mods == 0) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
 }
 
 void Lab::tick(kvf::Seconds const dt) {

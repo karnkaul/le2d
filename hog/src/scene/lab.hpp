@@ -15,6 +15,8 @@ class Lab : public Scene {
 
 	void on_event(le::event::Key key) final;
 
+	[[nodiscard]] auto clear_color() const -> kvf::Color final { return kvf::Color{0x222222ff}; }
+
 	void tick(kvf::Seconds dt) final;
 	void render(le::Renderer& renderer) const final;
 	void reset_events() final;

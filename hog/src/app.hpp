@@ -19,7 +19,9 @@ struct App : public scene::ISwitcher {
 		bool right{};
 	};
 
-	void switch_scene(scene::SwitchFunc create_scene) final;
+	auto get_services() const -> le::ServiceLocator const& final { return m_services; }
+
+	void enqueue_switch(SwitchFunc create_scene) final;
 
 	void tick(kvf::Seconds dt);
 	void render(le::Renderer& renderer) const;
@@ -33,7 +35,7 @@ struct App : public scene::ISwitcher {
 
 	kvf::DeltaTime m_delta_time{};
 	std::unique_ptr<scene::Scene> m_scene{};
-	scene::SwitchFunc m_create_scene{};
+	SwitchFunc m_create_scene{};
 
 	std::optional<le::console::Terminal> m_terminal{};
 	bool m_was_terminal_active{};

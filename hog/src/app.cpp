@@ -73,7 +73,7 @@ void App::run() {
 
 	auto font_loader = le::asset::FontLoader{&m_context};
 	if (auto font = font_loader.load("mono.ttf")) {
-		m_terminal.emplace(&font->asset, m_context.get_render_window().framebuffer_size());
+		m_terminal.emplace(&font->asset, m_context.framebuffer_size());
 		m_terminal->add_command("quit", {}, [&](le::console::Printer& printer) {
 			printer.println("quitting");
 			m_context.shutdown();
@@ -94,13 +94,13 @@ void App::run() {
 
 		auto const dt = m_delta_time.tick();
 		tick(dt);
-		if (auto renderer = m_context.begin_render()) { render(renderer); }
+		if (auto renderer = m_context.begin_render(m_scene->clear_color())) { render(renderer); }
 
 		m_context.present();
 	}
 }
 
-void App::switch_scene(scene::SwitchFunc create_scene) { m_create_scene = std::move(create_scene); }
+void App::enqueue_switch(SwitchFunc create_scene) { m_create_scene = std::move(create_scene); }
 
 void App::tick(kvf::Seconds const dt) {
 	process_events();
@@ -112,6 +112,7 @@ void App::tick(kvf::Seconds const dt) {
 			m_scene = std::move(next_scene);
 			m_delta_time.reset();
 		}
+		m_create_scene = {};
 	}
 
 	m_scene->tick(dt);

@@ -54,6 +54,7 @@ class Context {
 	[[nodiscard]] auto get_resource_pool() -> ResourcePool& { return m_resource_pool; }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
+	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window.event_queue(); }
 
 	[[nodiscard]] auto is_running() const -> bool { return m_window.is_open(); }
@@ -63,7 +64,7 @@ class Context {
 	auto set_render_scale(float scale) -> bool;
 
 	auto next_frame() -> vk::CommandBuffer;
-	[[nodiscard]] auto begin_render() -> Renderer;
+	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
 	void present();
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
