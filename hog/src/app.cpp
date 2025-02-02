@@ -50,7 +50,7 @@ struct App::EventVisitor {
 
 		if (self.m_terminal) {
 			self.m_terminal->on_key(key);
-			if (!self.m_was_terminal_active && self.m_terminal->is_active()) { self.m_scene->reset_events(); }
+			if (!self.m_was_terminal_active && self.m_terminal->is_active()) { self.m_scene->disengage_input(); }
 			self.m_was_terminal_active = self.m_terminal->is_active();
 		}
 	}

@@ -52,7 +52,7 @@ void Lab::tick(kvf::Seconds const dt) {
 	inspect();
 
 	if (m_escape.is_engaged()) {
-		m_escape.reset();
+		m_escape.disengage();
 		m_services->get<ISwitcher>().switch_scene<Scene>();
 	}
 }
@@ -76,9 +76,10 @@ void Lab::render(le::Renderer& renderer) const {
 	m_quad.draw(renderer);
 }
 
-void Lab::reset_events() {
-	m_horz.reset();
-	m_rotate.reset();
+void Lab::disengage_input() {
+	m_horz.disengage();
+	m_rotate.disengage();
+	m_escape.disengage();
 }
 
 void Lab::load_fonts() {

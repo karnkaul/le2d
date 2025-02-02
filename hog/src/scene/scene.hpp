@@ -15,7 +15,7 @@ class Scene : public SubEventHandler {
 	virtual void tick(kvf::Seconds /*dt*/) {}
 	virtual void render(le::Renderer& /*renderer*/) const {}
 
-	virtual void reset_events() {}
+	virtual void disengage_input() {}
 
 	[[nodiscard]] auto unproject(le::Transform const& render_view, le::ndc::vec2 point) const -> glm::vec2;
 

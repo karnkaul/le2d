@@ -17,7 +17,7 @@ class Lab : public Scene {
 
 	void tick(kvf::Seconds dt) final;
 	void render(le::Renderer& renderer) const final;
-	void reset_events() final;
+	void disengage_input() final;
 
 	void load_fonts();
 	void create_textures();

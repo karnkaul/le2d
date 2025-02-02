@@ -16,7 +16,7 @@ class EventTrigger {
 	}
 
 	[[nodiscard]] constexpr auto is_engaged() const -> bool { return m_engaged; }
-	constexpr void reset() { m_engaged = false; }
+	constexpr void disengage() { m_engaged = false; }
 
   private:
 	EventT m_trigger{};
@@ -59,7 +59,7 @@ class DigitalAxis {
 		return ret;
 	}
 
-	constexpr void reset() { m_held.reset(); }
+	constexpr void disengage() { m_held.reset(); }
 
   private:
 	constexpr void on_press(int const signal) {
