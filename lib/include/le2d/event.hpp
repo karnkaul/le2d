@@ -38,12 +38,16 @@ struct Key {
 	int key;
 	int action;
 	int mods;
+
+	auto operator==(Key const&) const -> bool = default;
 };
 
 struct MouseButton {
 	int button;
 	int action;
 	int mods;
+
+	auto operator==(MouseButton const&) const -> bool = default;
 };
 
 struct Scroll : glm::vec2 {

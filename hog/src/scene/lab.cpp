@@ -12,35 +12,16 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	create_textures();
 	m_quad.texture = &m_textures.front();
 	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
+
+	m_horz = le::input::KeyAxis{GLFW_KEY_A, GLFW_KEY_D};
+	m_rotate = le::input::KeyAxis{GLFW_KEY_E, GLFW_KEY_Q};
+	m_escape = le::input::KeyTrigger{GLFW_KEY_ESCAPE, GLFW_RELEASE};
 }
 
 void Lab::on_event(le::event::Key const key) {
-	if (key.key == GLFW_KEY_A) {
-		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.a = true; break;
-		case GLFW_RELEASE: m_held_keys.a = false; break;
-		}
-	}
-	if (key.key == GLFW_KEY_D) {
-		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.d = true; break;
-		case GLFW_RELEASE: m_held_keys.d = false; break;
-		}
-	}
-	if (key.key == GLFW_KEY_Q) {
-		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.q = true; break;
-		case GLFW_RELEASE: m_held_keys.q = false; break;
-		}
-	}
-	if (key.key == GLFW_KEY_E) {
-		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.e = true; break;
-		case GLFW_RELEASE: m_held_keys.e = false; break;
-		}
-	}
-
-	if (key.key == GLFW_KEY_ESCAPE && key.action == GLFW_RELEASE && key.mods == 0) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
+	m_horz.on_event(key);
+	m_rotate.on_event(key);
+	m_escape.on_event(key);
 }
 
 void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
@@ -53,14 +34,11 @@ void Lab::on_event(le::event::Scroll const scroll) {
 
 void Lab::tick(kvf::Seconds const dt) {
 	auto dxy = glm::vec2{};
-	if (m_held_keys.a) { dxy.x += -1.0f; }
-	if (m_held_keys.d) { dxy.x += 1.0f; }
+	dxy.x = m_horz.value();
 	if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
-	m_render_view.position.x += 500.0f * dxy.x * dt.count();
+	m_render_view.position.x += m_translate_speed * dxy.x * dt.count();
 
-	auto drot = float{};
-	if (m_held_keys.q) { drot += 1.0f; }
-	if (m_held_keys.e) { drot += -1.0f; }
+	auto const drot = m_rotate.value();
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
 	auto const rect = m_quad.bounding_rect();
@@ -69,6 +47,13 @@ void Lab::tick(kvf::Seconds const dt) {
 		m_quad.instance.tint = kvf::red_v;
 	} else {
 		m_quad.instance.tint = kvf::white_v;
+	}
+
+	inspect();
+
+	if (m_escape.is_engaged()) {
+		m_escape.reset();
+		m_services->get<ISwitcher>().switch_scene<Scene>();
 	}
 }
 
@@ -91,7 +76,10 @@ void Lab::render(le::Renderer& renderer) const {
 	m_quad.draw(renderer);
 }
 
-void Lab::reset_events() { m_held_keys = {}; }
+void Lab::reset_events() {
+	m_horz.reset();
+	m_rotate.reset();
+}
 
 void Lab::load_fonts() {
 	auto queue = klib::task::Queue{};
@@ -125,5 +113,13 @@ void Lab::create_textures() {
 	texture = le::Texture{context.create_texture(pixels.bitmap())};
 	texture.sampler = m_textures.back().sampler;
 	m_textures.push_back(std::move(texture));
+}
+
+void Lab::inspect() {
+	if (ImGui::Begin("Inspect")) {
+		ImGui::DragFloat("move speed", &m_translate_speed, 1.0f, 1.0f, 2000.0f);
+		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
+	}
+	ImGui::End();
 }
 } // namespace hog::scene
