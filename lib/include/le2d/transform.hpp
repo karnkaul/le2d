@@ -7,6 +7,7 @@ struct Transform {
 
 	[[nodiscard]] auto to_model() const -> glm::mat4;
 	[[nodiscard]] auto to_view() const -> glm::mat4;
+	[[nodiscard]] auto to_inverse_view() const -> glm::mat4;
 
 	glm::vec2 position{};
 	float orientation{};

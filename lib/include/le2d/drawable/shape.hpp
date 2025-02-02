@@ -1,5 +1,6 @@
 #pragma once
 #include <le2d/drawable/drawable.hpp>
+#include <le2d/shape/line_rect.hpp>
 #include <le2d/shape/quad.hpp>
 #include <le2d/shape/sprite.hpp>
 #include <le2d/shape/text.hpp>
@@ -43,4 +44,7 @@ using InstancedSprite = InstancedShape<shape::Sprite>;
 
 using Text = Shape<shape::Text>;
 using InstancedText = InstancedShape<shape::Text>;
+
+using LineRect = Shape<shape::LineRect>;
+using InstancedLineRect = InstancedShape<shape::LineRect>;
 } // namespace le::drawable

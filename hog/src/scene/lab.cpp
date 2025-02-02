@@ -1,6 +1,7 @@
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
+#include <le2d/vertex_bounds.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
 #include <scene/switcher.hpp>
@@ -10,31 +11,66 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	load_fonts();
 	create_textures();
 	m_quad.texture = &m_textures.front();
+	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
 }
 
 void Lab::on_event(le::event::Key const key) {
-	if (key.key == GLFW_KEY_LEFT) {
+	if (key.key == GLFW_KEY_A) {
 		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.left = true; break;
-		case GLFW_RELEASE: m_held_keys.left = false; break;
+		case GLFW_PRESS: m_held_keys.a = true; break;
+		case GLFW_RELEASE: m_held_keys.a = false; break;
 		}
 	}
-	if (key.key == GLFW_KEY_RIGHT) {
+	if (key.key == GLFW_KEY_D) {
 		switch (key.action) {
-		case GLFW_PRESS: m_held_keys.right = true; break;
-		case GLFW_RELEASE: m_held_keys.right = false; break;
+		case GLFW_PRESS: m_held_keys.d = true; break;
+		case GLFW_RELEASE: m_held_keys.d = false; break;
+		}
+	}
+	if (key.key == GLFW_KEY_Q) {
+		switch (key.action) {
+		case GLFW_PRESS: m_held_keys.q = true; break;
+		case GLFW_RELEASE: m_held_keys.q = false; break;
+		}
+	}
+	if (key.key == GLFW_KEY_E) {
+		switch (key.action) {
+		case GLFW_PRESS: m_held_keys.e = true; break;
+		case GLFW_RELEASE: m_held_keys.e = false; break;
 		}
 	}
 
 	if (key.key == GLFW_KEY_ESCAPE && key.action == GLFW_RELEASE && key.mods == 0) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
 }
 
+void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
+
+void Lab::on_event(le::event::Scroll const scroll) {
+	auto const dscale = m_zoom_speed * scroll.y;
+	m_render_view.scale.x = std::clamp(m_render_view.scale.x + dscale, 0.2f, 2.0f);
+	m_render_view.scale.y = m_render_view.scale.x;
+}
+
 void Lab::tick(kvf::Seconds const dt) {
 	auto dxy = glm::vec2{};
-	if (m_held_keys.left) { dxy.x += -1.0f; }
-	if (m_held_keys.right) { dxy.x += 1.0f; }
+	if (m_held_keys.a) { dxy.x += -1.0f; }
+	if (m_held_keys.d) { dxy.x += 1.0f; }
 	if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
-	m_render_view.position.x += 100.0f * dxy.x * dt.count();
+	m_render_view.position.x += 500.0f * dxy.x * dt.count();
+
+	auto drot = float{};
+	if (m_held_keys.q) { drot += 1.0f; }
+	if (m_held_keys.e) { drot += -1.0f; }
+	m_render_view.orientation += 50.0f * drot * dt.count();
+
+	auto rect = le::vertex_bounds(m_quad.get_vertices(), m_quad.instance.transform.to_model());
+	auto cursor_pos = m_cursor_pos.to_target(m_services->get<le::Context>().framebuffer_size());
+	cursor_pos = m_render_view.to_inverse_view() * glm::vec4{cursor_pos, 0.0f, 1.0f};
+	if (rect.contains(cursor_pos)) {
+		m_quad.instance.tint = kvf::red_v;
+	} else {
+		m_quad.instance.tint = kvf::white_v;
+	}
 }
 
 void Lab::render(le::Renderer& renderer) const {
@@ -47,8 +83,7 @@ void Lab::render(le::Renderer& renderer) const {
 	renderer.set_render_area(n_viewport);
 	renderer.view = m_render_view;
 	m_quad.draw(renderer);
-
-	m_text.draw(renderer);
+	m_line_rect.draw(renderer);
 
 	n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
 	renderer.set_render_area(n_viewport);
@@ -71,8 +106,6 @@ void Lab::load_fonts() {
 	auto& asset_store = m_services->get<le::asset::Store>();
 	auto const loaded = load_task->transfer_loaded(asset_store);
 	log::debug("{} assets loaded", loaded);
-
-	if (auto* main_font = asset_store.get<le::Font>("font.ttf")) { m_text.set_string(*main_font, "multi-line text\ndemo. it works!"); }
 }
 
 void Lab::create_textures() {

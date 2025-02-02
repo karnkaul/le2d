@@ -9,11 +9,15 @@ class Lab : public Scene {
 
   private:
 	struct HeldKeys {
-		bool left{};
-		bool right{};
+		bool a{};
+		bool d{};
+		bool q{};
+		bool e{};
 	};
 
 	void on_event(le::event::Key key) final;
+	void on_event(le::event::CursorPos pos) final;
+	void on_event(le::event::Scroll scroll) final;
 
 	[[nodiscard]] auto clear_color() const -> kvf::Color final { return kvf::Color{0x222222ff}; }
 
@@ -26,9 +30,12 @@ class Lab : public Scene {
 
 	std::vector<le::Texture> m_textures{};
 	le::drawable::Quad m_quad{};
+	le::drawable::LineRect m_line_rect{};
 
 	HeldKeys m_held_keys{};
+	le::ndc::vec2 m_cursor_pos{};
+	float m_zoom_speed{0.05f};
+
 	le::Transform m_render_view{};
-	le::drawable::Text m_text{};
 };
 } // namespace hog::scene

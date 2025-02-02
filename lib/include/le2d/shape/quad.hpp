@@ -6,7 +6,9 @@
 
 namespace le {
 struct QuadParams {
-	kvf::Rect<> rect{kvf::Rect<>::from_size(glm::vec2{200.0f})};
+	static constexpr auto rect_v = kvf::Rect<>::from_size(glm::vec2{200.0f});
+
+	kvf::Rect<> rect{rect_v};
 	kvf::Color color{kvf::white_v};
 	kvf::UvRect uv{kvf::uv_rect_v};
 };
@@ -19,12 +21,10 @@ class Quad {
 	static constexpr std::size_t vertex_count_v{4};
 	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
 
-	static constexpr auto rect_v = kvf::Rect<>::from_size(glm::vec2{200.0f});
-
 	explicit Quad(Params const& params = {}) { create(params); }
 
 	void create(glm::vec2 size) { create(Params{.rect = kvf::Rect<>::from_size(size)}); }
-	void create(QuadParams const& params);
+	void create(Params const& params);
 
 	[[nodiscard]] auto get_rect() const -> kvf::Rect<>;
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return get_rect().size(); }
