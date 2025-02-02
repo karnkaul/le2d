@@ -16,6 +16,8 @@ class Scene : public SubEventHandler {
 
 	virtual void reset_events() {}
 
+	[[nodiscard]] auto unproject(le::Transform const& render_view, le::ndc::vec2 point) const -> glm::vec2;
+
   protected:
 	gsl::not_null<le::ServiceLocator const*> m_services;
 };

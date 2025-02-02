@@ -63,9 +63,8 @@ void Lab::tick(kvf::Seconds const dt) {
 	if (m_held_keys.e) { drot += -1.0f; }
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
-	auto rect = le::vertex_bounds(m_quad.get_vertices(), m_quad.instance.transform.to_model());
-	auto cursor_pos = m_cursor_pos.to_target(m_services->get<le::Context>().framebuffer_size());
-	cursor_pos = m_render_view.to_inverse_view() * glm::vec4{cursor_pos, 0.0f, 1.0f};
+	auto const rect = m_quad.bounding_rect();
+	auto const cursor_pos = unproject(m_render_view, m_cursor_pos);
 	if (rect.contains(cursor_pos)) {
 		m_quad.instance.tint = kvf::red_v;
 	} else {

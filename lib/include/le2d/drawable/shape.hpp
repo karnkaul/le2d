@@ -4,6 +4,7 @@
 #include <le2d/shape/quad.hpp>
 #include <le2d/shape/sprite.hpp>
 #include <le2d/shape/text.hpp>
+#include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
 template <ShapeT Type>
@@ -13,7 +14,7 @@ class IShape : public Type, public IDrawable {
 
 	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
 
-	void draw(Renderer& renderer) const override { renderer.draw(this->Type::get_primitive(), get_instances()); }
+	void draw(Renderer& renderer) const override { renderer.draw(this->get_primitive(), get_instances()); }
 };
 
 template <ShapeT Type>
@@ -22,6 +23,8 @@ class Shape : public IShape<Type> {
 	using IShape<Type>::IShape;
 
 	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {&instance, 1}; }
+
+	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->get_primitive().vertices, instance.transform.to_model()); }
 
 	RenderInstance instance{};
 };
