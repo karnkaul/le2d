@@ -15,14 +15,24 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 
 	m_horz = le::input::KeyAxis{GLFW_KEY_A, GLFW_KEY_D};
 	m_rotate = le::input::KeyAxis{GLFW_KEY_E, GLFW_KEY_Q};
-	m_escape = le::input::KeyTrigger{GLFW_KEY_ESCAPE, GLFW_RELEASE};
+	m_escape = le::input::KeyChord{GLFW_KEY_ESCAPE, GLFW_RELEASE};
+	m_mb1 = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
+
+	auto const& asset_store = m_services->get<le::asset::Store>();
+	if (auto const* texture = asset_store.get<le::Texture>("hog_bg.jpg")) {
+		m_background.create(texture->get_size());
+		m_background.texture = texture;
+	}
 }
 
 void Lab::on_event(le::event::Key const key) {
 	m_horz.on_event(key);
 	m_rotate.on_event(key);
-	m_escape.on_event(key);
+
+	if (m_escape.is_engaged(key)) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
 }
+
+void Lab::on_event(le::event::MouseButton const button) { m_mb1.on_event(button); }
 
 void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
 
@@ -38,6 +48,10 @@ void Lab::tick(kvf::Seconds const dt) {
 	if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
 	m_render_view.position.x += m_translate_speed * dxy.x * dt.count();
 
+	if (m_mb1.is_engaged()) {
+		//
+	}
+
 	auto const drot = m_rotate.value();
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
@@ -50,11 +64,6 @@ void Lab::tick(kvf::Seconds const dt) {
 	}
 
 	inspect();
-
-	if (m_escape.is_engaged()) {
-		m_escape.disengage();
-		m_services->get<ISwitcher>().switch_scene<Scene>();
-	}
 }
 
 void Lab::render(le::Renderer& renderer) const {
@@ -66,6 +75,7 @@ void Lab::render(le::Renderer& renderer) const {
 	// n_viewport.rb.x = 0.5f;
 	renderer.set_render_area(n_viewport);
 	renderer.view = m_render_view;
+	m_background.draw(renderer);
 	m_quad.draw(renderer);
 	m_line_rect.draw(renderer);
 
@@ -79,7 +89,7 @@ void Lab::render(le::Renderer& renderer) const {
 void Lab::disengage_input() {
 	m_horz.disengage();
 	m_rotate.disengage();
-	m_escape.disengage();
+	m_mb1.disengage();
 }
 
 void Lab::load_fonts() {
@@ -88,6 +98,7 @@ void Lab::load_fonts() {
 	auto& context = m_services->get<le::Context>();
 	auto load_task = context.create_asset_load_task(&queue);
 	load_task->enqueue<le::Font>("font.ttf");
+	load_task->enqueue<le::Texture>("hog_bg.jpg");
 
 	queue.enqueue(*load_task);
 
