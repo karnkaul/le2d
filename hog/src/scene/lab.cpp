@@ -32,7 +32,9 @@ void Lab::on_event(le::event::Key const key) {
 	if (m_escape.is_engaged(key)) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
 }
 
-void Lab::on_event(le::event::MouseButton const button) { m_mb1.on_event(button); }
+void Lab::on_event(le::event::MouseButton const button) {
+	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
+}
 
 void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
 
@@ -48,15 +50,18 @@ void Lab::tick(kvf::Seconds const dt) {
 	if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
 	m_render_view.position.x += m_translate_speed * dxy.x * dt.count();
 
+	auto const unprojector = get_unprojector(m_render_view);
+	auto const cursor_pos = unprojector.unproject(m_cursor_pos);
 	if (m_mb1.is_engaged()) {
-		//
+		auto const prev_fb_cursor = unprojector.unproject(m_prev_cursor_pos);
+		auto const cursor_dxy = cursor_pos - prev_fb_cursor;
+		m_render_view.position -= cursor_dxy;
 	}
 
 	auto const drot = m_rotate.value();
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
 	auto const rect = m_quad.bounding_rect();
-	auto const cursor_pos = unproject(m_render_view, m_cursor_pos);
 	if (rect.contains(cursor_pos)) {
 		m_quad.instance.tint = kvf::red_v;
 	} else {
@@ -64,6 +69,8 @@ void Lab::tick(kvf::Seconds const dt) {
 	}
 
 	inspect();
+
+	m_prev_cursor_pos = m_cursor_pos;
 }
 
 void Lab::render(le::Renderer& renderer) const {
@@ -83,7 +90,7 @@ void Lab::render(le::Renderer& renderer) const {
 	renderer.set_render_area(n_viewport);
 	renderer.view = {};
 	renderer.view.scale = glm::vec2{0.25f};
-	m_quad.draw(renderer);
+	// m_quad.draw(renderer);
 }
 
 void Lab::disengage_input() {

@@ -36,7 +36,7 @@ class Lab : public Scene {
 	le::input::MouseButtonTrigger m_mb1{};
 
 	le::ndc::vec2 m_cursor_pos{};
-	le::ndc::vec2 m_dcursor{};
+	le::ndc::vec2 m_prev_cursor_pos{};
 	float m_translate_speed{500.0f};
 	float m_zoom_speed{0.05f};
 
