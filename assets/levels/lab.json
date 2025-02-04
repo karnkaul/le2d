@@ -1,0 +1,14 @@
+{
+  "name": "Lab",
+  "assets": {
+    "textures": [
+      "hog_bg.jpg"
+    ]
+  },
+  "background": {
+    "texture": 0,
+    "min_scale": 0.25,
+    "max_scale": 4.0,
+    "default_scale": 1.0
+  }
+}

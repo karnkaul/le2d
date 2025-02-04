@@ -1,3 +1,4 @@
+#include <djson/json.hpp>
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
@@ -8,7 +9,7 @@
 
 namespace hog::scene {
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
-	load_fonts();
+	load_assets();
 	create_textures();
 	m_quad.texture = &m_textures.front();
 	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
@@ -40,7 +41,7 @@ void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normaliz
 
 void Lab::on_event(le::event::Scroll const scroll) {
 	auto const dscale = m_zoom_speed * scroll.y;
-	m_render_view.scale.x = std::clamp(m_render_view.scale.x + dscale, 0.2f, 2.0f);
+	m_render_view.scale.x = std::clamp(m_render_view.scale.x + dscale, m_level_info.background.min_scale, m_level_info.background.max_scale);
 	m_render_view.scale.y = m_render_view.scale.x;
 }
 
@@ -99,13 +100,23 @@ void Lab::disengage_input() {
 	m_mb1.disengage();
 }
 
-void Lab::load_fonts() {
+void Lab::load_assets() {
+	auto& context = m_services->get<le::Context>();
+	auto const& data_loader = context.get_data_loader();
+	auto level_json = dj::Json{};
+	if (data_loader.load_json(level_json, "levels/lab.json")) {
+		m_level_info = {};
+		from_json(level_json, m_level_info);
+		log::info("'{}' level loaded", m_level_info.name);
+		m_render_view.scale = glm::vec2{m_level_info.background.default_scale};
+	}
+
 	auto queue = klib::task::Queue{};
 
-	auto& context = m_services->get<le::Context>();
 	auto load_task = context.create_asset_load_task(&queue);
 	load_task->enqueue<le::Font>("font.ttf");
-	load_task->enqueue<le::Texture>("hog_bg.jpg");
+
+	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
 
 	queue.enqueue(*load_task);
 

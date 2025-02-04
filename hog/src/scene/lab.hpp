@@ -1,6 +1,7 @@
 #pragma once
 #include <le2d/drawable/shape.hpp>
 #include <le2d/input.hpp>
+#include <level_info.hpp>
 #include <scene/scene.hpp>
 
 namespace hog::scene {
@@ -20,7 +21,7 @@ class Lab : public Scene {
 	void render(le::Renderer& renderer) const final;
 	void disengage_input() final;
 
-	void load_fonts();
+	void load_assets();
 	void create_textures();
 
 	void inspect();
@@ -29,6 +30,8 @@ class Lab : public Scene {
 	le::drawable::Quad m_background{};
 	le::drawable::Quad m_quad{};
 	le::drawable::LineRect m_line_rect{};
+
+	LevelInfo m_level_info{};
 
 	le::input::KeyAxis m_horz{};
 	le::input::KeyAxis m_rotate{};
