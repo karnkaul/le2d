@@ -4,6 +4,7 @@
 #include <le2d/transform.hpp>
 #include <algorithm>
 #include <gsl/pointers>
+#include <string>
 
 namespace le {
 template <typename PayloadT>
@@ -50,6 +51,7 @@ class BasicAnimation {
 		return sampler(m_timeline, elapsed);
 	}
 
+	std::string name{};
 	kvf::Seconds elapsed{};
 
   private:
