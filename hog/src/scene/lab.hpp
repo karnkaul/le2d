@@ -3,6 +3,7 @@
 #include <le2d/drawable/shape.hpp>
 #include <le2d/input.hpp>
 #include <level_info.hpp>
+#include <prop.hpp>
 #include <scene/scene.hpp>
 
 namespace hog::scene {
@@ -31,9 +32,10 @@ class Lab : public Scene {
 	le::drawable::Quad m_background{};
 	le::drawable::Quad m_quad{};
 	le::drawable::LineRect m_line_rect{};
-	le::Animator<le::Animation> m_anim{};
 
 	LevelInfo m_level_info{};
+
+	std::vector<Prop> m_props{};
 
 	le::input::KeyAxis m_horz{};
 	le::input::KeyAxis m_rotate{};

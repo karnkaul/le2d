@@ -21,13 +21,13 @@ class BasicAnimation {
 
 	[[nodiscard]] auto get_duration() const -> kvf::Seconds { return m_duration; }
 
+	[[nodiscard]] auto get_timeline() const -> std::span<Keyframe const> { return m_timeline; }
+
 	void set_timeline(std::vector<Keyframe> keyframes) {
 		m_timeline = std::move(keyframes);
 		std::ranges::sort(m_timeline, [](Keyframe const& a, Keyframe const& b) { return a.timestamp < b.timestamp; });
 		m_duration = m_timeline.empty() ? 0s : m_timeline.back().timestamp;
 	}
-
-	[[nodiscard]] auto get_timeline() const -> std::span<Keyframe const> { return m_timeline; }
 
 	std::string name{};
 	bool repeat{true};

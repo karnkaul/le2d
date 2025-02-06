@@ -20,12 +20,16 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_mb1 = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
 
 	auto const& asset_store = m_services->get<le::asset::Store>();
-	if (auto const* texture = asset_store.get<le::Texture>("hog_bg.jpg")) {
+	auto const& level_assets = m_level_info.assets;
+	if (auto const* texture = asset_store.get<le::Texture>(level_assets.textures.at(m_level_info.background.texture))) {
 		m_background.create(texture->get_size());
 		m_background.texture = texture;
 	}
 
-	if (auto const* animation = asset_store.get<le::Animation>("animations/lerp.json")) { m_anim.set_animation(animation); }
+	for (auto const& prop_info : m_level_info.props) {
+		auto& prop = m_props.emplace_back();
+		prop.load(asset_store, level_assets, prop_info);
+	}
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -64,8 +68,7 @@ void Lab::tick(kvf::Seconds const dt) {
 	auto const drot = m_rotate.value();
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
-	m_anim.tick(dt);
-	m_quad.instance.transform = m_anim.get_payload();
+	for (auto& prop : m_props) { prop.tick(dt); }
 
 	auto const rect = m_quad.bounding_rect();
 	if (rect.contains(cursor_pos)) {
@@ -91,6 +94,8 @@ void Lab::render(le::Renderer& renderer) const {
 	m_background.draw(renderer);
 	m_quad.draw(renderer);
 	m_line_rect.draw(renderer);
+
+	for (auto const& prop : m_props) { prop.draw(renderer); }
 
 	n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
 	renderer.set_render_area(n_viewport);
@@ -120,8 +125,9 @@ void Lab::load_assets() {
 
 	auto load_task = context.create_asset_load_task(&queue);
 	load_task->enqueue<le::Font>("font.ttf");
-	load_task->enqueue<le::Animation>("animations/lerp.json");
 	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
+	for (auto const& animation : m_level_info.assets.animations) { load_task->enqueue<le::Animation>(animation); }
+	for (auto const& flipbook : m_level_info.assets.flipbooks) { load_task->enqueue<le::Flipbook>(flipbook); }
 
 	queue.enqueue(*load_task);
 
