@@ -1,4 +1,5 @@
 #include <djson/json.hpp>
+#include <kvf/util.hpp>
 #include <level_info.hpp>
 
 void hog::from_json(dj::Json const& json, LevelAssets& level_assets) {
@@ -7,6 +8,7 @@ void hog::from_json(dj::Json const& json, LevelAssets& level_assets) {
 
 void hog::from_json(dj::Json const& json, LevelBackground& level_background) {
 	from_json(json["texture"], level_background.texture, level_background.texture);
+	if (auto const& color = json["color"]) { level_background.color = kvf::util::color_from_hex(color.as_string()); }
 	from_json(json["min_scale"], level_background.min_scale, level_background.min_scale);
 	from_json(json["max_scale"], level_background.max_scale, level_background.max_scale);
 	from_json(json["default_scale"], level_background.default_scale, level_background.default_scale);

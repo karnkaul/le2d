@@ -15,7 +15,7 @@ class Lab : public Scene {
 	void on_event(le::event::CursorPos pos) final;
 	void on_event(le::event::Scroll scroll) final;
 
-	[[nodiscard]] auto clear_color() const -> kvf::Color final { return kvf::Color{0x222222ff}; }
+	[[nodiscard]] auto clear_color() const -> kvf::Color final { return m_level_info.background.color; }
 
 	void tick(kvf::Seconds dt) final;
 	void render(le::Renderer& renderer) const final;
