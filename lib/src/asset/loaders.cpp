@@ -1,7 +1,6 @@
 #include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
-#include <le2d/font.hpp>
-#include <le2d/texture.hpp>
+#include <le2d/json_io.hpp>
 #include <log.hpp>
 
 namespace le::asset {
@@ -13,6 +12,15 @@ auto load_bytes(Context const& context, std::string_view const type, Uri const& 
 		return {};
 	}
 	return ret;
+}
+
+auto load_json(Context const& context, std::string_view const type, Uri const& uri) -> dj::Json {
+	auto text = std::string{};
+	if (!context.get_data_loader().load_string(text, uri)) {
+		log::warn("'{}' Failed to load {} JSON", uri.get_string(), type);
+		return {};
+	}
+	return dj::Json::parse(text);
 }
 
 template <typename T, typename F, typename... Args>
@@ -30,6 +38,16 @@ auto to_wrap(Uri const& uri, std::string_view const type, T t) {
 	return std::make_unique<Wrap<T>>(std::move(t));
 }
 } // namespace
+
+auto JsonLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<dj::Json>> {
+	static constexpr std::string_view type_v{"JSON"};
+	auto json = dj::Json{};
+	if (!m_context->get_data_loader().load_json(json, uri)) {
+		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
+		return {};
+	}
+	return to_wrap(uri, type_v, std::move(json));
+}
 
 auto SpirVLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<SpirV>> {
 	static constexpr std::string_view type_v{"SpirV"};
@@ -57,5 +75,23 @@ auto TextureLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>>
 	auto texture = m_context->create_texture();
 	if (!try_load(uri, type_v, texture, &Texture::load_and_write, bytes)) { return {}; }
 	return to_wrap(uri, type_v, std::move(texture));
+}
+
+auto AnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Animation>> {
+	static constexpr std::string_view type_v{"Animation"};
+	auto const json = load_json(*m_context, type_v, uri);
+	if (!json) { return {}; }
+	auto animation = Animation{};
+	from_json(json, animation);
+	return to_wrap(uri, type_v, std::move(animation));
+}
+
+auto FlipbookLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Flipbook>> {
+	static constexpr std::string_view type_v{"Flipbook"};
+	auto const json = load_json(*m_context, type_v, uri);
+	if (!json) { return {}; }
+	auto flipbook = Flipbook{};
+	from_json(json, flipbook);
+	return to_wrap(uri, type_v, std::move(flipbook));
 }
 } // namespace le::asset

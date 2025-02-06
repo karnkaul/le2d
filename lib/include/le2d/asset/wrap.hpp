@@ -1,6 +1,5 @@
 #pragma once
 #include <klib/polymorphic.hpp>
-#include <concepts>
 #include <typeindex>
 
 namespace le::asset {

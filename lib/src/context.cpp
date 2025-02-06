@@ -64,9 +64,12 @@ auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { ret
 
 auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
 	auto ret = std::make_unique<asset::LoadTask>(task_queue);
+	ret->add_loader(std::make_unique<asset::JsonLoader>(this));
 	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
+	ret->add_loader(std::make_unique<asset::AnimationLoader>(this));
+	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
 	return ret;
 }
 } // namespace le

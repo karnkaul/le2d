@@ -24,7 +24,7 @@ class LoadTask : public klib::task::Task {
 
 	template <std::derived_from<ILoader> LoaderT>
 	void add_loader(std::unique_ptr<LoaderT> loader) {
-		add_loader(typeid(typename LoaderT::type), std::move(loader));
+		add_loader(typeid(typename LoaderT::value_type), std::move(loader));
 	}
 
 	template <typename Type>
