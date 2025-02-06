@@ -31,7 +31,7 @@ class Lab : public Scene {
 	le::drawable::Quad m_background{};
 	le::drawable::Quad m_quad{};
 	le::drawable::LineRect m_line_rect{};
-	le::Animation m_anim{};
+	le::Animator<le::Animation> m_anim{};
 
 	LevelInfo m_level_info{};
 

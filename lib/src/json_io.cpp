@@ -4,6 +4,7 @@ namespace {
 template <typename AnimationT>
 void do_from_json(dj::Json const& json, AnimationT& animation) {
 	from_json(json["name"], animation.name);
+	if (auto const& repeat = json["repeat"]) { from_json(repeat, animation.repeat); }
 	auto timeline = std::vector<typename AnimationT::Keyframe>{};
 	auto const& in_timeline = json["timeline"].array_view();
 	timeline.reserve(in_timeline.size());

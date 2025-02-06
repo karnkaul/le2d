@@ -25,29 +25,7 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 		m_background.texture = texture;
 	}
 
-	auto keyframes = std::vector<le::Animation::Keyframe>{};
-	auto kf = le::Animation::Keyframe{};
-	kf.timestamp = 0s;
-	keyframes.push_back(kf);
-	kf.timestamp = 1s;
-	kf.payload.position.y = 200.0f;
-	keyframes.push_back(kf);
-	kf.timestamp = 1.5s;
-	kf.payload.orientation = 90.0f;
-	keyframes.push_back(kf);
-	kf.timestamp = 2s;
-	kf.payload.orientation = 180.0f;
-	keyframes.push_back(kf);
-	kf.timestamp = 3s;
-	kf.payload.position.y = 0.0f;
-	keyframes.push_back(kf);
-	kf.timestamp = 3.5s;
-	kf.payload.orientation = 270.0f;
-	keyframes.push_back(kf);
-	kf.timestamp = 4s;
-	kf.payload.orientation = 360.0f;
-	keyframes.push_back(kf);
-	m_anim.set_timeline(std::move(keyframes));
+	if (auto const* animation = asset_store.get<le::Animation>("animations/lerp.json")) { m_anim.set_animation(animation); }
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -87,7 +65,7 @@ void Lab::tick(kvf::Seconds const dt) {
 	m_render_view.orientation += 50.0f * drot * dt.count();
 
 	m_anim.tick(dt);
-	m_quad.instance.transform = m_anim.get_transform();
+	m_quad.instance.transform = m_anim.get_payload();
 
 	auto const rect = m_quad.bounding_rect();
 	if (rect.contains(cursor_pos)) {
@@ -142,7 +120,7 @@ void Lab::load_assets() {
 
 	auto load_task = context.create_asset_load_task(&queue);
 	load_task->enqueue<le::Font>("font.ttf");
-
+	load_task->enqueue<le::Animation>("animations/lerp.json");
 	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
 
 	queue.enqueue(*load_task);

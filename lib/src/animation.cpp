@@ -29,9 +29,10 @@ auto get_keyframe_at(std::span<KeyframeT const> timeline, kvf::Seconds const tim
 }
 } // namespace
 
-auto Animation::Sampler::operator()(std::span<Keyframe const> timeline, kvf::Seconds const time) const -> Transform {
+auto Animation::sample(kvf::Seconds const time) const -> Transform {
+	auto const timeline = get_timeline();
 	if (timeline.empty()) { return {}; }
-	auto const [left, right] = get_bounds(std::span{timeline}, time);
+	auto const [left, right] = get_bounds(timeline, time);
 	if (left.timestamp == right.timestamp) { return left.payload; }
 	auto const total_t = right.timestamp - left.timestamp;
 	auto const t = (time - left.timestamp) / total_t;
@@ -42,8 +43,8 @@ auto Animation::Sampler::operator()(std::span<Keyframe const> timeline, kvf::Sec
 	};
 }
 
-auto Flipbook::Sampler::operator()(std::span<Keyframe const> timeline, kvf::Seconds const time) const -> kvf::UvRect {
-	auto const* keyframe = get_keyframe_at(timeline, time);
+auto Flipbook::sample(kvf::Seconds const time) const -> kvf::UvRect {
+	auto const* keyframe = get_keyframe_at(get_timeline(), time);
 	if (keyframe == nullptr) { return {}; }
 	return keyframe->payload;
 }
