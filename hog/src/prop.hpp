@@ -20,7 +20,7 @@ class Prop {
 	std::string_view name{};
 	le::drawable::Sprite sprite{};
 	le::Transform transform{};
-	le::Animator<le::Animation> animation{};
-	le::Animator<le::Flipbook> flipbook{};
+	le::Animator animator{};
+	le::FlipAnimator flipper{};
 };
 } // namespace hog

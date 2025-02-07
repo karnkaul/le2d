@@ -1,4 +1,5 @@
 #pragma once
+#include <klib/polymorphic.hpp>
 #include <kvf/rect.hpp>
 #include <kvf/time.hpp>
 #include <le2d/transform.hpp>
@@ -14,10 +15,12 @@ struct AnimKeyframe {
 };
 
 template <typename PayloadT>
-class BasicAnimation {
+class BasicAnimation : public klib::Polymorphic {
   public:
 	using Payload = PayloadT;
 	using Keyframe = AnimKeyframe<PayloadT>;
+
+	[[nodiscard]] virtual auto sample(kvf::Seconds time) const -> PayloadT = 0;
 
 	[[nodiscard]] auto get_duration() const -> kvf::Seconds { return m_duration; }
 
@@ -37,20 +40,11 @@ class BasicAnimation {
 	kvf::Seconds m_duration{};
 };
 
-class Animation : public BasicAnimation<Transform> {
+template <typename PayloadT>
+class BasicAnimator {
   public:
-	[[nodiscard]] auto sample(kvf::Seconds time) const -> Transform;
-};
-
-class Flipbook : public BasicAnimation<kvf::UvRect> {
-  public:
-	[[nodiscard]] auto sample(kvf::Seconds time) const -> kvf::UvRect;
-};
-
-template <typename AnimationT>
-class Animator {
-  public:
-	using Payload = typename AnimationT::Payload;
+	using Payload = PayloadT;
+	using AnimationT = BasicAnimation<PayloadT>;
 
 	[[nodiscard]] auto has_animation() const -> bool { return get_animation() != nullptr; }
 
@@ -83,4 +77,18 @@ class Animator {
 	AnimationT const* m_animation{};
 	Payload m_payload{};
 };
+
+class Animation : public BasicAnimation<Transform> {
+  public:
+	[[nodiscard]] auto sample(kvf::Seconds time) const -> Transform final;
+};
+
+using Animator = BasicAnimator<Transform>;
+
+class Flipbook : public BasicAnimation<kvf::UvRect> {
+  public:
+	[[nodiscard]] auto sample(kvf::Seconds time) const -> kvf::UvRect final;
+};
+
+using FlipAnimator = BasicAnimator<kvf::UvRect>;
 } // namespace le
