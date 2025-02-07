@@ -14,8 +14,6 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_quad.texture = &m_textures.front();
 	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
 
-	m_horz = le::input::KeyAxis{GLFW_KEY_A, GLFW_KEY_D};
-	m_rotate = le::input::KeyAxis{GLFW_KEY_E, GLFW_KEY_Q};
 	m_escape = le::input::KeyChord{GLFW_KEY_ESCAPE, GLFW_RELEASE};
 	m_mb1 = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
 
@@ -26,16 +24,11 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 		m_background.texture = texture;
 	}
 
-	for (auto const& prop_info : m_level_info.props) {
-		auto& prop = m_props.emplace_back();
-		prop.load(asset_store, level_assets, prop_info);
-	}
+	m_props.reserve(m_level_info.props.size());
+	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
 }
 
 void Lab::on_event(le::event::Key const key) {
-	m_horz.on_event(key);
-	m_rotate.on_event(key);
-
 	if (m_escape.is_engaged(key)) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
 }
 
@@ -47,26 +40,18 @@ void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normaliz
 
 void Lab::on_event(le::event::Scroll const scroll) {
 	auto const dscale = m_zoom_speed * scroll.y;
-	m_render_view.scale.x = std::clamp(m_render_view.scale.x + dscale, m_level_info.background.min_scale, m_level_info.background.max_scale);
-	m_render_view.scale.y = m_render_view.scale.x;
+	m_world_view.scale.x = std::clamp(m_world_view.scale.x + dscale, m_level_info.background.min_scale, m_level_info.background.max_scale);
+	m_world_view.scale.y = m_world_view.scale.x;
 }
 
 void Lab::tick(kvf::Seconds const dt) {
-	auto dxy = glm::vec2{};
-	dxy.x = m_horz.value();
-	if (std::abs(dxy.x) > 0.0f) { dxy = glm::normalize(dxy); }
-	m_render_view.position.x += m_translate_speed * dxy.x * dt.count();
-
-	auto const unprojector = get_unprojector(m_render_view);
+	auto const unprojector = get_unprojector(m_world_view);
 	auto const cursor_pos = unprojector.unproject(m_cursor_pos);
 	if (m_mb1.is_engaged()) {
 		auto const prev_fb_cursor = unprojector.unproject(m_prev_cursor_pos);
 		auto const cursor_dxy = cursor_pos - prev_fb_cursor;
-		m_render_view.position -= cursor_dxy;
+		m_world_view.position -= cursor_dxy;
 	}
-
-	auto const drot = m_rotate.value();
-	m_render_view.orientation += 50.0f * drot * dt.count();
 
 	for (auto& prop : m_props) { prop.tick(dt); }
 
@@ -83,32 +68,15 @@ void Lab::tick(kvf::Seconds const dt) {
 }
 
 void Lab::render(le::Renderer& renderer) const {
-	auto n_viewport = kvf::uv_rect_v;
-	auto const polygon_mode = vk::PolygonMode::eFill;
 	renderer.set_line_width(3.0f);
-	renderer.polygon_mode = polygon_mode;
+	renderer.view = m_world_view;
+	render_world(renderer);
 
-	// n_viewport.rb.x = 0.5f;
-	renderer.set_render_area(n_viewport);
-	renderer.view = m_render_view;
-	m_background.draw(renderer);
-	m_quad.draw(renderer);
-	m_line_rect.draw(renderer);
-
-	for (auto const& prop : m_props) { prop.draw(renderer); }
-
-	n_viewport = {.lt = {0.5f, 0.25f}, .rb = {0.75f, 0.5f}};
-	renderer.set_render_area(n_viewport);
 	renderer.view = {};
-	renderer.view.scale = glm::vec2{0.25f};
-	// m_quad.draw(renderer);
+	render_ui(renderer);
 }
 
-void Lab::disengage_input() {
-	m_horz.disengage();
-	m_rotate.disengage();
-	m_mb1.disengage();
-}
+void Lab::disengage_input() { m_mb1.disengage(); }
 
 void Lab::load_assets() {
 	auto& context = m_services->get<le::Context>();
@@ -118,7 +86,7 @@ void Lab::load_assets() {
 		m_level_info = {};
 		from_json(level_json, m_level_info);
 		log::info("'{}' level loaded", m_level_info.name);
-		m_render_view.scale = glm::vec2{m_level_info.background.default_scale};
+		m_world_view.scale = glm::vec2{m_level_info.background.default_scale};
 	}
 
 	auto queue = klib::task::Queue{};
@@ -158,9 +126,22 @@ void Lab::create_textures() {
 
 void Lab::inspect() {
 	if (ImGui::Begin("Inspect")) {
-		ImGui::DragFloat("move speed", &m_translate_speed, 1.0f, 1.0f, 2000.0f);
+		ImGui::DragFloat2("view position", &m_world_view.position.x, 1.0f);
+		if (ImGui::DragFloat("view scale", &m_world_view.scale.x, 0.01f, m_level_info.background.min_scale, m_level_info.background.max_scale)) {
+			m_world_view.scale.y = m_world_view.scale.x;
+		}
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
 	}
 	ImGui::End();
 }
+
+void Lab::render_world(le::Renderer& renderer) const {
+	m_background.draw(renderer);
+	m_quad.draw(renderer);
+	m_line_rect.draw(renderer);
+
+	for (auto const& prop : m_props) { prop.draw(renderer); }
+}
+
+void Lab::render_ui(le::Renderer& renderer) const {}
 } // namespace hog::scene

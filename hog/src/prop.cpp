@@ -1,17 +1,8 @@
-#include <djson/json.hpp>
-#include <le2d/asset/store.hpp>
-#include <level_info.hpp>
 #include <prop.hpp>
+#include <level_info.hpp>
+#include <le2d/asset/store.hpp>
 
 namespace hog {
-void Prop::load(le::asset::Store const& store, LevelAssets const& assets, PropInfo const& info) {
-	name = info.name;
-	transform = sprite.instance.transform = info.transform;
-	sprite.set_texture(store.get<le::Texture>(assets.textures.at(info.texture)));
-	if (info.animation) { animator.set_animation(store.get<le::Animation>(assets.animations.at(*info.animation))); }
-	if (info.flipbook) { flipper.set_animation(store.get<le::Flipbook>(assets.flipbooks.at(*info.flipbook))); }
-}
-
 void Prop::tick(kvf::Seconds dt) {
 	if (animator.has_animation()) {
 		animator.tick(dt);
@@ -23,3 +14,12 @@ void Prop::tick(kvf::Seconds dt) {
 	}
 }
 } // namespace hog
+
+auto hog::create_prop(le::asset::Store const& asset_store, LevelAssets const& level_assets, PropInfo const& prop_info) -> Prop {
+	auto ret = Prop{.name = prop_info.name};
+	ret.transform = ret.sprite.instance.transform = prop_info.transform;
+	ret.sprite.set_texture(asset_store.get<le::Texture>(level_assets.textures.at(prop_info.texture)));
+	if (prop_info.animation) { ret.animator.set_animation(asset_store.get<le::Animation>(level_assets.animations.at(*prop_info.animation))); }
+	if (prop_info.flipbook) { ret.flipper.set_animation(asset_store.get<le::Flipbook>(level_assets.flipbooks.at(*prop_info.flipbook))); }
+	return ret;
+}

@@ -2,18 +2,9 @@
 #include <le2d/animation.hpp>
 #include <le2d/drawable/shape.hpp>
 
-namespace le::asset {
-class Store;
-}
-
 namespace hog {
-struct LevelAssets;
-struct PropInfo;
-
 class Prop {
   public:
-	void load(le::asset::Store const& store, LevelAssets const& assets, PropInfo const& info);
-
 	void tick(kvf::Seconds dt);
 	void draw(le::Renderer& renderer) const { sprite.draw(renderer); }
 
@@ -23,4 +14,15 @@ class Prop {
 	le::Animator animator{};
 	le::FlipAnimator flipper{};
 };
+} // namespace hog
+
+namespace le::asset {
+class Store;
+}
+
+namespace hog {
+struct LevelAssets;
+struct PropInfo;
+
+[[nodiscard]] auto create_prop(le::asset::Store const& asset_store, LevelAssets const& level_assets, PropInfo const& prop_info) -> Prop;
 } // namespace hog

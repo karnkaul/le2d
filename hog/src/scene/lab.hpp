@@ -28,6 +28,9 @@ class Lab : public Scene {
 
 	void inspect();
 
+	void render_world(le::Renderer& renderer) const;
+	void render_ui(le::Renderer& renderer) const;
+
 	std::vector<le::Texture> m_textures{};
 	le::drawable::Quad m_background{};
 	le::drawable::Quad m_quad{};
@@ -37,16 +40,13 @@ class Lab : public Scene {
 
 	std::vector<Prop> m_props{};
 
-	le::input::KeyAxis m_horz{};
-	le::input::KeyAxis m_rotate{};
 	le::input::KeyChord m_escape{};
 	le::input::MouseButtonTrigger m_mb1{};
 
 	le::ndc::vec2 m_cursor_pos{};
 	le::ndc::vec2 m_prev_cursor_pos{};
-	float m_translate_speed{500.0f};
 	float m_zoom_speed{0.05f};
 
-	le::Transform m_render_view{};
+	le::Transform m_world_view{};
 };
 } // namespace hog::scene
