@@ -45,7 +45,7 @@ class Lab : public Scene {
 	le::input::KeyChord m_escape{};
 	le::input::MouseButtonTrigger m_mb1{};
 
-	ui::Button m_widget{};
+	ui::Button m_button{};
 
 	le::ndc::vec2 m_cursor_pos{};
 	le::ndc::vec2 m_prev_cursor_pos{};

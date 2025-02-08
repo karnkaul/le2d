@@ -2,5 +2,5 @@
 #include <cstdint>
 
 namespace hog::ui {
-enum class WidgetState : std::uint8_t { None, Hover, Press, COUNT_ };
+enum class WidgetState : std::uint8_t { None, Hover, Press, Disabled, COUNT_ };
 } // namespace hog::ui

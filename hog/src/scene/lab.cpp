@@ -28,11 +28,11 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_props.reserve(m_level_info.props.size());
 	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
 
-	m_widget.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_widget.set_size(glm::vec2{200.0f, 100.0f});
-	m_widget.set_position({200.0f, -100.0f});
-	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_widget.set_text(*font, "click"); }
-	m_widget.set_on_click([] { log::debug("clicked"); });
+	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
+	m_button.set_size(glm::vec2{200.0f, 100.0f});
+	m_button.set_position({200.0f, -100.0f});
+	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_button.set_text(*font, "click"); }
+	m_button.set_on_click([] { log::debug("clicked"); });
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -41,12 +41,12 @@ void Lab::on_event(le::event::Key const key) {
 
 void Lab::on_event(le::event::MouseButton const button) {
 	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
-	m_widget.on_button(button);
+	m_button.on_button(button);
 }
 
 void Lab::on_event(le::event::CursorPos const pos) {
 	m_cursor_pos = pos.normalized;
-	m_widget.on_cursor(pos);
+	m_button.on_cursor(pos);
 }
 
 void Lab::on_event(le::event::Scroll const scroll) {
@@ -73,8 +73,8 @@ void Lab::tick(kvf::Seconds const dt) {
 		m_quad.instance.tint = kvf::white_v;
 	}
 
-	m_widget.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_widget.tick(dt);
+	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
+	m_button.tick(dt);
 
 	inspect();
 
@@ -90,7 +90,10 @@ void Lab::render(le::Renderer& renderer) const {
 	render_ui(renderer);
 }
 
-void Lab::disengage_input() { m_mb1.disengage(); }
+void Lab::disengage_input() {
+	m_mb1.disengage();
+	m_button.disengage();
+}
 
 void Lab::load_assets() {
 	auto& context = m_services->get<le::Context>();
@@ -145,9 +148,8 @@ void Lab::inspect() {
 			m_world_view.scale.y = m_world_view.scale.x;
 		}
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
-
-		static constexpr auto widget_state_str_v = klib::EnumArray<ui::WidgetState, std::string_view>{"None", "Hover", "Press"};
-		ImGui::TextUnformatted(klib::FixedString{"widget state: {}", widget_state_str_v[m_widget.get_state()]}.c_str());
+		auto disabled = m_button.get_state() == ui::WidgetState::Disabled;
+		if (ImGui::Checkbox("disabled", &disabled)) { m_button.set_disabled(disabled); }
 	}
 	ImGui::End();
 }
@@ -161,7 +163,7 @@ void Lab::render_world(le::Renderer& renderer) const {
 }
 
 void Lab::render_ui(le::Renderer& renderer) const {
-	m_widget.draw(renderer);
+	m_button.draw(renderer);
 	//
 }
 } // namespace hog::scene

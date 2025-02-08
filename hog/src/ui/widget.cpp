@@ -6,6 +6,8 @@ void Widget::set_framebuffer_size(glm::vec2 const framebuffer_size) { m_framebuf
 
 void Widget::on_cursor(le::event::CursorPos const& cursor_pos) {
 	m_cursor_pos = cursor_pos.normalized;
+	if (m_state == State::Disabled) { return; }
+
 	if (is_cursor_hit()) {
 		if (m_state == State::None) { m_state = State::Hover; }
 	} else {
@@ -22,13 +24,19 @@ void Widget::on_button(le::event::MouseButton const& mouse_button) {
 	}
 }
 
+void Widget::set_disabled(bool const disabled) { m_state = disabled ? State::Disabled : State::None; }
+
 void Widget::tick(kvf::Seconds const dt) {
 	if (m_debounce_remain > 0s) { m_debounce_remain -= dt; }
 }
 
+void Widget::disengage() { m_state = State::None; }
+
 auto Widget::is_cursor_hit() const -> bool { return get_hitbox().contains(m_cursor_pos.to_target(m_framebuffer_size)); }
 
 void Widget::on_mb1_press() {
+	if (m_state == State::Disabled) { return; }
+
 	auto const is_hit = is_cursor_hit();
 	if (!is_hit) {
 		m_state = State::None;
@@ -39,6 +47,8 @@ void Widget::on_mb1_press() {
 }
 
 void Widget::on_mb1_release() {
+	if (m_state == State::Disabled) { return; }
+
 	auto const is_hit = is_cursor_hit();
 	if (!is_hit) {
 		m_state = State::None;

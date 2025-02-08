@@ -17,11 +17,14 @@ class Widget : public klib::Polymorphic {
 	void on_cursor(le::event::CursorPos const& cursor_pos);
 	void on_button(le::event::MouseButton const& mouse_button);
 
+	void set_disabled(bool disabled);
+
 	[[nodiscard]] virtual auto get_hitbox() const -> kvf::Rect<> = 0;
 	virtual void tick(kvf::Seconds dt);
 	virtual void draw(le::Renderer& renderer) const = 0;
 
 	virtual void on_click() {}
+	virtual void disengage();
 
 	kvf::Seconds click_debounce{100ms};
 
