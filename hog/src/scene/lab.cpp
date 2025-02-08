@@ -1,4 +1,5 @@
 #include <djson/json.hpp>
+#include <klib/fixed_string.hpp>
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
@@ -8,6 +9,8 @@
 #include <scene/switcher.hpp>
 
 namespace hog::scene {
+void Lab::TestWidget::on_click() { log::debug("clicked"); }
+
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	load_assets();
 	create_textures();
@@ -26,6 +29,10 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 
 	m_props.reserve(m_level_info.props.size());
 	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
+
+	m_widget.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
+	m_widget.hitbox.create(glm::vec2{100.0f});
+	m_widget.hitbox.instance.transform.position = {200.0f, -100.0f};
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -34,9 +41,13 @@ void Lab::on_event(le::event::Key const key) {
 
 void Lab::on_event(le::event::MouseButton const button) {
 	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
+	m_widget.on_button(button);
 }
 
-void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
+void Lab::on_event(le::event::CursorPos const pos) {
+	m_cursor_pos = pos.normalized;
+	m_widget.on_cursor(pos);
+}
 
 void Lab::on_event(le::event::Scroll const scroll) {
 	auto const dscale = m_zoom_speed * scroll.y;
@@ -61,6 +72,9 @@ void Lab::tick(kvf::Seconds const dt) {
 	} else {
 		m_quad.instance.tint = kvf::white_v;
 	}
+
+	m_widget.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
+	m_widget.tick(dt);
 
 	inspect();
 
@@ -131,6 +145,9 @@ void Lab::inspect() {
 			m_world_view.scale.y = m_world_view.scale.x;
 		}
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
+
+		static constexpr auto widget_state_str_v = klib::EnumArray<ui::WidgetState, std::string_view>{"None", "Hover", "Press"};
+		ImGui::TextUnformatted(klib::FixedString{"widget state: {}", widget_state_str_v[m_widget.get_state()]}.c_str());
 	}
 	ImGui::End();
 }
@@ -143,5 +160,8 @@ void Lab::render_world(le::Renderer& renderer) const {
 	for (auto const& prop : m_props) { prop.draw(renderer); }
 }
 
-void Lab::render_ui(le::Renderer& renderer) const {}
+void Lab::render_ui(le::Renderer& renderer) const {
+	m_widget.draw(renderer);
+	//
+}
 } // namespace hog::scene
