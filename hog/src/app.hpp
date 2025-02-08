@@ -12,13 +12,6 @@ struct App : public scene::ISwitcher {
 	void run();
 
   private:
-	struct EventVisitor;
-
-	struct HeldKeys {
-		bool left{};
-		bool right{};
-	};
-
 	auto get_services() const -> le::ServiceLocator const& final { return m_services; }
 
 	void enqueue_switch(SwitchFunc create_scene) final;

@@ -13,59 +13,6 @@ auto const context_ci = le::ContextCreateInfo{
 };
 }
 
-struct App::EventVisitor {
-	App& self;
-
-	void operator()(le::event::WindowClose const close) const { self.m_scene->on_event(close); }
-
-	void operator()(le::event::WindowFocus const focus) const { self.m_scene->on_event(focus); }
-
-	void operator()(le::event::CursorFocus const focus) const { self.m_scene->on_event(focus); }
-
-	void operator()(le::event::FramebufferResize const resize) const {
-		self.m_scene->on_event(resize);
-		if (self.m_terminal) { self.m_terminal->resize(resize); }
-	}
-
-	void operator()(le::event::WindowResize const resize) const { self.m_scene->on_event(resize); }
-
-	void operator()(le::event::WindowPos const pos) const { self.m_scene->on_event(pos); }
-
-	void operator()(le::event::CursorPos const& cursor_pos) const {
-		if (!self.m_terminal || !self.m_terminal->is_active()) { self.m_scene->on_event(cursor_pos); }
-
-		if (self.m_terminal) { self.m_terminal->on_cursor_move(cursor_pos); }
-	}
-
-	void operator()(le::event::Codepoint const codepoint) const {
-		if (!self.m_terminal || !self.m_terminal->is_active()) { self.m_scene->on_event(codepoint); }
-
-		if (self.m_terminal) { self.m_terminal->on_codepoint(codepoint); }
-	}
-
-	void operator()(le::event::Key const& key) const {
-		if (!self.m_terminal || !self.m_terminal->is_active()) { self.m_scene->on_event(key); }
-
-		if (key.action == GLFW_RELEASE && key.key == GLFW_KEY_W && key.mods == GLFW_MOD_CONTROL) { self.m_context.shutdown(); }
-
-		if (self.m_terminal) {
-			self.m_terminal->on_key(key);
-			if (!self.m_was_terminal_active && self.m_terminal->is_active()) { self.m_scene->disengage_input(); }
-			self.m_was_terminal_active = self.m_terminal->is_active();
-		}
-	}
-
-	void operator()(le::event::MouseButton const& button) const { self.m_scene->on_event(button); }
-
-	void operator()(le::event::Scroll const scroll) const {
-		if (!self.m_terminal || !self.m_terminal->is_active()) { self.m_scene->on_event(scroll); }
-
-		if (self.m_terminal) { self.m_terminal->on_scroll(scroll); }
-	}
-
-	void operator()(le::event::Drop const drop) const { self.m_scene->on_event(drop); }
-};
-
 App::App(gsl::not_null<le::IDataLoader const*> data_loader) : m_context(data_loader, context_ci) {}
 
 void App::run() {
@@ -117,7 +64,7 @@ void App::tick(kvf::Seconds const dt) {
 
 	m_scene->tick(dt);
 
-	if (m_terminal) { m_terminal->tick(dt); }
+	if (m_terminal) { m_terminal->tick(m_context.framebuffer_size(), dt); }
 }
 
 void App::render(le::Renderer& renderer) const {
@@ -127,7 +74,12 @@ void App::render(le::Renderer& renderer) const {
 }
 
 void App::process_events() {
-	auto const visitor = EventVisitor{*this};
-	for (auto const& event : m_context.event_queue()) { std::visit(visitor, event); }
+	auto const events = m_context.event_queue();
+
+	auto terminal_activated = false;
+	if (m_terminal) { m_terminal->handle_events(events, &terminal_activated); }
+	if (terminal_activated) { m_scene->disengage_input(); }
+
+	if (m_terminal && !m_terminal->is_active()) { m_scene->handle_events(events); }
 }
 } // namespace hog

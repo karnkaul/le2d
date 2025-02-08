@@ -13,6 +13,8 @@ class Scene : public SubEventHandler {
 
 	[[nodiscard]] virtual auto clear_color() const -> kvf::Color { return kvf::black_v; }
 
+	void handle_events(std::span<le::Event const> events);
+
 	virtual void tick(kvf::Seconds /*dt*/) {}
 	virtual void render(le::Renderer& /*renderer*/) const {}
 
