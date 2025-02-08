@@ -6,7 +6,7 @@
 #include <level_info.hpp>
 #include <prop.hpp>
 #include <scene/scene.hpp>
-#include <ui/widget.hpp>
+#include <ui/button.hpp>
 
 namespace hog::scene {
 class Lab : public Scene {
@@ -14,23 +14,6 @@ class Lab : public Scene {
 	explicit Lab(gsl::not_null<le::ServiceLocator*> services);
 
   private:
-	struct TestWidget : ui::Widget {
-		[[nodiscard]] auto get_hitbox() const -> kvf::Rect<> final { return hitbox.bounding_rect(); }
-		void tick(kvf::Seconds /*dt*/) final {
-			static constexpr auto state_colors_v = klib::EnumArray<ui::WidgetState, kvf::Color>{
-				kvf::white_v,
-				kvf::cyan_v,
-				kvf::magenta_v,
-			};
-			hitbox.instance.tint = state_colors_v[get_state()];
-		}
-		void draw(le::Renderer& renderer) const final { hitbox.draw(renderer); }
-
-		void on_click() final;
-
-		le::drawable::Quad hitbox{};
-	};
-
 	void on_event(le::event::Key key) final;
 	void on_event(le::event::MouseButton button) final;
 	void on_event(le::event::CursorPos pos) final;
@@ -62,7 +45,7 @@ class Lab : public Scene {
 	le::input::KeyChord m_escape{};
 	le::input::MouseButtonTrigger m_mb1{};
 
-	TestWidget m_widget{};
+	ui::Button m_widget{};
 
 	le::ndc::vec2 m_cursor_pos{};
 	le::ndc::vec2 m_prev_cursor_pos{};

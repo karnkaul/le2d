@@ -3,10 +3,9 @@
 #include <kvf/time.hpp>
 #include <le2d/event.hpp>
 #include <le2d/renderer.hpp>
+#include <ui/widget_state.hpp>
 
 namespace hog::ui {
-enum class WidgetState : std::uint8_t { None, Hover, Press, COUNT_ };
-
 class Widget : public klib::Polymorphic {
   public:
 	using State = WidgetState;
@@ -19,10 +18,12 @@ class Widget : public klib::Polymorphic {
 	void on_button(le::event::MouseButton const& mouse_button);
 
 	[[nodiscard]] virtual auto get_hitbox() const -> kvf::Rect<> = 0;
-	virtual void tick(kvf::Seconds dt) = 0;
+	virtual void tick(kvf::Seconds dt);
 	virtual void draw(le::Renderer& renderer) const = 0;
 
 	virtual void on_click() {}
+
+	kvf::Seconds click_debounce{100ms};
 
   protected:
 	[[nodiscard]] auto is_cursor_hit() const -> bool;
@@ -34,5 +35,6 @@ class Widget : public klib::Polymorphic {
 	le::ndc::vec2 m_cursor_pos{};
 
 	State m_state{};
+	kvf::Seconds m_debounce_remain{};
 };
 } // namespace hog::ui

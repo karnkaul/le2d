@@ -22,7 +22,9 @@ void Widget::on_button(le::event::MouseButton const& mouse_button) {
 	}
 }
 
-void Widget::tick(kvf::Seconds const /*dt*/) {}
+void Widget::tick(kvf::Seconds const dt) {
+	if (m_debounce_remain > 0s) { m_debounce_remain -= dt; }
+}
 
 auto Widget::is_cursor_hit() const -> bool { return get_hitbox().contains(m_cursor_pos.to_target(m_framebuffer_size)); }
 
@@ -43,7 +45,10 @@ void Widget::on_mb1_release() {
 		return;
 	}
 
-	on_click();
+	if (m_debounce_remain <= 0s) {
+		on_click();
+		m_debounce_remain = click_debounce;
+	}
 	m_state = State::Hover;
 }
 } // namespace hog::ui

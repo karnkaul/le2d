@@ -9,8 +9,6 @@
 #include <scene/switcher.hpp>
 
 namespace hog::scene {
-void Lab::TestWidget::on_click() { log::debug("clicked"); }
-
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	load_assets();
 	create_textures();
@@ -31,8 +29,10 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
 
 	m_widget.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_widget.hitbox.create(glm::vec2{100.0f});
-	m_widget.hitbox.instance.transform.position = {200.0f, -100.0f};
+	m_widget.set_size(glm::vec2{200.0f, 100.0f});
+	m_widget.set_position({200.0f, -100.0f});
+	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_widget.set_text(*font, "click"); }
+	m_widget.set_on_click([] { log::debug("clicked"); });
 }
 
 void Lab::on_event(le::event::Key const key) {
