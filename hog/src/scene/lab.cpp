@@ -76,6 +76,8 @@ void Lab::tick(kvf::Seconds const dt) {
 	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
 	m_button.tick(dt);
 
+	if (m_button.get_state() == ui::WidgetState::Press) { m_mb1.disengage(); }
+
 	inspect();
 
 	m_prev_cursor_pos = m_cursor_pos;
@@ -150,6 +152,15 @@ void Lab::inspect() {
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
 		auto disabled = m_button.get_state() == ui::WidgetState::Disabled;
 		if (ImGui::Checkbox("disabled", &disabled)) { m_button.set_disabled(disabled); }
+
+		auto params = m_button.get_superellipse_params();
+		auto modified = false;
+		modified |= ImGui::DragFloat2("size", &params.size.x);
+		modified |= ImGui::DragFloat("exponent", &params.exponent);
+		auto resolution = int(params.resolution);
+		modified |= ImGui::DragInt("resolution", &resolution);
+		params.resolution = std::int32_t(resolution);
+		if (modified) { m_button.set_superellipse_params(params); }
 	}
 	ImGui::End();
 }

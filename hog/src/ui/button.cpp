@@ -16,8 +16,6 @@ void Button::on_click() {
 	if (m_on_click) { m_on_click(); }
 }
 
-void Button::set_size(glm::vec2 const size) { m_background.create(size); }
-
 void Button::set_position(glm::vec2 const position) {
 	m_background.instance.transform.position = m_text.instance.transform.position = position;
 	m_text.instance.transform.position.y += style.text_n_y_offset * float(style.text_height);

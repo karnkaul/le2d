@@ -17,15 +17,25 @@ class Button : public Widget {
 
 	void on_click() override;
 
-	void set_size(glm::vec2 size);
+	[[nodiscard]] auto get_superellipse_params() const -> le::SuperEllipseParams const& { return m_background.get_params(); }
+	void set_superellipse_params(le::SuperEllipseParams const& params) { m_background.create(params); }
+
+	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_background.get_size(); }
+	void set_size(glm::vec2 size) { m_background.create(le::SuperEllipseParams{.size = size}); }
+
+	[[nodiscard]] auto get_texture() const -> le::ITexture const* { return m_background.texture; }
+	void set_texture(le::ITexture const* texture) { m_background.texture = texture; }
+
+	[[nodiscard]] auto get_position() const -> glm::vec2 { return m_background.instance.transform.position; }
 	void set_position(glm::vec2 position);
+
 	void set_text(le::Font& font, std::string_view text);
 	void set_on_click(OnClick callback) { m_on_click = std::move(callback); }
 
 	Style style{};
 
   protected:
-	le::drawable::Quad m_background{};
+	le::drawable::SuperEllipse m_background{};
 	le::drawable::Text m_text{};
 
 	OnClick m_on_click{};

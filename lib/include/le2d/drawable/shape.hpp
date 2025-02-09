@@ -3,6 +3,7 @@
 #include <le2d/shape/line_rect.hpp>
 #include <le2d/shape/quad.hpp>
 #include <le2d/shape/sprite.hpp>
+#include <le2d/shape/super_ellipse.hpp>
 #include <le2d/shape/text.hpp>
 #include <le2d/vertex_bounds.hpp>
 
@@ -50,4 +51,7 @@ using InstancedText = InstancedShape<shape::Text>;
 
 using LineRect = Shape<shape::LineRect>;
 using InstancedLineRect = InstancedShape<shape::LineRect>;
+
+using SuperEllipse = Shape<shape::SuperEllipse>;
+using InstancedSuperEllipse = InstancedShape<shape::SuperEllipse>;
 } // namespace le::drawable
