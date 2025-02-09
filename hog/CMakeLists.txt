@@ -1,4 +1,4 @@
-project(le2d-example)
+project(hog)
 
 add_executable(${PROJECT_NAME})
 
@@ -13,7 +13,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   src
 )
 
-file(GLOB_RECURSE sources LIST_DIRECTORIES false "src/*.[hc]pp")
+target_precompile_headers(${PROJECT_NAME} REUSE_FROM le2d)
+
+file(GLOB_RECURSE sources LIST_DIRECTORIES false "src/**.[hc]pp")
 target_sources(${PROJECT_NAME} PRIVATE
   ${sources}
 )

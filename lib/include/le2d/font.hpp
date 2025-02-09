@@ -1,16 +1,11 @@
 #pragma once
 #include <kvf/ttf.hpp>
+#include <le2d/text_height.hpp>
 #include <le2d/texture.hpp>
 #include <le2d/vertex_array.hpp>
 #include <unordered_map>
 
 namespace le {
-enum struct TextHeight : std::uint8_t {
-	Min = 8,
-	Default = 40,
-	Max = 200,
-};
-
 class FontAtlas {
   public:
 	using Glyph = kvf::ttf::Glyph;

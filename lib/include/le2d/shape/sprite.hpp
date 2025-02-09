@@ -6,7 +6,7 @@
 namespace le::shape {
 class Sprite : public klib::Polymorphic {
   public:
-	static constexpr auto size_v{Quad::rect_v.size()};
+	static constexpr auto size_v{QuadParams::rect_v.size()};
 
 	explicit Sprite(glm::vec2 size = size_v) { set_base_size(size); }
 

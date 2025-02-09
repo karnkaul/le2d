@@ -22,11 +22,14 @@ class LoadTask : public klib::task::Task {
 
 	explicit LoadTask(gsl::not_null<Queue*> queue) : m_queue(queue) {}
 
-	void add_loader(std::unique_ptr<ILoader> loader);
+	template <std::derived_from<ILoader> LoaderT>
+	void add_loader(std::unique_ptr<LoaderT> loader) {
+		add_loader(typeid(typename LoaderT::value_type), std::move(loader));
+	}
 
 	template <typename Type>
 	auto enqueue(Uri uri) -> bool {
-		return enqueue(std::move(uri), typeid(Type));
+		return enqueue(typeid(Type), std::move(uri));
 	}
 	void next_stage();
 
@@ -54,7 +57,8 @@ class LoadTask : public klib::task::Task {
 
 	void execute() final;
 
-	auto enqueue(Uri uri, std::type_index type) -> bool;
+	void add_loader(std::type_index type, std::unique_ptr<ILoader> loader);
+	auto enqueue(std::type_index type, Uri uri) -> bool;
 	void push_task(ILoader const& loader, Uri uri);
 
 	Queue* m_queue;

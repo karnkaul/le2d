@@ -1,0 +1,32 @@
+{
+  "name": "Lab",
+  "assets": {
+    "textures": [
+      "hog_bg.jpg",
+      "awesomeface.png"
+    ],
+    "animations": [
+      "animations/lerp.json"
+    ]
+  },
+  "background": {
+    "color": "#220011ff",
+    "texture": 0,
+    "min_scale": 0.25,
+    "max_scale": 4.0,
+    "default_scale": 1.0
+  },
+  "props": [
+    {
+      "name": "lerpface",
+      "transform": {
+        "position": [
+          -300,
+          -100
+        ]
+      },
+      "texture": 1,
+      "animation": 0
+    }
+  ]
+}

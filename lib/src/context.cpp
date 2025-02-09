@@ -23,6 +23,8 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	}
 }
 
+auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
+
 auto Context::set_render_scale(float const scale) -> bool {
 	if (scale < min_render_scale_v || scale > max_render_scale_v) { return false; }
 	m_render_scale = scale;
@@ -35,10 +37,10 @@ auto Context::next_frame() -> vk::CommandBuffer {
 	return m_cmd;
 }
 
-auto Context::begin_render() -> Renderer {
+auto Context::begin_render(kvf::Color const clear) -> Renderer {
 	if (!m_cmd) { return {}; }
-	glm::ivec2 const scaled_extent = glm::vec2{swapchain_size()} * m_render_scale;
-	return m_pass.begin_render(m_resource_pool, m_cmd, scaled_extent);
+	m_pass.set_clear_color(clear);
+	return m_pass.begin_render(m_resource_pool, m_cmd, framebuffer_size());
 }
 
 void Context::present() {
@@ -47,7 +49,11 @@ void Context::present() {
 }
 
 auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Shader {
-	return Shader{*m_data_loader, m_pass.get_render_device().get_device(), vertex, fragment};
+	auto const loader = asset::SpirVLoader{this};
+	auto const vert = loader.load(vertex);
+	auto const frag = loader.load(fragment);
+	if (!vert || !frag) { return {}; }
+	return Shader{m_pass.get_render_device().get_device(), vert->asset, frag->asset};
 }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
@@ -58,8 +64,12 @@ auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { ret
 
 auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
 	auto ret = std::make_unique<asset::LoadTask>(task_queue);
+	ret->add_loader(std::make_unique<asset::JsonLoader>(this));
+	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
+	ret->add_loader(std::make_unique<asset::AnimationLoader>(this));
+	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
 	return ret;
 }
 } // namespace le

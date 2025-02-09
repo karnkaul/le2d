@@ -167,50 +167,29 @@ struct Terminal::Impl : Printer {
 
 	void set_background(kvf::Color const color) { m_background.instance.tint = color; }
 
-	void resize(glm::vec2 const framebuffer_size) {
-		if (!kvf::is_positive(framebuffer_size)) { return; }
-		m_framebuffer_size = framebuffer_size;
-		resize();
-	}
-
 	void println(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.output); }
 	void printerr(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.error); }
 
-	void on_key(event::Key const& key) {
-		if (key.mods == 0) {
-			if (key.action == GLFW_PRESS) {
-				switch (key.key) {
-				case GLFW_KEY_GRAVE_ACCENT: toggle_active(); break;
-				case GLFW_KEY_ENTER: on_enter(); break;
-				}
-			}
-			if (key.action != GLFW_RELEASE) {
-				switch (key.key) {
-				case GLFW_KEY_UP: cycle_up(); break;
-				case GLFW_KEY_DOWN: cycle_down(); break;
-				case GLFW_KEY_TAB: autocomplete(); break;
-				case GLFW_KEY_PAGE_UP: page_up(); break;
-				case GLFW_KEY_PAGE_DOWN: page_down(); break;
-				}
+	void handle_events(std::span<Event const> events, bool* activated) {
+		auto const was_active = is_active();
+		auto const visitor = klib::SubVisitor{
+			[this](event::Key const& key) { on_key(key); },
+			[this](event::Codepoint const codepoint) { on_codepoint(codepoint); },
+			[this](event::CursorPos const& cursor) { on_cursor_move(cursor); },
+			[this](event::Scroll const& scroll) { on_scroll(scroll); },
+		};
+		for (auto const& event : events) { std::visit(visitor, event); }
+		if (activated != nullptr) { *activated = !was_active && is_active(); }
+	}
+
+	void tick(glm::vec2 const framebuffer_size, kvf::Seconds const dt) {
+		if (kvf::is_positive(framebuffer_size)) {
+			if (m_framebuffer_size != framebuffer_size) {
+				m_framebuffer_size = framebuffer_size;
+				resize();
 			}
 		}
-		m_input.on_key(key);
-	}
 
-	void on_codepoint(event::Codepoint const codepoint) {
-		if (!m_active || codepoint == event::Codepoint('`')) { return; }
-		m_input.on_codepoint(codepoint);
-		stop_cycling();
-	}
-
-	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
-
-	void on_scroll(event::Scroll const scroll) {
-		if ((m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
-		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
-	}
-
-	void tick(kvf::Seconds const dt) {
 		if (m_active) {
 			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::min(m_render_view.position.y, m_show_y);
@@ -337,6 +316,42 @@ struct Terminal::Impl : Printer {
 			return;
 		}
 		m_buffer.position.y = std::clamp(value, -max_dy, m_buffer_max_y);
+	}
+
+	void on_key(event::Key const& key) {
+		if (key.key == GLFW_KEY_GRAVE_ACCENT && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
+		if (!is_active()) { return; }
+
+		if (key.mods == 0) {
+			if (key.action == GLFW_PRESS) {
+				switch (key.key) {
+				case GLFW_KEY_ENTER: on_enter(); break;
+				}
+			}
+			if (key.action != GLFW_RELEASE) {
+				switch (key.key) {
+				case GLFW_KEY_UP: cycle_up(); break;
+				case GLFW_KEY_DOWN: cycle_down(); break;
+				case GLFW_KEY_TAB: autocomplete(); break;
+				case GLFW_KEY_PAGE_UP: page_up(); break;
+				case GLFW_KEY_PAGE_DOWN: page_down(); break;
+				}
+			}
+		}
+		m_input.on_key(key);
+	}
+
+	void on_codepoint(event::Codepoint const codepoint) {
+		if (!is_active() || codepoint == event::Codepoint('`')) { return; }
+		m_input.on_codepoint(codepoint);
+		stop_cycling();
+	}
+
+	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
+
+	void on_scroll(event::Scroll const scroll) {
+		if (!is_active() || (m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
+		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
 	}
 
 	void on_enter() {
@@ -475,17 +490,9 @@ auto Terminal::get_background() const -> kvf::Color { return m_impl->get_backgro
 
 void Terminal::set_background(kvf::Color const color) { m_impl->set_background(color); }
 
-void Terminal::resize(glm::ivec2 const framebuffer_size) { m_impl->resize(framebuffer_size); }
+void Terminal::handle_events(std::span<Event const> events, bool* activated) { m_impl->handle_events(events, activated); }
 
-void Terminal::on_key(event::Key const& key) { m_impl->on_key(key); }
-
-void Terminal::on_codepoint(event::Codepoint codepoint) { m_impl->on_codepoint(codepoint); }
-
-void Terminal::on_cursor_move(event::CursorPos const& cursor_pos) { m_impl->on_cursor_move(cursor_pos); }
-
-void Terminal::on_scroll(event::Scroll scroll) { m_impl->on_scroll(scroll); }
-
-void Terminal::tick(kvf::Seconds const dt) { m_impl->tick(dt); }
+void Terminal::tick(glm::vec2 framebuffer_size, kvf::Seconds const dt) { m_impl->tick(framebuffer_size, dt); }
 
 void Terminal::draw(Renderer& renderer) const { m_impl->draw(renderer); }
 } // namespace le::console

@@ -1,8 +1,8 @@
 #pragma once
 #include <klib/log.hpp>
 
-namespace le::example::log {
-constexpr std::string_view tag_v{"le2d::example"};
+namespace hog::log {
+constexpr std::string_view tag_v{"hog"};
 
 template <typename... Args>
 void error(klib::log::Fmt<Args...> const& fmt, Args&&... args) {
@@ -24,4 +24,4 @@ void debug(klib::log::Fmt<Args...> const& fmt, Args&&... args) {
 	if constexpr (!klib::log::debug_enabled_v) { return; }
 	klib::log::debug(tag_v, fmt, std::forward<Args>(args)...);
 }
-} // namespace le::example::log
+} // namespace hog::log

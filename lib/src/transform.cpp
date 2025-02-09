@@ -24,4 +24,10 @@ auto Transform::to_view() const -> glm::mat4 {
 	auto const trs = Trs{-position, -orientation, scale};
 	return trs.s * trs.r * trs.t;
 }
+
+auto Transform::to_inverse_view() const -> glm::mat4 {
+	if (scale == glm::vec2{0.0f}) { return {}; }
+	auto const trs = Trs{position, orientation, 1.0f / scale};
+	return trs.t * trs.r * trs.s;
+}
 } // namespace le

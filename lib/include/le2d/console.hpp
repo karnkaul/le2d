@@ -36,7 +36,7 @@ struct TerminalCreateInfo {
 	} storage{};
 
 	struct {
-		TextHeight text_height{TextHeight::Default};
+		TextHeight text_height{TextHeight{20}};
 		float line_spacing{1.1f};
 		float separator_height{2.0f};
 		float x_pad{15.0f};
@@ -76,14 +76,9 @@ class Terminal : public IDrawable, public Printer {
 	[[nodiscard]] auto get_background() const -> kvf::Color;
 	void set_background(kvf::Color color);
 
-	void resize(glm::ivec2 framebuffer_size);
+	void handle_events(std::span<Event const> events, bool* activated = nullptr);
 
-	void on_key(event::Key const& key);
-	void on_codepoint(event::Codepoint codepoint);
-	void on_cursor_move(event::CursorPos const& cursor_pos);
-	void on_scroll(event::Scroll scroll);
-
-	void tick(kvf::Seconds dt);
+	void tick(glm::vec2 framebuffer_size, kvf::Seconds dt);
 	void draw(Renderer& renderer) const final;
 
   private:

@@ -1,0 +1,56 @@
+{
+  "name": "lerp",
+  "timeline": [
+    {
+      "timestamp": 0,
+      "transform": {}
+    },
+    {
+      "timestamp": 1,
+      "transform": {
+        "position": [
+          0,
+          200
+        ]
+      }
+    },
+    {
+      "timestamp": 1.5,
+      "transform": {
+        "position": [
+          0,
+          200
+        ],
+        "orientation": 90
+      }
+    },
+    {
+      "timestamp": 2,
+      "transform": {
+        "position": [
+          0,
+          200
+        ],
+        "orientation": 180
+      }
+    },
+    {
+      "timestamp": 3,
+      "transform": {
+        "orientation": 180
+      }
+    },
+    {
+      "timestamp": 3.5,
+      "transform": {
+        "orientation": 270
+      }
+    },
+    {
+      "timestamp": 4,
+      "transform": {
+        "orientation": 360
+      }
+    }
+  ]
+}
