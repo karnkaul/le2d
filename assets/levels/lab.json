@@ -28,5 +28,11 @@
       "texture": 1,
       "animation": 0
     }
+  ],
+  "collectibles": [
+    {
+      "prop": 0,
+      "description": "awesome face"
+    }
   ]
 }

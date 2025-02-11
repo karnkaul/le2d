@@ -1,6 +1,6 @@
 #pragma once
+#include <game/level.hpp>
 #include <game/level_info.hpp>
-#include <game/prop.hpp>
 #include <klib/enum_array.hpp>
 #include <le2d/animation.hpp>
 #include <le2d/drawable/shape.hpp>
@@ -28,7 +28,11 @@ class Lab : public Scene {
 	void load_assets();
 	void create_textures();
 
+	void check_hit(glm::vec2 cursor_pos);
+	void collect(Collectible& collectible);
+
 	void inspect();
+	void inspect_collectibles();
 
 	void render_world(le::Renderer& renderer) const;
 	void render_ui(le::Renderer& renderer) const;
@@ -39,11 +43,12 @@ class Lab : public Scene {
 	le::drawable::LineRect m_line_rect{};
 
 	LevelInfo m_level_info{};
-
-	std::vector<Prop> m_props{};
+	Level m_level{};
 
 	le::input::KeyChord m_escape{};
-	le::input::MouseButtonTrigger m_mb1{};
+	le::input::MouseButtonTrigger m_drag_view{};
+	le::input::MouseButtonChord m_click{};
+	bool m_check_hit{};
 
 	ui::Button m_button{};
 

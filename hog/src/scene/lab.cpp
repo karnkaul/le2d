@@ -17,7 +17,8 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
 
 	m_escape = le::input::KeyChord{GLFW_KEY_ESCAPE, GLFW_RELEASE};
-	m_mb1 = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
+	m_drag_view = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
+	m_click = le::input::MouseButtonChord{GLFW_MOUSE_BUTTON_1};
 
 	auto const& asset_store = m_services->get<le::asset::Store>();
 	auto const& level_assets = m_level_info.assets;
@@ -26,8 +27,7 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 		m_background.texture = texture;
 	}
 
-	m_props.reserve(m_level_info.props.size());
-	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
+	m_level = build_level(asset_store, m_level_info);
 
 	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
 	m_button.set_size(glm::vec2{200.0f, 100.0f});
@@ -43,14 +43,12 @@ void Lab::on_event(le::event::Key const key) {
 }
 
 void Lab::on_event(le::event::MouseButton const button) {
-	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
-	// m_button.on_button(button);
+	if (m_drag_view.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
+
+	if (m_click.is_engaged(button)) { m_check_hit = true; }
 }
 
-void Lab::on_event(le::event::CursorPos const pos) {
-	m_cursor_pos = pos.normalized;
-	// m_button.on_cursor(pos);
-}
+void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
 
 void Lab::on_event(le::event::Scroll const scroll) {
 	auto const dscale = m_zoom_speed * scroll.y;
@@ -61,13 +59,13 @@ void Lab::on_event(le::event::Scroll const scroll) {
 void Lab::tick(kvf::Seconds const dt) {
 	auto const unprojector = get_unprojector(m_world_view);
 	auto const cursor_pos = unprojector.unproject(m_cursor_pos);
-	if (m_mb1.is_engaged()) {
+	if (m_drag_view.is_engaged()) {
 		auto const prev_fb_cursor = unprojector.unproject(m_prev_cursor_pos);
 		auto const cursor_dxy = cursor_pos - prev_fb_cursor;
 		m_world_view.position -= cursor_dxy;
 	}
 
-	for (auto& prop : m_props) { prop.tick(dt); }
+	for (auto& prop : m_level.props) { prop.tick(dt); }
 
 	auto const rect = m_quad.bounding_rect();
 	if (rect.contains(cursor_pos)) {
@@ -79,7 +77,10 @@ void Lab::tick(kvf::Seconds const dt) {
 	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
 	m_button.tick(dt);
 
-	// if (m_button.get_state() == ui::WidgetState::Press) { m_mb1.disengage(); }
+	if (m_check_hit) {
+		m_check_hit = false;
+		check_hit(cursor_pos);
+	}
 
 	inspect();
 
@@ -96,7 +97,7 @@ void Lab::render(le::Renderer& renderer) const {
 }
 
 void Lab::disengage_input() {
-	m_mb1.disengage();
+	m_drag_view.disengage();
 	m_button.disengage();
 }
 
@@ -146,6 +147,22 @@ void Lab::create_textures() {
 	m_textures.push_back(std::move(texture));
 }
 
+void Lab::check_hit(glm::vec2 const cursor_pos) {
+	for (auto& collectible : m_level.collectibles) {
+		auto const& prop = m_level.props.at(collectible.prop_index);
+		if (prop.sprite.bounding_rect().contains(cursor_pos)) {
+			collect(collectible);
+			return;
+		}
+	}
+}
+
+void Lab::collect(Collectible& collectible) {
+	if (collectible.collected) { return; }
+	collectible.collected = true;
+	log::debug("'{}' collected", m_level.props.at(collectible.prop_index).name);
+}
+
 void Lab::inspect() {
 	if (ImGui::Begin("Inspect")) {
 		ImGui::DragFloat2("view position", &m_world_view.position.x, 1.0f);
@@ -164,8 +181,20 @@ void Lab::inspect() {
 		modified |= ImGui::DragInt("resolution", &resolution);
 		params.resolution = std::int32_t(resolution);
 		if (modified) { m_button.set_superellipse_params(params); }
+
+		if (ImGui::TreeNode("collectibles")) {
+			inspect_collectibles();
+			ImGui::TreePop();
+		}
 	}
 	ImGui::End();
+}
+
+void Lab::inspect_collectibles() {
+	for (auto& collectible : m_level.collectibles) {
+		auto const& prop = m_level.props.at(collectible.prop_index);
+		ImGui::Checkbox(prop.name.data(), &collectible.collected);
+	}
 }
 
 void Lab::render_world(le::Renderer& renderer) const {
@@ -173,7 +202,7 @@ void Lab::render_world(le::Renderer& renderer) const {
 	m_quad.draw(renderer);
 	m_line_rect.draw(renderer);
 
-	for (auto const& prop : m_props) { prop.draw(renderer); }
+	for (auto const& prop : m_level.props) { prop.draw(renderer); }
 }
 
 void Lab::render_ui(le::Renderer& renderer) const {

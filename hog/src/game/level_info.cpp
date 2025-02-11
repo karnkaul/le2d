@@ -34,6 +34,12 @@ void hog::from_json(dj::Json const& json, PropInfo& prop_info) {
 	optional_from_json(json["flipbook"], prop_info.flipbook);
 }
 
+void hog::from_json(dj::Json const& json, CollectibleInfo& collectible_info) {
+	from_json(json["prop"], collectible_info.prop);
+	from_json(json["description"], collectible_info.description);
+	if (auto const& icon_uv = json["icon_uv"]) { le::from_json(icon_uv, collectible_info.icon_uv); }
+}
+
 void hog::from_json(dj::Json const& json, LevelInfo& level_info) {
 	from_json(json["name"], level_info.name);
 	from_json(json["assets"], level_info.assets);
@@ -41,4 +47,7 @@ void hog::from_json(dj::Json const& json, LevelInfo& level_info) {
 	auto const& props = json["props"].array_view();
 	level_info.props.reserve(props.size());
 	for (auto const& prop : props) { from_json(prop, level_info.props.emplace_back()); }
+	auto const& collectibles = json["collectibles"].array_view();
+	level_info.collectibles.reserve(collectibles.size());
+	for (auto const& collectible : collectibles) { from_json(collectible, level_info.collectibles.emplace_back()); }
 }

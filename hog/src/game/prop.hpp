@@ -3,8 +3,7 @@
 #include <le2d/drawable/shape.hpp>
 
 namespace hog {
-class Prop {
-  public:
+struct Prop {
 	void tick(kvf::Seconds dt);
 	void draw(le::Renderer& renderer) const { sprite.draw(renderer); }
 
@@ -14,15 +13,4 @@ class Prop {
 	le::Animator animator{};
 	le::FlipAnimator flipper{};
 };
-} // namespace hog
-
-namespace le::asset {
-class Store;
-}
-
-namespace hog {
-struct LevelAssets;
-struct PropInfo;
-
-[[nodiscard]] auto create_prop(le::asset::Store const& asset_store, LevelAssets const& level_assets, PropInfo const& prop_info) -> Prop;
 } // namespace hog

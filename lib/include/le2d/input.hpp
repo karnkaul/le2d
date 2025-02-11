@@ -38,6 +38,8 @@ class KeyChord : public Chord {
 
 class MouseButtonChord : public Chord {
   public:
+	MouseButtonChord() = default;
+
 	explicit constexpr MouseButtonChord(int const button, int const action = GLFW_PRESS, int const mods = 0)
 		: Chord(Entry{.actor = button, .action = action, .mods = mods}) {}
 

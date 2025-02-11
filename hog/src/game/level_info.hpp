@@ -1,5 +1,6 @@
 #pragma once
 #include <kvf/color.hpp>
+#include <kvf/rect.hpp>
 #include <le2d/transform.hpp>
 #include <le2d/uri.hpp>
 #include <optional>
@@ -32,15 +33,23 @@ struct PropInfo {
 	std::optional<std::size_t> flipbook{};
 };
 
+struct CollectibleInfo {
+	std::size_t prop{};
+	std::string description{};
+	kvf::UvRect icon_uv{kvf::uv_rect_v};
+};
+
 struct LevelInfo {
 	std::string name{};
 	LevelAssets assets{};
 	LevelBackground background{};
 	std::vector<PropInfo> props{};
+	std::vector<CollectibleInfo> collectibles{};
 };
 
 void from_json(dj::Json const& json, LevelAssets& level_assets);
 void from_json(dj::Json const& json, LevelBackground& level_background);
 void from_json(dj::Json const& json, PropInfo& prop_info);
+void from_json(dj::Json const& json, CollectibleInfo& collectible_info);
 void from_json(dj::Json const& json, LevelInfo& level_info);
 } // namespace hog
