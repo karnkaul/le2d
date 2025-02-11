@@ -3,6 +3,7 @@
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
+#include <le2d/event/dispatch.hpp>
 #include <le2d/vertex_bounds.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
@@ -33,6 +34,8 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_button.set_position({200.0f, -100.0f});
 	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_button.set_text(*font, "click"); }
 	m_button.set_on_click([] { log::debug("clicked"); });
+
+	services->get<le::event::Dispatch>().attach(&m_button);
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -41,12 +44,12 @@ void Lab::on_event(le::event::Key const key) {
 
 void Lab::on_event(le::event::MouseButton const button) {
 	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
-	m_button.on_button(button);
+	// m_button.on_button(button);
 }
 
 void Lab::on_event(le::event::CursorPos const pos) {
 	m_cursor_pos = pos.normalized;
-	m_button.on_cursor(pos);
+	// m_button.on_cursor(pos);
 }
 
 void Lab::on_event(le::event::Scroll const scroll) {
@@ -76,7 +79,7 @@ void Lab::tick(kvf::Seconds const dt) {
 	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
 	m_button.tick(dt);
 
-	if (m_button.get_state() == ui::WidgetState::Press) { m_mb1.disengage(); }
+	// if (m_button.get_state() == ui::WidgetState::Press) { m_mb1.disengage(); }
 
 	inspect();
 

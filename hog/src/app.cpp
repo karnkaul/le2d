@@ -30,6 +30,7 @@ void App::run() {
 
 	m_services.bind(&m_context);
 	m_services.bind(&m_asset_store);
+	m_services.bind(&m_event_dispatch);
 	m_services.bind<scene::ISwitcher>(this);
 
 	m_scene = std::make_unique<scene::Lab>(&m_services);
@@ -80,6 +81,6 @@ void App::process_events() {
 	if (m_terminal) { m_terminal->handle_events(events, &terminal_activated); }
 	if (terminal_activated) { m_scene->disengage_input(); }
 
-	if (m_terminal && !m_terminal->is_active()) { m_scene->handle_events(events); }
+	if (m_terminal && !m_terminal->is_active()) { m_event_dispatch.dispatch(events); }
 }
 } // namespace hog

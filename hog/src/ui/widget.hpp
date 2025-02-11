@@ -1,12 +1,12 @@
 #pragma once
 #include <klib/polymorphic.hpp>
 #include <kvf/time.hpp>
-#include <le2d/event.hpp>
+#include <le2d/event/listener.hpp>
 #include <le2d/renderer.hpp>
 #include <ui/widget_state.hpp>
 
 namespace hog::ui {
-class Widget : public klib::Polymorphic {
+class Widget : public le::event::IListener {
   public:
 	using State = WidgetState;
 
@@ -14,8 +14,7 @@ class Widget : public klib::Polymorphic {
 
 	void set_framebuffer_size(glm::vec2 framebuffer_size);
 
-	void on_cursor(le::event::CursorPos const& cursor_pos);
-	void on_button(le::event::MouseButton const& mouse_button);
+	auto consume_event(le::Event const& event) -> bool override;
 
 	void set_disabled(bool disabled);
 
@@ -31,8 +30,8 @@ class Widget : public klib::Polymorphic {
   protected:
 	[[nodiscard]] auto is_cursor_hit() const -> bool;
 
-	void on_mb1_press();
-	void on_mb1_release();
+	void on_cursor(le::event::CursorPos const& cursor_pos);
+	auto on_button(le::event::MouseButton const& mouse_button) -> bool;
 
 	glm::vec2 m_framebuffer_size{};
 	le::ndc::vec2 m_cursor_pos{};

@@ -1,11 +1,13 @@
 #include <klib/visitor.hpp>
 #include <le2d/context.hpp>
+#include <le2d/event/dispatch.hpp>
+#include <le2d/service_locator.hpp>
 #include <scene/scene.hpp>
 
 namespace hog::scene {
-void Scene::handle_events(std::span<le::Event const> events) {
-	// TODO: UI modal blocks world input
+Scene::Scene(gsl::not_null<le::ServiceLocator const*> services) : m_services(services) { m_services->get<le::event::Dispatch>().attach(this); }
 
+auto Scene::consume_event(le::Event const& event) -> bool {
 	auto const visitor = klib::Visitor{
 		[this](le::event::WindowClose const close) { on_event(close); },
 		[this](le::event::WindowFocus const focus) { on_event(focus); },
@@ -20,7 +22,8 @@ void Scene::handle_events(std::span<le::Event const> events) {
 		[this](le::event::Scroll const scroll) { on_event(scroll); },
 		[this](le::event::Drop const& drop) { on_event(drop); },
 	};
-	for (auto const& event : events) { std::visit(visitor, event); }
+	std::visit(visitor, event);
+	return false;
 }
 
 auto Scene::get_unprojector(le::Transform const& render_view) const -> le::Unprojector {

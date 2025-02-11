@@ -2,6 +2,7 @@
 #include <le2d/asset/store.hpp>
 #include <le2d/console.hpp>
 #include <le2d/context.hpp>
+#include <le2d/event/dispatch.hpp>
 #include <le2d/service_locator.hpp>
 #include <scene/switcher.hpp>
 
@@ -23,6 +24,7 @@ struct App : public scene::ISwitcher {
 	le::Context m_context;
 
 	le::asset::Store m_asset_store{};
+	le::event::Dispatch m_event_dispatch{};
 
 	le::ServiceLocator m_services{};
 

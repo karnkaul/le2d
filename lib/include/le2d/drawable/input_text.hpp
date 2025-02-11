@@ -1,7 +1,7 @@
 #pragma once
 #include <kvf/time.hpp>
 #include <le2d/drawable/drawable.hpp>
-#include <le2d/event.hpp>
+#include <le2d/event/event.hpp>
 #include <le2d/line_input.hpp>
 #include <le2d/shape/text.hpp>
 
