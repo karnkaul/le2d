@@ -1,10 +1,10 @@
 #pragma once
+#include <game/level_info.hpp>
+#include <game/prop.hpp>
 #include <klib/enum_array.hpp>
 #include <le2d/animation.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/input.hpp>
-#include <level_info.hpp>
-#include <prop.hpp>
 #include <scene/scene.hpp>
 #include <ui/button.hpp>
 

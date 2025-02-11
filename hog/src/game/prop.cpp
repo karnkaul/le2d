@@ -1,5 +1,5 @@
-#include <prop.hpp>
-#include <level_info.hpp>
+#include <game/level_info.hpp>
+#include <game/prop.hpp>
 #include <le2d/asset/store.hpp>
 
 namespace hog {

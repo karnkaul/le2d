@@ -1,7 +1,7 @@
+#include <game/level_info.hpp>
 #include <klib/concepts.hpp>
 #include <kvf/util.hpp>
 #include <le2d/json_io.hpp>
-#include <level_info.hpp>
 
 namespace {
 template <klib::NumberT Type>
