@@ -12,12 +12,12 @@ struct Builder {
 
 	void build() {
 		level.props.reserve(info.props.size());
-		for (auto const& prop : info.props) { level.props.push_back(create_prop(prop)); }
+		for (auto const& prop : info.props) { level.props.push_back(to_prop(prop)); }
 		level.collectibles.reserve(info.collectibles.size());
-		for (auto const& collectible : info.collectibles) { level.collectibles.push_back(create_collectible(collectible)); }
+		for (auto const& collectible : info.collectibles) { level.collectibles.push_back(to_collectible(collectible)); }
 	}
 
-	[[nodiscard]] auto create_prop(PropInfo const& prop_info) const -> Prop {
+	[[nodiscard]] auto to_prop(PropInfo const& prop_info) const -> Prop {
 		auto ret = Prop{.name = prop_info.name};
 		ret.transform = ret.sprite.instance.transform = prop_info.transform;
 		ret.sprite.set_texture(store.get<le::Texture>(info.assets.textures.at(prop_info.texture)));
@@ -26,7 +26,7 @@ struct Builder {
 		return ret;
 	}
 
-	[[nodiscard]] static auto create_collectible(CollectibleInfo const& collectible_info) -> Collectible {
+	[[nodiscard]] static auto to_collectible(CollectibleInfo const& collectible_info) -> Collectible {
 		return Collectible{
 			.prop_index = collectible_info.prop,
 			.description = collectible_info.description,
@@ -35,6 +35,17 @@ struct Builder {
 	}
 };
 } // namespace
+
+void Prop::tick(kvf::Seconds dt) {
+	if (animator.has_animation()) {
+		animator.tick(dt);
+		sprite.instance.transform = le::Transform::accumulate(transform, animator.get_payload());
+	}
+	if (flipper.has_animation()) {
+		flipper.tick(dt);
+		sprite.set_uv(flipper.get_payload());
+	}
+}
 } // namespace hog
 
 auto hog::build_level(le::asset::Store const& store, LevelInfo const& info) -> Level {
