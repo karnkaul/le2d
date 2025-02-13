@@ -17,6 +17,9 @@ class Button : public Widget {
 
 	void on_click() override;
 
+	[[nodiscard]] auto get_position() const -> glm::vec2 override { return m_background.instance.transform.position; }
+	void set_position(glm::vec2 position) override;
+
 	[[nodiscard]] auto get_superellipse_params() const -> le::SuperEllipseParams const& { return m_background.get_params(); }
 	void set_superellipse_params(le::SuperEllipseParams const& params) { m_background.create(params); }
 
@@ -25,9 +28,6 @@ class Button : public Widget {
 
 	[[nodiscard]] auto get_texture() const -> le::ITexture const* { return m_background.texture; }
 	void set_texture(le::ITexture const* texture) { m_background.texture = texture; }
-
-	[[nodiscard]] auto get_position() const -> glm::vec2 { return m_background.instance.transform.position; }
-	void set_position(glm::vec2 position);
 
 	void set_text(le::Font& font, std::string_view text);
 	void set_on_click(OnClick callback) { m_on_click = std::move(callback); }

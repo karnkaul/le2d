@@ -6,7 +6,7 @@
 #include <le2d/drawable/shape.hpp>
 #include <le2d/input.hpp>
 #include <scene/scene.hpp>
-#include <ui/button.hpp>
+#include <ui/scroll_view.hpp>
 
 namespace hog::scene {
 class Lab : public Scene {
@@ -50,7 +50,7 @@ class Lab : public Scene {
 	le::input::MouseButtonChord m_click{};
 	bool m_check_hit{};
 
-	ui::Button m_button{};
+	ui::ScrollView m_scroll_view{};
 
 	le::ndc::vec2 m_cursor_pos{};
 	le::ndc::vec2 m_prev_cursor_pos{};

@@ -25,6 +25,9 @@ class Widget : public le::event::IListener {
 	virtual void on_click() {}
 	virtual void disengage();
 
+	[[nodiscard]] virtual auto get_position() const -> glm::vec2 = 0;
+	virtual void set_position(glm::vec2 position) = 0;
+
 	kvf::Seconds click_debounce{100ms};
 
   protected:

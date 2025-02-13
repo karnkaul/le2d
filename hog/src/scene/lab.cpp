@@ -8,6 +8,7 @@
 #include <log.hpp>
 #include <scene/lab.hpp>
 #include <scene/switcher.hpp>
+#include <ui/button.hpp>
 
 namespace hog::scene {
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
@@ -29,13 +30,24 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 
 	m_level = build_level(asset_store, m_level_info);
 
-	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_button.set_size(glm::vec2{200.0f, 100.0f});
-	m_button.set_position({200.0f, -100.0f});
-	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_button.set_text(*font, "click"); }
-	m_button.set_on_click([] { log::debug("clicked"); });
+	auto* font = asset_store.get<le::Font>("font.ttf");
+	auto make_button = [&](std::string_view const name) {
+		auto ret = ui::Button{};
+		ret.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
+		ret.set_size(glm::vec2{200.0f, 100.0f});
+		ret.set_position({200.0f, -100.0f});
+		if (font != nullptr) { ret.set_text(*font, name); }
+		ret.set_on_click([name] { log::debug("{} clicked", name); });
+		return ret;
+	};
 
-	services->get<le::event::Dispatch>().attach(&m_button);
+	m_scroll_view.background.create({200.0f, 400.0f});
+	m_scroll_view.background.instance.tint.w = 0x77;
+	m_scroll_view.background.instance.transform.position = {200.0f, 0.0f};
+	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("zero")));
+	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("one")));
+
+	services->get<le::event::Dispatch>().attach(&m_scroll_view);
 }
 
 void Lab::on_event(le::event::Key const key) {
@@ -74,8 +86,9 @@ void Lab::tick(kvf::Seconds const dt) {
 		m_quad.instance.tint = kvf::white_v;
 	}
 
-	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_button.tick(dt);
+	auto const framebuffer_size = m_services->get<le::Context>().framebuffer_size();
+	m_scroll_view.set_framebuffer_size(framebuffer_size);
+	m_scroll_view.tick(dt);
 
 	if (m_check_hit) {
 		m_check_hit = false;
@@ -98,7 +111,7 @@ void Lab::render(le::Renderer& renderer) const {
 
 void Lab::disengage_input() {
 	m_drag_view.disengage();
-	m_button.disengage();
+	m_scroll_view.disengage();
 }
 
 void Lab::load_assets() {
@@ -170,17 +183,6 @@ void Lab::inspect() {
 			m_world_view.scale.y = m_world_view.scale.x;
 		}
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
-		auto disabled = m_button.get_state() == ui::WidgetState::Disabled;
-		if (ImGui::Checkbox("disabled", &disabled)) { m_button.set_disabled(disabled); }
-
-		auto params = m_button.get_superellipse_params();
-		auto modified = false;
-		modified |= ImGui::DragFloat2("size", &params.size.x);
-		modified |= ImGui::DragFloat("exponent", &params.exponent);
-		auto resolution = int(params.resolution);
-		modified |= ImGui::DragInt("resolution", &resolution);
-		params.resolution = std::int32_t(resolution);
-		if (modified) { m_button.set_superellipse_params(params); }
 
 		if (ImGui::TreeNode("collectibles")) {
 			inspect_collectibles();
@@ -205,8 +207,5 @@ void Lab::render_world(le::Renderer& renderer) const {
 	for (auto const& prop : m_level.props) { prop.draw(renderer); }
 }
 
-void Lab::render_ui(le::Renderer& renderer) const {
-	m_button.draw(renderer);
-	//
-}
+void Lab::render_ui(le::Renderer& renderer) const { m_scroll_view.draw(renderer); }
 } // namespace hog::scene
