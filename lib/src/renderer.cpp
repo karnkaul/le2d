@@ -68,7 +68,7 @@ auto image_wds(vk::DescriptorImageInfo const& dii, vk::DescriptorSet set, std::u
 
 Renderer::Renderer(RenderPass& render_pass, ResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
 	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->default_shader),
-	  m_viewport(render_pass.m_render_pass.viewport()) {
+	  m_viewport(render_pass.m_render_pass.viewport()), m_scissor(render_pass.m_render_pass.scissor()) {
 	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) { end_render(); }
 }
 
@@ -94,6 +94,22 @@ auto Renderer::set_render_area(kvf::UvRect const& n_rect) -> bool {
 	auto const rect = kvf::UvRect{.lt = n_rect.lt * fb_size, .rb = n_rect.rb * fb_size};
 	auto const vp_size = rect.size();
 	m_viewport = vk::Viewport{rect.lt.x, rect.rb.y, vp_size.x, -vp_size.y};
+	return true;
+}
+
+auto Renderer::set_scissor_rect(kvf::UvRect n_rect) -> bool {
+	if (!is_rendering() || !is_normalized(n_rect)) { return false; }
+
+	n_rect.lt.x = std::clamp(n_rect.lt.x, 0.0f, 1.0f);
+	n_rect.lt.y = std::clamp(n_rect.lt.y, 0.0f, 1.0f);
+	n_rect.rb.x = std::clamp(n_rect.rb.x, n_rect.lt.x, 1.0f);
+	n_rect.rb.y = std::clamp(n_rect.rb.y, n_rect.lt.y, 1.0f);
+
+	auto const fb_size = kvf::util::to_glm_vec(m_pass->m_render_pass.get_extent());
+	auto const rect = kvf::UvRect{.lt = n_rect.lt * fb_size, .rb = n_rect.rb * fb_size};
+	auto const offset = glm::ivec2{rect.lt};
+	auto const extent = glm::uvec2{rect.size()};
+	m_scissor = vk::Rect2D{vk::Offset2D{offset.x, offset.y}, vk::Extent2D{extent.x, extent.y}};
 	return true;
 }
 
@@ -151,7 +167,9 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	m_pass->m_render_device->get_device().updateDescriptorSets(descriptor_writes, {});
 
 	m_cmd.setViewport(0, m_viewport);
+	m_cmd.setScissor(0, m_scissor);
 	m_cmd.setLineWidth(m_line_width);
+
 	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->pipelines.get_layout(), 0, descriptor_sets, {});
 	m_cmd.bindVertexBuffers(0, vbo.get_buffer(), vk::DeviceSize{});
 	if (primitive.indices.empty()) {
@@ -190,7 +208,6 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 	if (m_pipeline == pipeline) { return true; }
 
 	m_pass->m_render_pass.bind_pipeline(pipeline);
-	m_cmd.setLineWidth(m_line_width);
 	m_pipeline = pipeline;
 
 	return true;
