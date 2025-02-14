@@ -1,4 +1,5 @@
 #include <app.hpp>
+#include <klib/visitor.hpp>
 #include <le2d/asset/loaders.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
@@ -30,7 +31,7 @@ void App::run() {
 
 	m_services.bind(&m_context);
 	m_services.bind(&m_asset_store);
-	m_services.bind(&m_event_dispatch);
+	m_services.bind(&m_input_dispatch);
 	m_services.bind<scene::ISwitcher>(this);
 
 	m_scene = std::make_unique<scene::Lab>(&m_services);
@@ -81,6 +82,15 @@ void App::process_events() {
 	if (m_terminal) { m_terminal->handle_events(events, &terminal_activated); }
 	if (terminal_activated) { m_scene->disengage_input(); }
 
-	if (m_terminal && !m_terminal->is_active()) { m_event_dispatch.dispatch(events); }
+	if (m_terminal && !m_terminal->is_active()) {
+		auto const visitor = klib::SubVisitor{
+			[this](le::event::CursorPos const& pos) { m_input_dispatch.on_cursor_move(pos.normalized.to_target(m_context.framebuffer_size())); },
+			[this](le::event::Codepoint const codepoint) { m_input_dispatch.on_codepoint(codepoint); },
+			[this](le::event::Key const& key) { m_input_dispatch.on_key(key); },
+			[this](le::event::MouseButton const& button) { m_input_dispatch.on_mouse_button(button); },
+			[this](le::event::Scroll const& scroll) { m_input_dispatch.on_scroll(scroll); },
+		};
+		for (auto const& event : events) { std::visit(visitor, event); }
+	}
 }
 } // namespace hog

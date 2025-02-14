@@ -1,6 +1,6 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <le2d/event/event.hpp>
+#include <le2d/event.hpp>
 #include <bitset>
 
 namespace le::input {

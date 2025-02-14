@@ -1,17 +1,19 @@
 #pragma once
 #include <le2d/drawable/shape.hpp>
-#include <le2d/input.hpp>
+#include <le2d/input/controls.hpp>
 #include <ui/widget.hpp>
 #include <memory>
 #include <optional>
 #include <vector>
 
 namespace hog::ui {
-class ScrollView : public le::event::IListener {
+class ScrollView : public le::input::Listener {
   public:
 	enum class State : std::int8_t { Idle, Scrolling };
 
-	auto consume_event(le::Event const& event) -> bool override;
+	auto consume_cursor_move(glm::vec2 pos) -> bool override;
+	auto consume_mouse_button(le::event::MouseButton const& button) -> bool override;
+	auto consume_scroll(le::event::Scroll const& scroll) -> bool override;
 
 	void set_framebuffer_size(glm::vec2 size);
 	void disengage();
@@ -44,7 +46,7 @@ class ScrollView : public le::event::IListener {
 
 	std::vector<std::unique_ptr<Widget>> m_widgets{};
 	glm::vec2 m_framebuffer_size{};
-	le::ndc::vec2 m_cursor_pos{};
+	glm::vec2 m_cursor_pos{};
 	float m_prev_cursor_y{};
 	std::optional<float> m_drag_start_y{};
 	State m_state{};

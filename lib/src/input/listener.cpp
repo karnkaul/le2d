@@ -1,13 +1,13 @@
-#include <le2d/event/dispatch.hpp>
-#include <le2d/event/listener.hpp>
+#include <le2d/input/dispatch.hpp>
+#include <le2d/input/listener.hpp>
 
-namespace le::event {
-IListener::IListener(IListener&& rhs) noexcept : m_dispatch(rhs.m_dispatch) {
+namespace le::input {
+Listener::Listener(Listener&& rhs) noexcept : m_dispatch(rhs.m_dispatch) {
 	if (m_dispatch == nullptr) { return; }
 	m_dispatch->attach(this);
 }
 
-auto IListener::operator=(IListener&& rhs) noexcept -> IListener& {
+auto Listener::operator=(Listener&& rhs) noexcept -> Listener& {
 	if (m_dispatch != rhs.m_dispatch) {
 		if (m_dispatch != nullptr) { m_dispatch->detach(this); }
 		m_dispatch = rhs.m_dispatch;
@@ -16,8 +16,8 @@ auto IListener::operator=(IListener&& rhs) noexcept -> IListener& {
 	return *this;
 }
 
-IListener::~IListener() {
+Listener::~Listener() {
 	if (m_dispatch == nullptr) { return; }
 	m_dispatch->detach(this);
 }
-} // namespace le::event
+} // namespace le::input

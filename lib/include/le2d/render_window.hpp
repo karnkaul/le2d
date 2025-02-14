@@ -4,7 +4,7 @@
 #include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/window.hpp>
-#include <le2d/event/event.hpp>
+#include <le2d/event.hpp>
 
 namespace le {
 class RenderWindow {

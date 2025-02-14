@@ -2,24 +2,46 @@
 #include <ui/scroll_view.hpp>
 
 namespace hog::ui {
-auto ScrollView::consume_event(le::Event const& event) -> bool {
+void ScrollView::set_framebuffer_size(glm::vec2 size) { m_framebuffer_size = size; }
+
+auto ScrollView::consume_cursor_move(glm::vec2 const pos) -> bool {
+	m_cursor_pos = pos;
+	if (m_drag_start_y.has_value()) { return true; }
 	auto ret = false;
+	for (auto const& widget : m_widgets) { ret |= widget->consume_cursor_move(pos); }
+	return ret;
+}
+
+auto ScrollView::consume_mouse_button(le::event::MouseButton const& button) -> bool {
+	if (button.button != GLFW_MOUSE_BUTTON_1) { return false; }
+
 	auto const was_idle = m_state == State::Idle;
-	auto const visitor = klib::SubVisitor{
-		[&](le::event::Scroll const& scroll) { ret = on_scroll(scroll); },
-		[&](le::event::MouseButton const& mb) { ret = on_mouse_button(mb); },
-		[&](le::event::CursorPos const& pos) { ret = on_cursor_pos(pos); },
-	};
-	std::visit(visitor, event);
+	m_mb1_press.on_event(button);
+
+	switch (button.action) {
+	case GLFW_PRESS: {
+		if (background.bounding_rect().contains(m_cursor_pos)) { m_drag_start_y = m_cursor_pos.y; }
+		break;
+	}
+	case GLFW_RELEASE:
+		m_state = State::Idle;
+		m_drag_start_y.reset();
+		break;
+	}
+
+	auto ret = false;
 	if (was_idle && m_state == State::Idle) {
-		for (auto const& widget : m_widgets) { ret |= widget->consume_event(event); }
+		for (auto const& widget : m_widgets) { ret |= widget->consume_mouse_button(button); }
 	}
 	return ret;
 }
 
-void ScrollView::set_framebuffer_size(glm::vec2 size) {
-	m_framebuffer_size = size;
-	for (auto const& widget : m_widgets) { widget->set_framebuffer_size(size); }
+auto ScrollView::consume_scroll(le::event::Scroll const& scroll) -> bool {
+	if (!background.bounding_rect().contains(m_cursor_pos)) { return false; }
+	y_offset += -scroll_speed * scroll.y;
+	for (auto const& widget : m_widgets) { widget->disengage(); }
+	move_widgets(-scroll_speed * scroll.y);
+	return true;
 }
 
 void ScrollView::disengage() {
@@ -48,12 +70,10 @@ void ScrollView::reposition_widgets() {
 }
 
 void ScrollView::tick(kvf::Seconds const dt) {
-	auto const cursor_pos = m_cursor_pos.to_target(m_framebuffer_size);
-
-	if (m_mb1_press.is_engaged()) { do_scroll(cursor_pos); }
+	if (m_mb1_press.is_engaged()) { do_scroll(m_cursor_pos); }
 	for (auto const& widget : m_widgets) { widget->tick(dt); }
 
-	m_prev_cursor_y = cursor_pos.y;
+	m_prev_cursor_y = m_cursor_pos.y;
 }
 
 void ScrollView::draw(le::Renderer& renderer) const {
@@ -64,7 +84,7 @@ void ScrollView::draw(le::Renderer& renderer) const {
 }
 
 auto ScrollView::on_scroll(le::event::Scroll const& scroll) -> bool {
-	if (!background.bounding_rect().contains(m_cursor_pos.to_target(m_framebuffer_size))) { return false; }
+	if (!background.bounding_rect().contains(m_cursor_pos)) { return false; }
 	y_offset += -scroll_speed * scroll.y;
 	for (auto const& widget : m_widgets) { widget->disengage(); }
 	move_widgets(-scroll_speed * scroll.y);
@@ -73,11 +93,10 @@ auto ScrollView::on_scroll(le::event::Scroll const& scroll) -> bool {
 
 auto ScrollView::on_mouse_button(le::event::MouseButton const& button) -> bool {
 	if (button.button != GLFW_MOUSE_BUTTON_1) { return false; }
-	auto const cursor_pos = m_cursor_pos.to_target(m_framebuffer_size);
 	m_mb1_press.on_event(button);
 	switch (button.action) {
 	case GLFW_PRESS: {
-		if (background.bounding_rect().contains(cursor_pos)) { m_drag_start_y = cursor_pos.y; }
+		if (background.bounding_rect().contains(m_cursor_pos)) { m_drag_start_y = m_cursor_pos.y; }
 		break;
 	}
 	case GLFW_RELEASE:

@@ -4,7 +4,7 @@
 #include <klib/enum_array.hpp>
 #include <le2d/animation.hpp>
 #include <le2d/drawable/shape.hpp>
-#include <le2d/input.hpp>
+#include <le2d/input/controls.hpp>
 #include <scene/scene.hpp>
 #include <ui/scroll_view.hpp>
 
@@ -14,10 +14,10 @@ class Lab : public Scene {
 	explicit Lab(gsl::not_null<le::ServiceLocator*> services);
 
   private:
-	void on_event(le::event::Key key) final;
-	void on_event(le::event::MouseButton button) final;
-	void on_event(le::event::CursorPos pos) final;
-	void on_event(le::event::Scroll scroll) final;
+	auto consume_cursor_move(glm::vec2 pos) -> bool override;
+	auto consume_key(le::event::Key const& key) -> bool override;
+	auto consume_mouse_button(le::event::MouseButton const& button) -> bool override;
+	auto consume_scroll(le::event::Scroll const& scroll) -> bool override;
 
 	[[nodiscard]] auto clear_color() const -> kvf::Color final { return m_level_info.background.color; }
 
@@ -52,8 +52,8 @@ class Lab : public Scene {
 
 	ui::ScrollView m_scroll_view{};
 
-	le::ndc::vec2 m_cursor_pos{};
-	le::ndc::vec2 m_prev_cursor_pos{};
+	glm::vec2 m_cursor_pos{};
+	glm::vec2 m_prev_cursor_pos{};
 	float m_zoom_speed{0.05f};
 
 	le::Transform m_world_view{};

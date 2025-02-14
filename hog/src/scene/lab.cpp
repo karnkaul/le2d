@@ -3,7 +3,7 @@
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
-#include <le2d/event/dispatch.hpp>
+#include <le2d/input/dispatch.hpp>
 #include <le2d/vertex_bounds.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
@@ -33,7 +33,6 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	auto* font = asset_store.get<le::Font>("font.ttf");
 	auto make_button = [&](std::string_view const name) {
 		auto ret = ui::Button{};
-		ret.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
 		ret.set_size(glm::vec2{200.0f, 100.0f});
 		ret.set_position({200.0f, -100.0f});
 		if (font != nullptr) { ret.set_text(*font, name); }
@@ -47,25 +46,40 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("zero")));
 	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("one")));
 
-	services->get<le::event::Dispatch>().attach(&m_scroll_view);
+	services->get<le::input::Dispatch>().attach(&m_scroll_view);
 }
 
-void Lab::on_event(le::event::Key const key) {
-	if (m_escape.is_engaged(key)) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
+auto Lab::consume_cursor_move(glm::vec2 const pos) -> bool {
+	m_cursor_pos = pos;
+	return false;
 }
 
-void Lab::on_event(le::event::MouseButton const button) {
-	if (m_drag_view.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
-
-	if (m_click.is_engaged(button)) { m_check_hit = true; }
+auto Lab::consume_key(le::event::Key const& key) -> bool {
+	if (m_escape.is_engaged(key)) {
+		m_services->get<ISwitcher>().switch_scene<Scene>();
+		return true;
+	}
+	return false;
 }
 
-void Lab::on_event(le::event::CursorPos const pos) { m_cursor_pos = pos.normalized; }
+auto Lab::consume_mouse_button(le::event::MouseButton const& button) -> bool {
+	auto ret = false;
+	if (m_drag_view.on_event(button)) {
+		m_prev_cursor_pos = m_cursor_pos;
+		ret = true;
+	}
+	if (m_click.is_engaged(button)) {
+		m_check_hit = true;
+		ret = true;
+	}
+	return ret;
+}
 
-void Lab::on_event(le::event::Scroll const scroll) {
+auto Lab::consume_scroll(le::event::Scroll const& scroll) -> bool {
 	auto const dscale = m_zoom_speed * scroll.y;
 	m_world_view.scale.x = std::clamp(m_world_view.scale.x + dscale, m_level_info.background.min_scale, m_level_info.background.max_scale);
 	m_world_view.scale.y = m_world_view.scale.x;
+	return true;
 }
 
 void Lab::tick(kvf::Seconds const dt) {

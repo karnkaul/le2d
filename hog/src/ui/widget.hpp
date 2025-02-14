@@ -1,20 +1,19 @@
 #pragma once
 #include <klib/polymorphic.hpp>
 #include <kvf/time.hpp>
-#include <le2d/event/listener.hpp>
+#include <le2d/input/listener.hpp>
 #include <le2d/renderer.hpp>
 #include <ui/widget_state.hpp>
 
 namespace hog::ui {
-class Widget : public le::event::IListener {
+class Widget : public le::input::Listener {
   public:
 	using State = WidgetState;
 
 	[[nodiscard]] auto get_state() const -> State { return m_state; }
 
-	void set_framebuffer_size(glm::vec2 framebuffer_size);
-
-	auto consume_event(le::Event const& event) -> bool override;
+	auto consume_cursor_move(glm::vec2 pos) -> bool override;
+	auto consume_mouse_button(le::event::MouseButton const& button) -> bool override;
 
 	void set_disabled(bool disabled);
 
@@ -36,8 +35,7 @@ class Widget : public le::event::IListener {
 	void on_cursor(le::event::CursorPos const& cursor_pos);
 	auto on_button(le::event::MouseButton const& mouse_button) -> bool;
 
-	glm::vec2 m_framebuffer_size{};
-	le::ndc::vec2 m_cursor_pos{};
+	glm::vec2 m_cursor_pos{};
 
 	State m_state{};
 	kvf::Seconds m_debounce_remain{};

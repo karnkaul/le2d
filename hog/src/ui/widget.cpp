@@ -3,16 +3,41 @@
 #include <ui/widget.hpp>
 
 namespace hog::ui {
-void Widget::set_framebuffer_size(glm::vec2 const framebuffer_size) { m_framebuffer_size = framebuffer_size; }
+auto Widget::consume_cursor_move(glm::vec2 const pos) -> bool {
+	m_cursor_pos = pos;
+	if (m_state == State::Disabled) { return false; }
 
-auto Widget::consume_event(le::Event const& event) -> bool {
-	auto ret = false;
-	auto const visitor = klib::SubVisitor{
-		[&](le::event::CursorPos const& cursor) { on_cursor(cursor); },
-		[&](le::event::MouseButton const& mb) { ret = on_button(mb); },
-	};
-	std::visit(visitor, event);
-	return ret;
+	if (is_cursor_hit()) {
+		if (m_state == State::None) { m_state = State::Hover; }
+	} else {
+		m_state = State::None;
+	}
+	return false;
+}
+
+auto Widget::consume_mouse_button(le::event::MouseButton const& button) -> bool {
+	if (button.button != GLFW_MOUSE_BUTTON_1 || m_state == State::Disabled) { return false; }
+
+	auto const is_hit = is_cursor_hit();
+	if (!is_hit) {
+		m_state = State::None;
+		return false;
+	}
+
+	switch (button.action) {
+	case GLFW_PRESS: m_state = State::Press; return true;
+	case GLFW_RELEASE: {
+		if (m_state == State::Press && m_debounce_remain <= 0s) {
+			on_click();
+			m_debounce_remain = click_debounce;
+		}
+		m_state = State::Hover;
+		break;
+	}
+	default: break;
+	}
+
+	return false;
 }
 
 void Widget::set_disabled(bool const disabled) { m_state = disabled ? State::Disabled : State::None; }
@@ -61,5 +86,5 @@ auto Widget::on_button(le::event::MouseButton const& mouse_button) -> bool {
 	return false;
 }
 
-auto Widget::is_cursor_hit() const -> bool { return get_hitbox().contains(m_cursor_pos.to_target(m_framebuffer_size)); }
+auto Widget::is_cursor_hit() const -> bool { return get_hitbox().contains(m_cursor_pos); }
 } // namespace hog::ui

@@ -1,6 +1,6 @@
 #pragma once
 #include <klib/polymorphic.hpp>
-#include <le2d/event/event.hpp>
+#include <le2d/event.hpp>
 
 namespace hog {
 class IEventHandler : public klib::Polymorphic {
