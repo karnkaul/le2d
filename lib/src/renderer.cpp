@@ -97,13 +97,8 @@ auto Renderer::set_render_area(kvf::UvRect const& n_rect) -> bool {
 	return true;
 }
 
-auto Renderer::set_scissor_rect(kvf::UvRect n_rect) -> bool {
+auto Renderer::set_scissor_rect(kvf::UvRect const& n_rect) -> bool {
 	if (!is_rendering() || !is_normalized(n_rect)) { return false; }
-
-	n_rect.lt.x = std::clamp(n_rect.lt.x, 0.0f, 1.0f);
-	n_rect.lt.y = std::clamp(n_rect.lt.y, 0.0f, 1.0f);
-	n_rect.rb.x = std::clamp(n_rect.rb.x, n_rect.lt.x, 1.0f);
-	n_rect.rb.y = std::clamp(n_rect.rb.y, n_rect.lt.y, 1.0f);
 
 	auto const fb_size = kvf::util::to_glm_vec(m_pass->m_render_pass.get_extent());
 	auto const rect = kvf::UvRect{.lt = n_rect.lt * fb_size, .rb = n_rect.rb * fb_size};

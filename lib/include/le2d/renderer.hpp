@@ -27,7 +27,7 @@ class Renderer {
 	auto set_line_width(float width) -> bool;
 	auto set_shader(Shader const& shader) -> bool;
 	auto set_render_area(kvf::UvRect const& n_rect) -> bool;
-	auto set_scissor_rect(kvf::UvRect n_rect) -> bool;
+	auto set_scissor_rect(kvf::UvRect const& n_rect) -> bool;
 	auto set_user_data(UserDrawData const& user_data) -> bool;
 
 	auto draw(Primitive const& primitive, std::span<RenderInstance const> instances) -> bool;
