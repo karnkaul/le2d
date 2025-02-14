@@ -1,12 +1,12 @@
 #pragma once
 #include <game/level.hpp>
 #include <game/level_info.hpp>
+#include <game/sidebar.hpp>
 #include <klib/enum_array.hpp>
 #include <le2d/animation.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/input/controls.hpp>
 #include <scene/scene.hpp>
-#include <ui/scroll_view.hpp>
 
 namespace hog::scene {
 class Lab : public Scene {
@@ -29,7 +29,7 @@ class Lab : public Scene {
 	void create_textures();
 
 	void check_hit(glm::vec2 cursor_pos);
-	void collect(Collectible& collectible);
+	void collect(std::size_t collectible_index);
 
 	void inspect();
 	void inspect_collectibles();
@@ -50,7 +50,7 @@ class Lab : public Scene {
 	le::input::MouseButtonChord m_click{};
 	bool m_check_hit{};
 
-	ui::ScrollView m_scroll_view{};
+	Sidebar m_sidebar;
 
 	glm::vec2 m_cursor_pos{};
 	glm::vec2 m_prev_cursor_pos{};

@@ -57,6 +57,8 @@ void ScrollView::add_widget(std::unique_ptr<Widget> widget) {
 	reposition_widgets();
 }
 
+void ScrollView::clear_widgets() { m_widgets.clear(); }
+
 void ScrollView::reposition_widgets() {
 	if (m_widgets.empty()) { return; }
 
@@ -82,35 +84,6 @@ void ScrollView::draw(le::Renderer& renderer) const {
 	background.draw(renderer);
 	for (auto const& widget : m_widgets) { widget->draw(renderer); }
 	renderer.set_scissor_rect(kvf::uv_rect_v);
-}
-
-auto ScrollView::on_scroll(le::event::Scroll const& scroll) -> bool {
-	if (!background.bounding_rect().contains(m_cursor_pos)) { return false; }
-	y_offset += -scroll_speed * scroll.y;
-	for (auto const& widget : m_widgets) { widget->disengage(); }
-	move_widgets(-scroll_speed * scroll.y);
-	return true;
-}
-
-auto ScrollView::on_mouse_button(le::event::MouseButton const& button) -> bool {
-	if (button.button != GLFW_MOUSE_BUTTON_1) { return false; }
-	m_mb1_press.on_event(button);
-	switch (button.action) {
-	case GLFW_PRESS: {
-		if (background.bounding_rect().contains(m_cursor_pos)) { m_drag_start_y = m_cursor_pos.y; }
-		break;
-	}
-	case GLFW_RELEASE:
-		m_state = State::Idle;
-		m_drag_start_y.reset();
-		break;
-	}
-	return false;
-}
-
-auto ScrollView::on_cursor_pos(le::event::CursorPos const& cursor) -> bool {
-	m_cursor_pos = cursor.normalized;
-	return m_drag_start_y.has_value();
 }
 
 void ScrollView::do_scroll(glm::vec2 const cursor_pos) {

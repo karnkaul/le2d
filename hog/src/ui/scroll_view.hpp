@@ -19,6 +19,7 @@ class ScrollView : public le::input::Listener {
 	void disengage_input() override;
 
 	void add_widget(std::unique_ptr<Widget> widget);
+	void clear_widgets();
 
 	void reposition_widgets();
 
@@ -35,10 +36,6 @@ class ScrollView : public le::input::Listener {
 	float y_offset{};
 
   private:
-	auto on_scroll(le::event::Scroll const& scroll) -> bool;
-	auto on_mouse_button(le::event::MouseButton const& button) -> bool;
-	auto on_cursor_pos(le::event::CursorPos const& cursor_pos) -> bool;
-
 	void do_scroll(glm::vec2 cursor_pos);
 	void move_widgets(float dy);
 

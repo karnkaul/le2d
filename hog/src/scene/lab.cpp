@@ -9,9 +9,10 @@
 #include <scene/lab.hpp>
 #include <scene/switcher.hpp>
 #include <ui/button.hpp>
+#include <ranges>
 
 namespace hog::scene {
-Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
+Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sidebar(*services) {
 	load_assets();
 	create_textures();
 	m_quad.texture = &m_textures.front();
@@ -30,23 +31,11 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 
 	m_level = build_level(asset_store, m_level_info);
 
-	auto* font = asset_store.get<le::Font>("font.ttf");
-	auto make_button = [&](std::string_view const name) {
-		auto ret = ui::Button{};
-		ret.set_size(glm::vec2{200.0f, 100.0f});
-		ret.set_position({200.0f, -100.0f});
-		if (font != nullptr) { ret.set_text(*font, name); }
-		ret.set_on_click([name] { log::debug("{} clicked", name); });
-		return ret;
-	};
+	m_sidebar.tile_bg = asset_store.get<le::Texture>("textures/tile_bg.png");
+	m_sidebar.checkbox = asset_store.get<le::Texture>("textures/checkbox.png");
 
-	m_scroll_view.background.create({200.0f, 400.0f});
-	m_scroll_view.background.instance.tint.w = 0x77;
-	m_scroll_view.background.instance.transform.position = {200.0f, 0.0f};
-	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("zero")));
-	m_scroll_view.add_widget(std::make_unique<ui::Button>(make_button("one")));
-
-	services->get<le::input::Dispatch>().attach(&m_scroll_view);
+	m_sidebar.initialize_for(m_level);
+	m_sidebar.set_framebuffer_size(services->get<le::Context>().framebuffer_size());
 }
 
 auto Lab::consume_cursor_move(glm::vec2 const pos) -> bool {
@@ -101,8 +90,9 @@ void Lab::tick(kvf::Seconds const dt) {
 	}
 
 	auto const framebuffer_size = m_services->get<le::Context>().framebuffer_size();
-	m_scroll_view.set_framebuffer_size(framebuffer_size);
-	m_scroll_view.tick(dt);
+
+	m_sidebar.set_framebuffer_size(framebuffer_size);
+	m_sidebar.tick(dt);
 
 	if (m_check_hit) {
 		m_check_hit = false;
@@ -123,10 +113,7 @@ void Lab::render(le::Renderer& renderer) const {
 	render_ui(renderer);
 }
 
-void Lab::disengage_input() {
-	m_drag_view.disengage();
-	m_scroll_view.disengage_input();
-}
+void Lab::disengage_input() { m_drag_view.disengage(); }
 
 void Lab::load_assets() {
 	auto& context = m_services->get<le::Context>();
@@ -146,6 +133,7 @@ void Lab::load_assets() {
 	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
 	for (auto const& animation : m_level_info.assets.animations) { load_task->enqueue<le::Animation>(animation); }
 	for (auto const& flipbook : m_level_info.assets.flipbooks) { load_task->enqueue<le::Flipbook>(flipbook); }
+	load_task->enqueue<le::Texture>("textures/checkbox.png");
 
 	queue.enqueue(*load_task);
 
@@ -175,18 +163,20 @@ void Lab::create_textures() {
 }
 
 void Lab::check_hit(glm::vec2 const cursor_pos) {
-	for (auto& collectible : m_level.collectibles) {
+	for (auto [index, collectible] : std::views::enumerate(m_level.collectibles)) {
 		auto const& prop = m_level.props.at(collectible.prop_index);
 		if (prop.sprite.bounding_rect().contains(cursor_pos)) {
-			collect(collectible);
+			collect(std::size_t(index));
 			return;
 		}
 	}
 }
 
-void Lab::collect(Collectible& collectible) {
+void Lab::collect(std::size_t const collectible_index) {
+	auto& collectible = m_level.collectibles.at(collectible_index);
 	if (collectible.collected) { return; }
 	collectible.collected = true;
+	m_sidebar.set_collected(collectible_index, true);
 	log::debug("'{}' collected", m_level.props.at(collectible.prop_index).name);
 }
 
@@ -207,9 +197,9 @@ void Lab::inspect() {
 }
 
 void Lab::inspect_collectibles() {
-	for (auto& collectible : m_level.collectibles) {
+	for (auto [index, collectible] : std::views::enumerate(m_level.collectibles)) {
 		auto const& prop = m_level.props.at(collectible.prop_index);
-		ImGui::Checkbox(prop.name.data(), &collectible.collected);
+		if (ImGui::Checkbox(prop.name.data(), &collectible.collected)) { m_sidebar.set_collected(std::size_t(index), collectible.collected); }
 	}
 }
 
@@ -221,5 +211,5 @@ void Lab::render_world(le::Renderer& renderer) const {
 	for (auto const& prop : m_level.props) { prop.draw(renderer); }
 }
 
-void Lab::render_ui(le::Renderer& renderer) const { m_scroll_view.draw(renderer); }
+void Lab::render_ui(le::Renderer& renderer) const { m_sidebar.draw(renderer); }
 } // namespace hog::scene

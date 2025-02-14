@@ -26,6 +26,9 @@ class Listener : public klib::Polymorphic {
 
 	virtual void disengage_input() {}
 
+	[[nodiscard]] auto get_dispatch() const -> Dispatch* { return m_dispatch; }
+	[[nodiscard]] auto is_attached() const -> bool { return get_dispatch() != nullptr; }
+
   private:
 	Dispatch* m_dispatch{};
 
