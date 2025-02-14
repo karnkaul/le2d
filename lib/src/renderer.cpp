@@ -18,10 +18,6 @@ struct ImageSampler {
 	vk::Sampler sampler{};
 };
 
-constexpr auto is_normalized(float const f) { return f >= 0.0f && f <= 1.0f; }
-constexpr auto is_normalized(glm::vec2 const v) { return is_normalized(v.x) && is_normalized(v.y); }
-constexpr auto is_normalized(kvf::UvRect const& r) { return is_normalized(r.lt) && is_normalized(r.rb); }
-
 void write_instances(std::vector<std::byte>& out, std::span<RenderInstance const> instances) {
 	out.clear();
 	out.resize(instances.size() * sizeof(Std430Instance));
@@ -68,7 +64,7 @@ auto image_wds(vk::DescriptorImageInfo const& dii, vk::DescriptorSet set, std::u
 
 Renderer::Renderer(RenderPass& render_pass, ResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
 	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->default_shader),
-	  m_viewport(render_pass.m_render_pass.viewport()), m_scissor(render_pass.m_render_pass.scissor()) {
+	  m_viewport(render_pass.m_render_pass.to_viewport(kvf::uv_rect_v)), m_scissor(render_pass.m_render_pass.to_scissor(kvf::uv_rect_v)) {
 	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) { end_render(); }
 }
 
@@ -88,23 +84,14 @@ auto Renderer::set_shader(Shader const& shader) -> bool {
 }
 
 auto Renderer::set_render_area(kvf::UvRect const& n_rect) -> bool {
-	if (!is_rendering() || !is_normalized(n_rect)) { return false; }
-
-	auto const fb_size = kvf::util::to_glm_vec(m_pass->m_render_pass.get_extent());
-	auto const rect = kvf::UvRect{.lt = n_rect.lt * fb_size, .rb = n_rect.rb * fb_size};
-	auto const vp_size = rect.size();
-	m_viewport = vk::Viewport{rect.lt.x, rect.rb.y, vp_size.x, -vp_size.y};
+	if (!is_rendering()) { return false; }
+	m_viewport = m_pass->m_render_pass.to_viewport(n_rect);
 	return true;
 }
 
 auto Renderer::set_scissor_rect(kvf::UvRect const& n_rect) -> bool {
-	if (!is_rendering() || !is_normalized(n_rect)) { return false; }
-
-	auto const fb_size = kvf::util::to_glm_vec(m_pass->m_render_pass.get_extent());
-	auto const rect = kvf::UvRect{.lt = n_rect.lt * fb_size, .rb = n_rect.rb * fb_size};
-	auto const offset = glm::ivec2{rect.lt};
-	auto const extent = glm::uvec2{rect.size()};
-	m_scissor = vk::Rect2D{vk::Offset2D{offset.x, offset.y}, vk::Extent2D{extent.x, extent.y}};
+	if (!is_rendering()) { return false; }
+	m_scissor = m_pass->m_render_pass.to_scissor(n_rect);
 	return true;
 }
 
