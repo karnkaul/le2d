@@ -125,7 +125,7 @@ void Lab::render(le::Renderer& renderer) const {
 
 void Lab::disengage_input() {
 	m_drag_view.disengage();
-	m_scroll_view.disengage();
+	m_scroll_view.disengage_input();
 }
 
 void Lab::load_assets() {

@@ -44,9 +44,10 @@ auto ScrollView::consume_scroll(le::event::Scroll const& scroll) -> bool {
 	return true;
 }
 
-void ScrollView::disengage() {
+void ScrollView::disengage_input() {
 	for (auto const& widget : m_widgets) { widget->disengage(); }
 	m_mb1_press.disengage();
+	m_drag_start_y.reset();
 	m_state = State::Idle;
 }
 

@@ -16,7 +16,7 @@ class ScrollView : public le::input::Listener {
 	auto consume_scroll(le::event::Scroll const& scroll) -> bool override;
 
 	void set_framebuffer_size(glm::vec2 size);
-	void disengage();
+	void disengage_input() override;
 
 	void add_widget(std::unique_ptr<Widget> widget);
 
