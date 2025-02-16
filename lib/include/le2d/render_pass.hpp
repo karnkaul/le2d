@@ -3,9 +3,9 @@
 #include <kvf/device_block.hpp>
 #include <kvf/render_pass.hpp>
 #include <le2d/renderer.hpp>
+#include <le2d/resource_pool.hpp>
 
 namespace le {
-class ResourcePool;
 class Renderer;
 
 class RenderPass {
@@ -22,7 +22,7 @@ class RenderPass {
 
 	void set_clear_color(kvf::Color color);
 
-	auto begin_render(ResourcePool& resource_pool, vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer;
+	auto begin_render(IResourcePool& resource_pool, vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer;
 
   private:
 	kvf::RenderDevice* m_render_device;

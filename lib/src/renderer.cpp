@@ -41,11 +41,11 @@ auto write_view_proj(kvf::vma::Buffer& out, Transform const& view, glm::vec2 con
 	return kvf::util::overwrite(out, mat_vp);
 }
 
-auto get_image_sampler(ResourcePool& resource_pool, ITexture const* texture) -> ImageSampler {
-	if (texture == nullptr) { texture = &resource_pool.white_texture; }
+auto get_image_sampler(IResourcePool& resource_pool, ITexture const* texture) -> ImageSampler {
+	if (texture == nullptr) { texture = &resource_pool.get_white_texture(); }
 	return ImageSampler{
 		.image = texture->get_image(),
-		.sampler = resource_pool.samplers.allocate(texture->sampler),
+		.sampler = resource_pool.allocate_sampler(texture->sampler),
 	};
 }
 
@@ -62,8 +62,8 @@ auto image_wds(vk::DescriptorImageInfo const& dii, vk::DescriptorSet set, std::u
 }
 } // namespace
 
-Renderer::Renderer(RenderPass& render_pass, ResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
-	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->default_shader),
+Renderer::Renderer(RenderPass& render_pass, IResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
+	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->get_default_shader()),
 	  m_viewport(render_pass.m_render_pass.to_viewport(kvf::uv_rect_v)), m_scissor(render_pass.m_render_pass.to_scissor(kvf::uv_rect_v)) {
 	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) { end_render(); }
 }
@@ -108,24 +108,25 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	if (!bind_shader(primitive.topology)) { return false; }
 
-	auto descriptor_sets = std::array<vk::DescriptorSet, PipelinePool::set_count_v>{};
-	auto const set_layouts = m_resource_pool->pipelines.get_set_layouts();
+	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
+	auto const set_layouts = m_resource_pool->get_set_layouts();
+	KLIB_ASSERT(set_layouts.size() == descriptor_sets.size());
 	if (!m_pass->m_render_device->allocate_sets(descriptor_sets, set_layouts)) { return false; }
 
 	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
-	auto& vbo = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
+	auto& vbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
 	if (!kvf::util::overwrite(vbo, primitive.vertices)) { return false; }
 	if (!primitive.indices.empty() && !kvf::util::overwrite(vbo, primitive.indices, primitive.vertices.size_bytes())) { return false; }
 
-	auto& view_buffer = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
+	auto& view_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
 	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
 	if (!write_view_proj(view_buffer, view, render_area)) { return false; }
 
 	write_instances(m_resource_pool->scratch_buffer, instances);
-	auto& instances_buffer = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer.size());
+	auto& instances_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer.size());
 	if (!kvf::util::overwrite(instances_buffer, m_resource_pool->scratch_buffer)) { return false; }
 
-	auto& user_ssbo = m_resource_pool->buffers.allocate(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
+	auto& user_ssbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
 	kvf::util::overwrite(user_ssbo, m_user_data.ssbo);
 
 	auto const texture = get_image_sampler(*m_resource_pool, primitive.texture);
@@ -152,7 +153,7 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	m_cmd.setScissor(0, m_scissor);
 	m_cmd.setLineWidth(m_line_width);
 
-	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->pipelines.get_layout(), 0, descriptor_sets, {});
+	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->get_pipeline_layout(), 0, descriptor_sets, {});
 	m_cmd.bindVertexBuffers(0, vbo.get_buffer(), vk::DeviceSize{});
 	if (primitive.indices.empty()) {
 		auto const vertices = std::uint32_t(primitive.vertices.size());
@@ -179,12 +180,12 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 
 	KLIB_ASSERT(m_shader != nullptr);
 
-	auto const info = PipelinePool::Info{
+	auto const fixed_state = PipelineFixedState{
 		.samples = m_pass->get_samples(),
 		.topology = topology,
 		.polygon_mode = polygon_mode,
 	};
-	auto const pipeline = m_resource_pool->pipelines.allocate(info, *m_shader);
+	auto const pipeline = m_resource_pool->allocate_pipeline(fixed_state, *m_shader);
 	if (!pipeline) { return false; }
 
 	if (m_pipeline == pipeline) { return true; }
