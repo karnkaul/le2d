@@ -11,6 +11,8 @@ class ScrollView : public le::input::Listener {
   public:
 	enum class State : std::int8_t { Idle, Scrolling };
 
+	using le::input::Listener::Listener;
+
 	auto consume_cursor_move(glm::vec2 pos) -> bool override;
 	auto consume_mouse_button(le::event::MouseButton const& button) -> bool override;
 	auto consume_scroll(le::event::Scroll const& scroll) -> bool override;

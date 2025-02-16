@@ -2,6 +2,8 @@
 #include <le2d/input/listener.hpp>
 
 namespace le::input {
+Listener::Listener(gsl::not_null<Dispatch*> dispatch) : m_dispatch(dispatch) { m_dispatch->attach(this); }
+
 Listener::Listener(Listener&& rhs) noexcept : m_dispatch(rhs.m_dispatch) {
 	if (m_dispatch == nullptr) { return; }
 	m_dispatch->attach(this);

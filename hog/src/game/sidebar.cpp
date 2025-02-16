@@ -1,12 +1,12 @@
 #include <game/sidebar.hpp>
 #include <le2d/asset/store.hpp>
+#include <le2d/context.hpp>
 #include <le2d/input/dispatch.hpp>
 
 namespace hog {
-Sidebar::Sidebar(le::ServiceLocator const& services) {
+Sidebar::Sidebar(le::ServiceLocator const& services) : m_context(&services.get<le::Context>()), m_scroller(&services.get<le::input::Dispatch>()) {
 	m_scroller.background.instance.tint.w = 0x77;
-
-	services.get<le::input::Dispatch>().attach(&m_scroller);
+	resize(m_context->framebuffer_size());
 }
 
 void Sidebar::initialize_for(Level const& level) {
@@ -19,17 +19,13 @@ void Sidebar::initialize_for(Level const& level) {
 	}
 }
 
-void Sidebar::set_framebuffer_size(glm::vec2 const size) {
-	if (!kvf::is_positive(size) || size == m_framebuffer_size) { return; }
-	m_framebuffer_size = size;
-	m_scroller.background.create({150.0f, m_framebuffer_size.y});
-	m_scroller.background.instance.transform.position.x = 0.5f * m_framebuffer_size.x - 80.0f;
-	m_scroller.reposition_widgets();
-}
-
 void Sidebar::set_collected(std::size_t const index, bool const collected) { m_tiles.at(index)->collected = collected; }
 
-void Sidebar::tick(kvf::Seconds const dt) { m_scroller.tick(dt); }
+void Sidebar::tick(kvf::Seconds const dt) {
+	glm::vec2 const framebuffer_size = m_context->framebuffer_size();
+	if (kvf::is_positive(framebuffer_size) && m_framebuffer_size != framebuffer_size) { resize(framebuffer_size); }
+	m_scroller.tick(dt);
+}
 
 void Sidebar::draw(le::Renderer& renderer) const { m_scroller.draw(renderer); }
 
@@ -44,6 +40,13 @@ auto Sidebar::to_tile(Collectible const& collectible, Prop const& prop) const ->
 	tile->checkbox.texture = checkbox;
 	tile->collected = collectible.collected;
 	return tile;
+}
+
+void Sidebar::resize(glm::vec2 const size) {
+	m_framebuffer_size = size;
+	m_scroller.background.create({150.0f, m_framebuffer_size.y});
+	m_scroller.background.instance.transform.position.x = 0.5f * m_framebuffer_size.x - 80.0f;
+	m_scroller.reposition_widgets();
 }
 
 void Sidebar::Tile::draw(le::Renderer& renderer) const {

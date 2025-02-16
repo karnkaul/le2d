@@ -35,7 +35,6 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sideb
 	m_sidebar.checkbox = asset_store.get<le::Texture>("textures/checkbox.png");
 
 	m_sidebar.initialize_for(m_level);
-	m_sidebar.set_framebuffer_size(services->get<le::Context>().framebuffer_size());
 }
 
 auto Lab::consume_cursor_move(glm::vec2 const pos) -> bool {
@@ -89,9 +88,6 @@ void Lab::tick(kvf::Seconds const dt) {
 		m_quad.instance.tint = kvf::white_v;
 	}
 
-	auto const framebuffer_size = m_services->get<le::Context>().framebuffer_size();
-
-	m_sidebar.set_framebuffer_size(framebuffer_size);
 	m_sidebar.tick(dt);
 
 	if (m_check_hit) {

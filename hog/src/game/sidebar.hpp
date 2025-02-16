@@ -3,14 +3,16 @@
 #include <le2d/service_locator.hpp>
 #include <ui/scroll_view.hpp>
 
+namespace le {
+class Context;
+}
+
 namespace hog {
 class Sidebar {
   public:
 	explicit Sidebar(le::ServiceLocator const& services);
 
 	void initialize_for(Level const& level);
-
-	void set_framebuffer_size(glm::vec2 size);
 
 	void set_collected(std::size_t index, bool collected);
 
@@ -35,6 +37,10 @@ class Sidebar {
 	};
 
 	[[nodiscard]] auto to_tile(Collectible const& collectible, Prop const& prop) const -> std::unique_ptr<Tile>;
+
+	void resize(glm::vec2 size);
+
+	gsl::not_null<le::Context const*> m_context;
 
 	ui::ScrollView m_scroller{};
 	std::vector<Tile*> m_tiles{};

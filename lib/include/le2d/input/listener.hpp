@@ -1,6 +1,7 @@
 #pragma once
 #include <klib/polymorphic.hpp>
 #include <le2d/event.hpp>
+#include <gsl/pointers>
 
 namespace le::input {
 class Dispatch;
@@ -11,6 +12,8 @@ class Listener : public klib::Polymorphic {
 	auto operator=(Listener const&) -> Listener& = delete;
 
 	Listener() = default;
+
+	explicit Listener(gsl::not_null<Dispatch*> dispatch);
 
 	Listener(Listener&& rhs) noexcept;
 	auto operator=(Listener&& rhs) noexcept -> Listener&;

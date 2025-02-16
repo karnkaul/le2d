@@ -45,12 +45,12 @@ class Lab : public Scene {
 	LevelInfo m_level_info{};
 	Level m_level{};
 
+	Sidebar m_sidebar;
+
 	le::input::KeyChord m_escape{};
 	le::input::MouseButtonTrigger m_drag_view{};
 	le::input::MouseButtonChord m_click{};
 	bool m_check_hit{};
-
-	Sidebar m_sidebar;
 
 	glm::vec2 m_cursor_pos{};
 	glm::vec2 m_prev_cursor_pos{};
