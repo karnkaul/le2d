@@ -33,6 +33,7 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sideb
 
 	m_sidebar.tile_bg = asset_store.get<le::Texture>("textures/tile_bg.png");
 	m_sidebar.checkbox = asset_store.get<le::Texture>("textures/checkbox.png");
+	m_sidebar.font = asset_store.get<le::Font>("font.ttf");
 
 	m_sidebar.initialize_for(m_level);
 }
@@ -59,6 +60,8 @@ auto Lab::consume_mouse_button(le::event::MouseButton const& button) -> bool {
 	if (m_click.is_engaged(button)) {
 		m_check_hit = true;
 		ret = true;
+
+		if (!m_sidebar.contains(m_cursor_pos)) { m_sidebar.hide_popup(); }
 	}
 	return ret;
 }
@@ -172,7 +175,7 @@ void Lab::collect(std::size_t const collectible_index) {
 	auto& collectible = m_level.collectibles.at(collectible_index);
 	if (collectible.collected) { return; }
 	collectible.collected = true;
-	m_sidebar.set_collected(collectible_index, true);
+	m_sidebar.collect(collectible_index);
 	log::debug("'{}' collected", m_level.props.at(collectible.prop_index).name);
 }
 

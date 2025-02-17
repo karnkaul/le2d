@@ -14,6 +14,10 @@ class Sidebar {
 
 	void initialize_for(Level const& level);
 
+	[[nodiscard]] auto contains(glm::vec2 cursor) const { return m_scroller.background.bounding_rect().contains(cursor); }
+	void hide_popup() { m_popup.tile = nullptr; }
+
+	void collect(std::size_t index);
 	void set_collected(std::size_t index, bool collected);
 
 	void tick(kvf::Seconds dt);
@@ -21,6 +25,13 @@ class Sidebar {
 
 	le::Texture const* tile_bg{};
 	le::Texture const* checkbox{};
+	le::Font* font{};
+
+	float tile_size{150.0f};
+	float right_pad{10.0f};
+	glm::vec2 popup_size{350.0f, 120.0f};
+	kvf::Color popup_text{kvf::black_v};
+	float popup_pad{20.0f};
 
   private:
 	struct Tile : ui::Widget {
@@ -30,10 +41,24 @@ class Sidebar {
 		[[nodiscard]] auto get_position() const -> glm::vec2 final { return background.instance.transform.position; }
 		void set_position(glm::vec2 position) final;
 
+		void set_popup();
+
+		Sidebar* sidebar{};
+		std::string_view description{};
+
 		le::drawable::Quad background{};
 		le::drawable::Sprite sprite{};
 		le::drawable::Quad checkbox{};
 		bool collected{};
+	};
+
+	struct Popup {
+		void update();
+		void draw(le::Renderer& renderer) const;
+
+		Tile const* tile{};
+		le::drawable::Quad background{};
+		le::drawable::Text description{};
 	};
 
 	[[nodiscard]] auto to_tile(Collectible const& collectible, Prop const& prop) const -> std::unique_ptr<Tile>;
@@ -44,6 +69,7 @@ class Sidebar {
 
 	ui::ScrollView m_scroller{};
 	std::vector<Tile*> m_tiles{};
+	Popup m_popup{};
 
 	glm::vec2 m_framebuffer_size{};
 };
