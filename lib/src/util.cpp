@@ -25,6 +25,6 @@ auto util::exe_path() -> std::string {
 	ret = std::string{buffer.data(), std::size_t(length)};
 #endif
 
-	return {};
+	return ret;
 }
 } // namespace le
