@@ -1,29 +1,23 @@
 #pragma once
-#include <le2d/resource_pool/buffer_pool.hpp>
-#include <le2d/resource_pool/pipeline_pool.hpp>
-#include <le2d/resource_pool/sampler_pool.hpp>
+#include <le2d/pipeline_fixed_state.hpp>
 #include <le2d/shader.hpp>
 #include <le2d/texture.hpp>
 #include <cstddef>
 #include <vector>
 
 namespace le {
-class ResourcePool {
+class IResourcePool : public klib::Polymorphic {
   public:
-	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device);
+	[[nodiscard]] virtual auto allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size) -> kvf::vma::Buffer& = 0;
+	[[nodiscard]] virtual auto allocate_pipeline(PipelineFixedState const& state, Shader const& shader) -> vk::Pipeline = 0;
+	[[nodiscard]] virtual auto allocate_sampler(TextureSampler const& sampler) -> vk::Sampler = 0;
 
-	void next_frame() { buffers.next_frame(); }
+	[[nodiscard]] virtual auto get_pipeline_layout() const -> vk::PipelineLayout = 0;
+	[[nodiscard]] virtual auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> = 0;
 
-	BufferPool buffers;
-	PipelinePool pipelines;
-	SamplerPool samplers;
-
-	Texture white_texture;
-	Shader default_shader{};
+	[[nodiscard]] virtual auto get_white_texture() const -> Texture const& = 0;
+	[[nodiscard]] virtual auto get_default_shader() const -> Shader const& = 0;
 
 	std::vector<std::byte> scratch_buffer{};
-
-  private:
-	kvf::DeviceBlock m_blocker;
 };
 } // namespace le

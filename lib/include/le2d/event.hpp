@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
 #include <klib/visitor.hpp>
-#include <kvf/ttf.hpp>
+#include <kvf/codepoint.hpp>
 #include <le2d/vector_space.hpp>
 #include <span>
 #include <string>
@@ -32,7 +32,7 @@ struct CursorPos {
 	ndc::vec2 normalized{};
 };
 
-using Codepoint = kvf::ttf::Codepoint;
+using Codepoint = kvf::Codepoint;
 
 struct Key {
 	int key;

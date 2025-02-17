@@ -297,12 +297,11 @@ struct Terminal::Impl : Printer {
 	}
 
 	void draw_buffer(Renderer& renderer) const {
-		auto const scissor_y = (0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y;
-		auto scissor = vk::Rect2D{vk::Offset2D{}, vk::Extent2D{std::uint32_t(m_framebuffer_size.x), std::uint32_t(scissor_y)}};
-		renderer.command_buffer().setScissor(0, scissor);
+		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
+		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
+		renderer.set_scissor_rect(rect);
 		m_buffer.draw(renderer);
-		scissor.extent.height = std::uint32_t(m_framebuffer_size.y);
-		renderer.command_buffer().setScissor(0, scissor);
+		renderer.set_scissor_rect(kvf::uv_rect_v);
 	}
 
 	void print_input(std::string line) { m_buffer.push({&line, 1}, m_info.colors.input); }

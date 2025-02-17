@@ -12,10 +12,9 @@ class Unprojector {
 
 	[[nodiscard]] auto to_framebuffer(ndc::vec2 const point) const -> glm::vec2 { return point.to_target(framebuffer_size()); }
 
-	[[nodiscard]] auto unproject(ndc::vec2 const point) const -> glm::vec2 {
-		auto const pos = to_framebuffer(point);
-		return m_inverse_view * glm::vec4{pos, 0.0f, 1.0f};
-	}
+	[[nodiscard]] auto unproject(ndc::vec2 const point) const -> glm::vec2 { return unproject(to_framebuffer(point)); }
+
+	[[nodiscard]] auto unproject(glm::vec2 const point) const -> glm::vec2 { return m_inverse_view * glm::vec4{point, 0.0f, 1.0f}; }
 
   private:
 	glm::mat4 m_inverse_view{};

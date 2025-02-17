@@ -3,6 +3,7 @@
 #include <klib/version_str.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/file_data_loader.hpp>
+#include <le2d/util.hpp>
 #include <log.hpp>
 
 auto main(int argc, char** argv) -> int {
@@ -17,7 +18,10 @@ auto main(int argc, char** argv) -> int {
 		auto const parse_result = klib::args::parse_main(args, argc, argv);
 		if (parse_result.early_return()) { return parse_result.get_return_code(); }
 
-		if (assets_dir.empty()) { assets_dir = le::FileDataLoader::upfind("assets", *argv); }
+		if (assets_dir.empty()) {
+			auto const exe_path = le::util::exe_path();
+			assets_dir = le::FileDataLoader::upfind("assets", exe_path);
+		}
 		auto const data_loader = le::FileDataLoader{assets_dir};
 
 		hog::log::info("le2d {}", klib::to_string(le::build_version_v));

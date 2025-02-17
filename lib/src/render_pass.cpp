@@ -19,7 +19,7 @@ RenderPass::RenderPass(gsl::not_null<kvf::RenderDevice*> render_device, vk::Samp
 
 void RenderPass::set_clear_color(kvf::Color const color) { m_render_pass.clear_color = color.to_linear(); }
 
-auto RenderPass::begin_render(ResourcePool& resource_pool, vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer {
+auto RenderPass::begin_render(IResourcePool& resource_pool, vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer {
 	size = clamp_size(size);
 	m_render_pass.begin_render(command_buffer, kvf::util::to_vk_extent(size));
 	return Renderer{*this, resource_pool, command_buffer};

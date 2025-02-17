@@ -1,3 +1,7 @@
+#include <common.hpp>
+#include <detail/buffer_pool.hpp>
+#include <detail/pipeline_pool.hpp>
+#include <detail/sampler_pool.hpp>
 #include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
@@ -11,16 +15,50 @@ auto create_window(WindowCreateInfo const& create_info) {
 	};
 	return std::visit(Visitor{}, create_info);
 }
+
+struct ResourcePool : IResourcePool {
+	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device)
+		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device, white_bitmap_v),
+		  m_blocker(render_device->get_device()) {}
+
+	[[nodiscard]] auto allocate_buffer(vk::BufferUsageFlags const usage, vk::DeviceSize const size) -> kvf::vma::Buffer& final {
+		return buffers.allocate(usage, size);
+	}
+
+	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, Shader const& shader) -> vk::Pipeline final {
+		return pipelines.allocate(state, shader);
+	}
+
+	[[nodiscard]] auto allocate_sampler(TextureSampler const& sampler) -> vk::Sampler final { return samplers.allocate(sampler); }
+
+	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return pipelines.get_layout(); }
+	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return pipelines.get_set_layouts(); }
+	[[nodiscard]] auto get_white_texture() const -> Texture const& final { return white_texture; }
+	[[nodiscard]] auto get_default_shader() const -> Shader const& final { return default_shader; }
+
+	void next_frame() { buffers.next_frame(); }
+
+	detail::BufferPool buffers;
+	detail::PipelinePool pipelines;
+	detail::SamplerPool samplers;
+
+	Texture white_texture;
+	Shader default_shader{};
+
+  private:
+	kvf::DeviceBlock m_blocker;
+};
 } // namespace
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
-	: m_data_loader(data_loader), m_window(create_window(create_info.window)), m_resource_pool(&m_window.get_render_device()),
-	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
+	: m_data_loader(data_loader), m_window(create_window(create_info.window)), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
+	auto resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device());
 	auto const& shader = create_info.default_shader;
-	m_resource_pool.default_shader = create_shader(shader.vertex, shader.fragment);
-	if (!m_resource_pool.default_shader) {
+	resource_pool->default_shader = create_shader(shader.vertex, shader.fragment);
+	if (!resource_pool->default_shader) {
 		log::warn("Context: failed to create Default Shader: '{}' / '{}'", shader.vertex.get_string(), shader.fragment.get_string());
 	}
+	m_resource_pool = std::move(resource_pool);
 }
 
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
@@ -33,14 +71,14 @@ auto Context::set_render_scale(float const scale) -> bool {
 
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window.next_frame();
-	m_resource_pool.next_frame();
+	static_cast<ResourcePool*>(m_resource_pool.get())->next_frame(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 	return m_cmd;
 }
 
 auto Context::begin_render(kvf::Color const clear) -> Renderer {
 	if (!m_cmd) { return {}; }
 	m_pass.set_clear_color(clear);
-	return m_pass.begin_render(m_resource_pool, m_cmd, framebuffer_size());
+	return m_pass.begin_render(*m_resource_pool, m_cmd, framebuffer_size());
 }
 
 void Context::present() {

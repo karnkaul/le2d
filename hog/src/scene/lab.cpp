@@ -3,20 +3,24 @@
 #include <klib/task/queue.hpp>
 #include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
+#include <le2d/input/dispatch.hpp>
 #include <le2d/vertex_bounds.hpp>
 #include <log.hpp>
 #include <scene/lab.hpp>
 #include <scene/switcher.hpp>
+#include <ui/button.hpp>
+#include <ranges>
 
 namespace hog::scene {
-Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
+Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sidebar(*services) {
 	load_assets();
 	create_textures();
 	m_quad.texture = &m_textures.front();
 	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
 
 	m_escape = le::input::KeyChord{GLFW_KEY_ESCAPE, GLFW_RELEASE};
-	m_mb1 = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
+	m_drag_view = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
+	m_click = le::input::MouseButtonChord{GLFW_MOUSE_BUTTON_1};
 
 	auto const& asset_store = m_services->get<le::asset::Store>();
 	auto const& level_assets = m_level_info.assets;
@@ -25,46 +29,57 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services) {
 		m_background.texture = texture;
 	}
 
-	m_props.reserve(m_level_info.props.size());
-	for (auto const& prop_info : m_level_info.props) { m_props.push_back(create_prop(asset_store, level_assets, prop_info)); }
+	m_level = build_level(asset_store, m_level_info);
 
-	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_button.set_size(glm::vec2{200.0f, 100.0f});
-	m_button.set_position({200.0f, -100.0f});
-	if (auto* font = asset_store.get<le::Font>("font.ttf")) { m_button.set_text(*font, "click"); }
-	m_button.set_on_click([] { log::debug("clicked"); });
+	m_sidebar.tile_bg = asset_store.get<le::Texture>("textures/tile_bg.png");
+	m_sidebar.checkbox = asset_store.get<le::Texture>("textures/checkbox.png");
+
+	m_sidebar.initialize_for(m_level);
 }
 
-void Lab::on_event(le::event::Key const key) {
-	if (m_escape.is_engaged(key)) { m_services->get<ISwitcher>().switch_scene<Scene>(); }
+auto Lab::consume_cursor_move(glm::vec2 const pos) -> bool {
+	m_cursor_pos = pos;
+	return false;
 }
 
-void Lab::on_event(le::event::MouseButton const button) {
-	if (m_mb1.on_event(button)) { m_prev_cursor_pos = m_cursor_pos; }
-	m_button.on_button(button);
+auto Lab::consume_key(le::event::Key const& key) -> bool {
+	if (m_escape.is_engaged(key)) {
+		m_services->get<ISwitcher>().switch_scene<Scene>();
+		return true;
+	}
+	return false;
 }
 
-void Lab::on_event(le::event::CursorPos const pos) {
-	m_cursor_pos = pos.normalized;
-	m_button.on_cursor(pos);
+auto Lab::consume_mouse_button(le::event::MouseButton const& button) -> bool {
+	auto ret = false;
+	if (m_drag_view.on_event(button)) {
+		m_prev_cursor_pos = m_cursor_pos;
+		ret = true;
+	}
+	if (m_click.is_engaged(button)) {
+		m_check_hit = true;
+		ret = true;
+	}
+	return ret;
 }
 
-void Lab::on_event(le::event::Scroll const scroll) {
+auto Lab::consume_scroll(le::event::Scroll const& scroll) -> bool {
 	auto const dscale = m_zoom_speed * scroll.y;
 	m_world_view.scale.x = std::clamp(m_world_view.scale.x + dscale, m_level_info.background.min_scale, m_level_info.background.max_scale);
 	m_world_view.scale.y = m_world_view.scale.x;
+	return true;
 }
 
 void Lab::tick(kvf::Seconds const dt) {
 	auto const unprojector = get_unprojector(m_world_view);
 	auto const cursor_pos = unprojector.unproject(m_cursor_pos);
-	if (m_mb1.is_engaged()) {
+	if (m_drag_view.is_engaged()) {
 		auto const prev_fb_cursor = unprojector.unproject(m_prev_cursor_pos);
 		auto const cursor_dxy = cursor_pos - prev_fb_cursor;
 		m_world_view.position -= cursor_dxy;
 	}
 
-	for (auto& prop : m_props) { prop.tick(dt); }
+	for (auto& prop : m_level.props) { prop.tick(dt); }
 
 	auto const rect = m_quad.bounding_rect();
 	if (rect.contains(cursor_pos)) {
@@ -73,10 +88,12 @@ void Lab::tick(kvf::Seconds const dt) {
 		m_quad.instance.tint = kvf::white_v;
 	}
 
-	m_button.set_framebuffer_size(m_services->get<le::Context>().framebuffer_size());
-	m_button.tick(dt);
+	m_sidebar.tick(dt);
 
-	if (m_button.get_state() == ui::WidgetState::Press) { m_mb1.disengage(); }
+	if (m_check_hit) {
+		m_check_hit = false;
+		check_hit(cursor_pos);
+	}
 
 	inspect();
 
@@ -92,10 +109,7 @@ void Lab::render(le::Renderer& renderer) const {
 	render_ui(renderer);
 }
 
-void Lab::disengage_input() {
-	m_mb1.disengage();
-	m_button.disengage();
-}
+void Lab::disengage_input() { m_drag_view.disengage(); }
 
 void Lab::load_assets() {
 	auto& context = m_services->get<le::Context>();
@@ -115,6 +129,7 @@ void Lab::load_assets() {
 	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
 	for (auto const& animation : m_level_info.assets.animations) { load_task->enqueue<le::Animation>(animation); }
 	for (auto const& flipbook : m_level_info.assets.flipbooks) { load_task->enqueue<le::Flipbook>(flipbook); }
+	load_task->enqueue<le::Texture>("textures/checkbox.png");
 
 	queue.enqueue(*load_task);
 
@@ -143,6 +158,24 @@ void Lab::create_textures() {
 	m_textures.push_back(std::move(texture));
 }
 
+void Lab::check_hit(glm::vec2 const cursor_pos) {
+	for (auto [index, collectible] : std::views::enumerate(m_level.collectibles)) {
+		auto const& prop = m_level.props.at(collectible.prop_index);
+		if (prop.sprite.bounding_rect().contains(cursor_pos)) {
+			collect(std::size_t(index));
+			return;
+		}
+	}
+}
+
+void Lab::collect(std::size_t const collectible_index) {
+	auto& collectible = m_level.collectibles.at(collectible_index);
+	if (collectible.collected) { return; }
+	collectible.collected = true;
+	m_sidebar.set_collected(collectible_index, true);
+	log::debug("'{}' collected", m_level.props.at(collectible.prop_index).name);
+}
+
 void Lab::inspect() {
 	if (ImGui::Begin("Inspect")) {
 		ImGui::DragFloat2("view position", &m_world_view.position.x, 1.0f);
@@ -150,19 +183,20 @@ void Lab::inspect() {
 			m_world_view.scale.y = m_world_view.scale.x;
 		}
 		ImGui::DragFloat("zoom speed", &m_zoom_speed, 0.01f, 0.01f, 0.5f);
-		auto disabled = m_button.get_state() == ui::WidgetState::Disabled;
-		if (ImGui::Checkbox("disabled", &disabled)) { m_button.set_disabled(disabled); }
 
-		auto params = m_button.get_superellipse_params();
-		auto modified = false;
-		modified |= ImGui::DragFloat2("size", &params.size.x);
-		modified |= ImGui::DragFloat("exponent", &params.exponent);
-		auto resolution = int(params.resolution);
-		modified |= ImGui::DragInt("resolution", &resolution);
-		params.resolution = std::int32_t(resolution);
-		if (modified) { m_button.set_superellipse_params(params); }
+		if (ImGui::TreeNode("collectibles")) {
+			inspect_collectibles();
+			ImGui::TreePop();
+		}
 	}
 	ImGui::End();
+}
+
+void Lab::inspect_collectibles() {
+	for (auto [index, collectible] : std::views::enumerate(m_level.collectibles)) {
+		auto const& prop = m_level.props.at(collectible.prop_index);
+		if (ImGui::Checkbox(prop.name.data(), &collectible.collected)) { m_sidebar.set_collected(std::size_t(index), collectible.collected); }
+	}
 }
 
 void Lab::render_world(le::Renderer& renderer) const {
@@ -170,11 +204,8 @@ void Lab::render_world(le::Renderer& renderer) const {
 	m_quad.draw(renderer);
 	m_line_rect.draw(renderer);
 
-	for (auto const& prop : m_props) { prop.draw(renderer); }
+	for (auto const& prop : m_level.props) { prop.draw(renderer); }
 }
 
-void Lab::render_ui(le::Renderer& renderer) const {
-	m_button.draw(renderer);
-	//
-}
+void Lab::render_ui(le::Renderer& renderer) const { m_sidebar.draw(renderer); }
 } // namespace hog::scene
