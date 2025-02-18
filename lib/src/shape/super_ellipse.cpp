@@ -8,7 +8,7 @@ void SuperEllipse::create(Params const& params) {
 	m_params = params;
 
 	auto const step = 360.0f / float(params.resolution);
-	m_verts.vertices.push_back(Vertex{.color = params.color});
+	m_verts.vertices.push_back(Vertex{.color = params.color.to_linear(), .uv = glm::vec2{0.5f}});
 	auto const a = 0.5f * params.size.x;
 	auto const b = 0.5f * params.size.y;
 	for (auto angle = 0.0f; angle < 360.0f + step; angle += step) {
@@ -18,7 +18,8 @@ void SuperEllipse::create(Params const& params) {
 		auto const left = std::pow(cos / a, params.exponent);
 		auto const right = std::pow(sin / b, params.exponent);
 		auto const r = std::pow(std::abs(left) + std::abs(right), -1.0f / params.exponent);
-		auto const vertex = Vertex{.position = {r * cos, r * sin}, .color = params.color};
+		auto vertex = Vertex{.position = {r * cos, r * sin}, .color = params.color.to_linear()};
+		vertex.uv = {(vertex.position.x / params.size.x) + 0.5f, 0.5f - (vertex.position.y / params.size.y)};
 		m_verts.vertices.push_back(vertex);
 	}
 }
