@@ -20,9 +20,13 @@ struct Builder {
 	[[nodiscard]] auto to_prop(PropInfo const& prop_info) const -> Prop {
 		auto ret = Prop{.name = prop_info.name};
 		ret.transform = ret.sprite.instance.transform = prop_info.transform;
-		ret.sprite.set_texture(store.get<le::Texture>(info.assets.textures.at(prop_info.texture)));
+		auto uv = kvf::uv_rect_v;
 		if (prop_info.animation) { ret.animator.set_animation(store.get<le::Animation>(info.assets.animations.at(*prop_info.animation))); }
-		if (prop_info.flipbook) { ret.flipper.set_animation(store.get<le::Flipbook>(info.assets.flipbooks.at(*prop_info.flipbook))); }
+		if (prop_info.flipbook) {
+			ret.flipper.set_animation(store.get<le::Flipbook>(info.assets.flipbooks.at(*prop_info.flipbook)));
+			if (auto const* flipbook = ret.flipper.get_animation()) { uv = flipbook->get_timeline().front().payload; }
+		}
+		ret.sprite.set_texture(store.get<le::Texture>(info.assets.textures.at(prop_info.texture)), uv);
 		return ret;
 	}
 

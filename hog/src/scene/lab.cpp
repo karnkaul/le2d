@@ -11,12 +11,11 @@
 #include <ui/button.hpp>
 #include <ranges>
 
+#include <le2d/json_io.hpp>
+
 namespace hog::scene {
 Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sidebar(*services) {
 	load_assets();
-	create_textures();
-	m_quad.texture = &m_textures.front();
-	m_line_rect.create(m_quad.get_rect(), kvf::yellow_v);
 
 	m_escape = le::input::KeyChord{GLFW_KEY_ESCAPE, GLFW_RELEASE};
 	m_drag_view = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
@@ -84,13 +83,6 @@ void Lab::tick(kvf::Seconds const dt) {
 
 	for (auto& prop : m_level.props) { prop.tick(dt); }
 
-	auto const rect = m_quad.bounding_rect();
-	if (rect.contains(cursor_pos)) {
-		m_quad.instance.tint = kvf::red_v;
-	} else {
-		m_quad.instance.tint = kvf::white_v;
-	}
-
 	m_sidebar.tick(dt);
 
 	if (m_check_hit) {
@@ -133,32 +125,13 @@ void Lab::load_assets() {
 	for (auto const& animation : m_level_info.assets.animations) { load_task->enqueue<le::Animation>(animation); }
 	for (auto const& flipbook : m_level_info.assets.flipbooks) { load_task->enqueue<le::Flipbook>(flipbook); }
 	load_task->enqueue<le::Texture>("textures/checkbox.png");
+	load_task->enqueue<le::Texture>("textures/runner.png");
 
 	queue.enqueue(*load_task);
 
 	auto& asset_store = m_services->get<le::asset::Store>();
 	auto const loaded = load_task->transfer_loaded(asset_store);
 	log::debug("{} assets loaded", loaded);
-}
-
-void Lab::create_textures() {
-	auto& context = m_services->get<le::Context>();
-
-	auto pixels = kvf::ColorBitmap{glm::ivec2{2, 2}};
-	pixels[0, 0] = kvf::red_v;
-	pixels[1, 0] = kvf::green_v;
-	pixels[0, 1] = kvf::blue_v;
-	pixels[1, 1] = kvf::white_v;
-	auto texture = le::Texture{context.create_texture(pixels.bitmap())};
-	texture.sampler.min_filter = texture.sampler.mag_filter = vk::Filter::eNearest;
-	m_textures.push_back(std::move(texture));
-
-	pixels = kvf::ColorBitmap{glm::ivec2{2, 1}};
-	pixels[0, 0] = kvf::cyan_v;
-	pixels[1, 0] = kvf::yellow_v;
-	texture = le::Texture{context.create_texture(pixels.bitmap())};
-	texture.sampler = m_textures.back().sampler;
-	m_textures.push_back(std::move(texture));
 }
 
 void Lab::check_hit(glm::vec2 const cursor_pos) {
@@ -204,9 +177,6 @@ void Lab::inspect_collectibles() {
 
 void Lab::render_world(le::Renderer& renderer) const {
 	m_background.draw(renderer);
-	m_quad.draw(renderer);
-	m_line_rect.draw(renderer);
-
 	for (auto const& prop : m_level.props) { prop.draw(renderer); }
 }
 

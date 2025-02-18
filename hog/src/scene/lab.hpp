@@ -26,7 +26,6 @@ class Lab : public Scene {
 	void disengage_input() final;
 
 	void load_assets();
-	void create_textures();
 
 	void check_hit(glm::vec2 cursor_pos);
 	void collect(std::size_t collectible_index);
@@ -39,8 +38,6 @@ class Lab : public Scene {
 
 	std::vector<le::Texture> m_textures{};
 	le::drawable::Quad m_background{};
-	le::drawable::Quad m_quad{};
-	le::drawable::LineRect m_line_rect{};
 
 	LevelInfo m_level_info{};
 	Level m_level{};

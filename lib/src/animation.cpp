@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <klib/assert.hpp>
+#include <kvf/is_positive.hpp>
 #include <le2d/animation.hpp>
 
 namespace le {
@@ -49,3 +50,33 @@ auto Flipbook::sample(kvf::Seconds const time) const -> kvf::UvRect {
 	return keyframe->payload;
 }
 } // namespace le
+
+auto le::generate_flipbook_keyframes(glm::vec2 const size, int const rows, int const cols, kvf::Seconds const duration) -> std::vector<Flipbook::Keyframe> {
+	if (!kvf::is_positive(size) || rows <= 0 || cols <= 0 || duration <= 0s) { return {}; }
+	auto const tile_size = glm::vec2{size.x / float(cols), size.y / float(rows)};
+	auto const tile_duration = kvf::Seconds{duration / float(rows * cols)};
+	auto ret = std::vector<Flipbook::Keyframe>{};
+	ret.reserve(std::size_t(rows * cols));
+	auto lt = glm::vec2{};
+	auto timestamp = kvf::Seconds{};
+	for (auto row = 0; row < rows; ++row) {
+		for (auto col = 0; col < cols; ++col) {
+			auto keyframe = Flipbook::Keyframe{};
+			keyframe.payload = kvf::UvRect{.lt = lt, .rb = lt + tile_size};
+			keyframe.payload.lt /= size;
+			keyframe.payload.rb /= size;
+			keyframe.timestamp = timestamp;
+			ret.push_back(keyframe);
+			timestamp += tile_duration;
+			lt.x += tile_size.x;
+		}
+		lt.x = 0;
+		lt.y += tile_size.y;
+	}
+
+	auto last = ret.back();
+	last.timestamp = duration;
+	ret.push_back(last);
+
+	return ret;
+}
