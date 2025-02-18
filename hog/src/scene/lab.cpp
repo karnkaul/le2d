@@ -1,11 +1,11 @@
 #include <djson/json.hpp>
 #include <klib/fixed_string.hpp>
 #include <klib/task/queue.hpp>
-#include <le2d/asset/store.hpp>
 #include <le2d/context.hpp>
 #include <le2d/input/dispatch.hpp>
 #include <le2d/vertex_bounds.hpp>
 #include <log.hpp>
+#include <resources.hpp>
 #include <scene/lab.hpp>
 #include <scene/switcher.hpp>
 #include <ui/button.hpp>
@@ -21,18 +21,18 @@ Lab::Lab(gsl::not_null<le::ServiceLocator*> services) : Scene(services), m_sideb
 	m_drag_view = le::input::MouseButtonTrigger{GLFW_MOUSE_BUTTON_1};
 	m_click = le::input::MouseButtonChord{GLFW_MOUSE_BUTTON_1};
 
-	auto const& asset_store = m_services->get<le::asset::Store>();
+	auto& resources = m_services->get<Resources>();
 	auto const& level_assets = m_level_info.assets;
-	if (auto const* texture = asset_store.get<le::Texture>(level_assets.textures.at(m_level_info.background.texture))) {
+	if (auto const* texture = resources.get<le::Texture>(level_assets.textures.at(m_level_info.background.texture))) {
 		m_background.create(texture->get_size());
 		m_background.texture = texture;
 	}
 
-	m_level = build_level(asset_store, m_level_info);
+	m_level = build_level(resources, m_level_info);
 
-	m_sidebar.tile_bg = asset_store.get<le::Texture>("textures/tile_bg.png");
-	m_sidebar.checkbox = asset_store.get<le::Texture>("textures/checkbox.png");
-	m_sidebar.font = asset_store.get<le::Font>("font.ttf");
+	m_sidebar.tile_bg = resources.get<le::Texture>("textures/tile_bg.png");
+	m_sidebar.checkbox = resources.get<le::Texture>("textures/checkbox.png");
+	m_sidebar.font = &resources.main_font;
 
 	m_sidebar.initialize_for(m_level);
 }
@@ -120,17 +120,15 @@ void Lab::load_assets() {
 	auto queue = klib::task::Queue{};
 
 	auto load_task = context.create_asset_load_task(&queue);
-	load_task->enqueue<le::Font>("font.ttf");
 	for (auto const& texture : m_level_info.assets.textures) { load_task->enqueue<le::Texture>(texture); }
 	for (auto const& animation : m_level_info.assets.animations) { load_task->enqueue<le::Animation>(animation); }
 	for (auto const& flipbook : m_level_info.assets.flipbooks) { load_task->enqueue<le::Flipbook>(flipbook); }
 	load_task->enqueue<le::Texture>("textures/checkbox.png");
-	load_task->enqueue<le::Texture>("textures/runner.png");
 
 	queue.enqueue(*load_task);
 
-	auto& asset_store = m_services->get<le::asset::Store>();
-	auto const loaded = load_task->transfer_loaded(asset_store);
+	auto& resources = m_services->get<Resources>();
+	auto const loaded = load_task->transfer_loaded(resources);
 	log::debug("{} assets loaded", loaded);
 }
 
