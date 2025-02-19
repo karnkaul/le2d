@@ -1,5 +1,6 @@
 #pragma once
 #include <game/level.hpp>
+#include <le2d/drawable/text.hpp>
 #include <le2d/service_locator.hpp>
 #include <ui/scroll_view.hpp>
 
@@ -38,7 +39,7 @@ class Sidebar {
 		[[nodiscard]] auto get_hitbox() const -> kvf::Rect<> final { return background.bounding_rect(); }
 		void draw(le::Renderer& renderer) const final;
 		void on_click() final;
-		[[nodiscard]] auto get_position() const -> glm::vec2 final { return background.instance.transform.position; }
+		[[nodiscard]] auto get_position() const -> glm::vec2 final { return background.transform.position; }
 		void set_position(glm::vec2 position) final;
 
 		void set_popup();

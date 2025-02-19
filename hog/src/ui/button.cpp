@@ -3,8 +3,8 @@
 namespace hog::ui {
 void Button::tick(kvf::Seconds const dt) {
 	Widget::tick(dt);
-	m_background.instance.tint = style.background_colors[get_state()];
-	m_text.instance.tint = style.text_colors[get_state()];
+	m_background.tint = style.background_colors[get_state()];
+	m_text.tint = style.text_colors[get_state()];
 }
 
 void Button::draw(le::Renderer& renderer) const {
@@ -17,14 +17,14 @@ void Button::on_click() {
 }
 
 void Button::set_position(glm::vec2 const position) {
-	m_background.instance.transform.position = m_text.instance.transform.position = position;
-	m_text.instance.transform.position.y += style.text_n_y_offset * float(style.text_height);
+	m_background.transform.position = m_text.transform.position = position;
+	m_text.transform.position.y += style.text_n_y_offset * float(style.text_height);
 }
 
 void Button::set_text(le::Font& font, std::string_view const text) {
-	auto const params = le::TextParams{
+	auto const params = le::drawable::TextParams{
 		.height = style.text_height,
-		.expand = le::TextExpand::eBoth,
+		.expand = le::drawable::TextExpand::eBoth,
 	};
 	m_text.set_string(font, text, params);
 }

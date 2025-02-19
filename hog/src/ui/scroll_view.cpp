@@ -62,8 +62,8 @@ void ScrollView::clear_widgets() { m_widgets.clear(); }
 void ScrollView::reposition_widgets() {
 	if (m_widgets.empty()) { return; }
 
-	auto const x = background.instance.transform.position.x;
-	auto y = background.instance.transform.position.y + (0.5f * background.get_size().y) - y_pad;
+	auto const x = background.transform.position.x;
+	auto y = background.transform.position.y + (0.5f * background.get_size().y) - y_pad;
 	for (auto const& widget : m_widgets) {
 		auto const size = widget->get_hitbox().size();
 		y -= 0.5f * size.y;
@@ -108,8 +108,8 @@ void ScrollView::move_widgets(float const dy) {
 	if (std::abs(dy) == 0.0f || m_widgets.empty()) { return; }
 
 	auto const hs_bg = 0.5f * background.get_size();
-	auto const y_top = background.instance.transform.position.y + hs_bg.y;
-	auto const y_bottom = background.instance.transform.position.y - hs_bg.y;
+	auto const y_top = background.transform.position.y + hs_bg.y;
+	auto const y_bottom = background.transform.position.y - hs_bg.y;
 
 	auto const& top_widget = *m_widgets.front();
 	auto const& bottom_widget = *m_widgets.back();

@@ -1,10 +1,10 @@
 #pragma once
+#include <kvf/color.hpp>
 #include <kvf/rect.hpp>
-#include <le2d/render_instance.hpp>
-#include <le2d/shape/shape.hpp>
+#include <le2d/geometry.hpp>
 #include <le2d/vertex_array.hpp>
 
-namespace le {
+namespace le::shape {
 struct SuperEllipseParams {
 	glm::vec2 size{200.0f};
 	kvf::Color color{kvf::white_v};
@@ -12,10 +12,13 @@ struct SuperEllipseParams {
 	std::int32_t resolution{128};
 };
 
-namespace shape {
-class SuperEllipse {
+class SuperEllipse : public IGeometry {
   public:
 	using Params = SuperEllipseParams;
+
+	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_verts.vertices; }
+	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return m_verts.indices; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleList; }
 
 	void create(Params const& params = {});
 
@@ -24,15 +27,8 @@ class SuperEllipse {
 
 	[[nodiscard]] auto get_vertex_array() const -> VertexArray const& { return m_verts; }
 
-	[[nodiscard]] auto get_primitive() const -> Primitive;
-
-	ITexture const* texture{};
-
   private:
 	VertexArray m_verts{};
 	Params m_params{};
 };
-
-static_assert(ShapeT<SuperEllipse>);
-} // namespace shape
-} // namespace le
+} // namespace le::shape

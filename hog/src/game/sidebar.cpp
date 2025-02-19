@@ -5,13 +5,13 @@
 
 namespace hog {
 Sidebar::Sidebar(le::ServiceLocator const& services) : m_context(&services.get<le::Context>()), m_scroller(&services.get<le::input::Dispatch>()) {
-	m_scroller.background.instance.tint.w = 0x77;
+	m_scroller.background.tint.w = 0x77;
 	resize(m_context->framebuffer_size());
 }
 
 void Sidebar::initialize_for(Level const& level) {
 	m_popup.background.create(popup_size);
-	m_popup.description.instance.tint = popup_text;
+	m_popup.description.tint = popup_text;
 
 	m_tiles.clear();
 	m_scroller.clear_widgets();
@@ -59,7 +59,7 @@ auto Sidebar::to_tile(Collectible const& collectible, Prop const& prop) const ->
 void Sidebar::resize(glm::vec2 const size) {
 	m_framebuffer_size = size;
 	m_scroller.background.create({tile_size, m_framebuffer_size.y});
-	m_scroller.background.instance.transform.position.x = 0.5f * (m_framebuffer_size.x - tile_size) - right_pad;
+	m_scroller.background.transform.position.x = 0.5f * (m_framebuffer_size.x - tile_size) - right_pad;
 	m_scroller.reposition_widgets();
 }
 
@@ -80,14 +80,14 @@ void Sidebar::Tile::on_click() {
 }
 
 void Sidebar::Tile::set_position(glm::vec2 const position) {
-	background.instance.transform.position = sprite.instance.transform.position = checkbox.instance.transform.position = position;
+	background.transform.position = sprite.transform.position = checkbox.transform.position = position;
 }
 
 void Sidebar::Tile::set_popup() {
 	if (sidebar->font != nullptr) {
-		auto const params = le::TextParams{
+		auto const params = le::drawable::TextParams{
 			.height = le::TextHeight{20},
-			.expand = le::TextExpand::eBoth,
+			.expand = le::drawable::TextExpand::eBoth,
 		};
 		sidebar->m_popup.description.set_string(*sidebar->font, description, params);
 	}
@@ -98,10 +98,10 @@ void Sidebar::Tile::set_popup() {
 void Sidebar::Popup::update() {
 	if (tile == nullptr) { return; }
 	auto const dx = (0.5f * (tile->sidebar->m_scroller.background.get_size().x + background.get_size().x)) + 20.0f;
-	background.instance.transform.position = tile->get_position();
-	background.instance.transform.position.x -= dx;
+	background.transform.position = tile->get_position();
+	background.transform.position.x -= dx;
 
-	description.instance.transform.position = background.instance.transform.position;
+	description.transform.position = background.transform.position;
 }
 
 void Sidebar::Popup::draw(le::Renderer& renderer) const {

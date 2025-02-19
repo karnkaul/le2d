@@ -29,6 +29,7 @@ void hog::from_json(dj::Json const& json, LevelBackground& level_background) {
 void hog::from_json(dj::Json const& json, PropInfo& prop_info) {
 	from_json(json["name"], prop_info.name);
 	le::from_json(json["transform"], prop_info.transform);
+	if (auto const& sprite_size = json["sprite_size"]) { le::from_json(sprite_size, prop_info.sprite_size); }
 	from_json(json["texture"], prop_info.texture);
 	optional_from_json(json["animation"], prop_info.animation);
 	optional_from_json(json["flipbook"], prop_info.flipbook);

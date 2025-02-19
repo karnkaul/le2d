@@ -19,13 +19,14 @@ struct Builder {
 
 	[[nodiscard]] auto to_prop(PropInfo const& prop_info) const -> Prop {
 		auto ret = Prop{.name = prop_info.name};
-		ret.transform = ret.sprite.instance.transform = prop_info.transform;
+		ret.transform = ret.sprite.transform = prop_info.transform;
 		auto uv = kvf::uv_rect_v;
 		if (prop_info.animation) { ret.animator.set_animation(store.get<le::Animation>(info.assets.animations.at(*prop_info.animation))); }
 		if (prop_info.flipbook) {
 			ret.flipper.set_animation(store.get<le::Flipbook>(info.assets.flipbooks.at(*prop_info.flipbook)));
 			if (auto const* flipbook = ret.flipper.get_animation()) { uv = flipbook->get_timeline().front().payload; }
 		}
+		ret.sprite.set_base_size(prop_info.sprite_size);
 		ret.sprite.set_texture(store.get<le::Texture>(info.assets.textures.at(prop_info.texture)), uv);
 		return ret;
 	}
@@ -43,7 +44,7 @@ struct Builder {
 void Prop::tick(kvf::Seconds dt) {
 	if (animator.has_animation()) {
 		animator.tick(dt);
-		sprite.instance.transform = le::Transform::accumulate(transform, animator.get_payload());
+		sprite.transform = le::Transform::accumulate(transform, animator.get_payload());
 	}
 	if (flipper.has_animation()) {
 		flipper.tick(dt);

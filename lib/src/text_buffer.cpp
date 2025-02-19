@@ -1,7 +1,7 @@
-#include <le2d/shape/text_buffer.hpp>
+#include <le2d/text_buffer.hpp>
 #include <algorithm>
 
-namespace le::shape {
+namespace le {
 TextBuffer::TextBuffer(gsl::not_null<FontAtlas*> atlas, std::size_t const limit, float n_line_spacing)
 	: m_atlas(atlas), m_limit(limit), m_n_line_spacing(n_line_spacing) {}
 
@@ -13,8 +13,9 @@ void TextBuffer::push_front(std::span<std::string> lines, kvf::Color color) {
 
 auto TextBuffer::get_primitive() const -> Primitive {
 	return Primitive{
-		.vertices = m_verts.vertices,
-		.indices = m_verts.indices,
+		.vertices = get_vertices(),
+		.indices = get_indices(),
+		.topology = get_topology(),
 		.texture = &m_atlas->get_texture(),
 	};
 }
@@ -37,4 +38,4 @@ void TextBuffer::refresh() {
 		m_size.y = pos.y;
 	}
 }
-} // namespace le::shape
+} // namespace le
