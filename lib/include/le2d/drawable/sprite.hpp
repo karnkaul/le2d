@@ -1,17 +1,15 @@
 #pragma once
 #include <kvf/aspect_resize.hpp>
-#include <le2d/drawable/drawable.hpp>
+#include <le2d/drawable/draw_primitive.hpp>
 #include <le2d/shape/quad.hpp>
 #include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
-class SpriteBase : public IDrawable {
+class SpriteBase : public IDrawPrimitive {
   public:
 	static constexpr auto size_v{shape::Quad::size_v};
 
-	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
-
-	void draw(Renderer& renderer) const final { renderer.draw(to_primitive(), get_instances()); }
+	[[nodiscard]] auto to_primitive() const -> Primitive final;
 
 	[[nodiscard]] auto get_base_size() const -> glm::vec2 { return m_size; }
 	void set_base_size(glm::vec2 size);
@@ -30,8 +28,6 @@ class SpriteBase : public IDrawable {
 	[[nodiscard]] auto get_resize_aspect() const -> kvf::ResizeAspect { return m_aspect; }
 	void set_resize_aspect(kvf::ResizeAspect aspect);
 
-	[[nodiscard]] auto to_primitive() const -> Primitive;
-
   protected:
 	void update(glm::vec2 base_size, glm::vec2 origin, kvf::UvRect const& uv);
 
@@ -41,17 +37,10 @@ class SpriteBase : public IDrawable {
 	kvf::ResizeAspect m_aspect{kvf::ResizeAspect::None};
 };
 
-class Sprite : public SpriteBase, public RenderInstance {
+class Sprite : public SingleDrawPrimitive<SpriteBase> {
   public:
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
-
 	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(to_primitive().vertices, transform.to_model()); }
 };
 
-class InstancedSprice : public SpriteBase {
-  public:
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return instances; }
-
-	std::vector<RenderInstance> instances{};
-};
+class InstancedSprite : public InstancedDrawPrimitive<SpriteBase> {};
 } // namespace le::drawable

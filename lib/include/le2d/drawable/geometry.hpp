@@ -1,18 +1,16 @@
 #pragma once
-#include <le2d/drawable/drawable.hpp>
+#include <le2d/drawable/draw_primitive.hpp>
 #include <le2d/geometry.hpp>
 #include <le2d/shape/quad.hpp>
 #include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
 template <std::derived_from<IGeometry> Type>
-class GeometryBase : public Type, public IDrawable {
+class GeometryBase : public Type, public IDrawPrimitive {
   public:
 	using Type::Type;
 
-	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
-
-	[[nodiscard]] auto to_primitive() const -> Primitive {
+	[[nodiscard]] auto to_primitive() const -> Primitive final {
 		return Primitive{
 			.vertices = this->get_vertices(),
 			.indices = this->get_indices(),
@@ -21,24 +19,15 @@ class GeometryBase : public Type, public IDrawable {
 		};
 	}
 
-	void draw(Renderer& renderer) const override { renderer.draw(to_primitive(), get_instances()); }
-
 	ITexture const* texture{};
 };
 
 template <std::derived_from<IGeometry> Type>
-class Geometry : public GeometryBase<Type>, public RenderInstance {
+class Geometry : public SingleDrawPrimitive<GeometryBase<Type>> {
   public:
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
-
-	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->to_primitive().vertices, transform.to_model()); }
+	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->to_primitive().vertices, this->transform.to_model()); }
 };
 
 template <std::derived_from<IGeometry> Type>
-class InstancedGeometry : public GeometryBase<Type> {
-  public:
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return instances; }
-
-	std::vector<RenderInstance> instances{};
-};
+class InstancedGeometry : public InstancedDrawPrimitive<GeometryBase<Type>> {};
 } // namespace le::drawable
