@@ -1,7 +1,7 @@
 #pragma once
 #include <le2d/drawable/drawable.hpp>
 #include <le2d/font.hpp>
-#include <le2d/geometry.hpp>
+#include <le2d/text/text_geometry.hpp>
 
 namespace le::drawable {
 enum class TextExpand : std::int8_t { eBoth, eRight, eLeft };
@@ -9,27 +9,6 @@ enum class TextExpand : std::int8_t { eBoth, eRight, eLeft };
 struct TextParams {
 	TextHeight height{TextHeight::Default};
 	TextExpand expand{TextExpand::eBoth};
-};
-
-class TextGeometry : public IGeometry {
-  public:
-	using Params = TextParams;
-
-	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_verts.vertices; }
-	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return m_verts.indices; }
-	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleList; }
-
-	void set_string(FontAtlas const& font_atlas, std::string_view line, TextExpand expand);
-
-	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
-	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
-
-	[[nodiscard]] auto get_vertex_array() const -> VertexArray const& { return m_verts; }
-
-  private:
-	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
-	VertexArray m_verts{};
-	glm::vec2 m_size{};
 };
 
 class TextBase : public IDrawable {
@@ -40,14 +19,17 @@ class TextBase : public IDrawable {
 
 	void set_string(Font& font, std::string_view line, Params const& params = {});
 
-	[[nodiscard]] auto get_primitive() const -> Primitive;
+	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 	[[nodiscard]] auto get_texture() const -> Texture const* { return m_texture; }
+	[[nodiscard]] auto to_primitive() const -> Primitive;
 
-	void draw(Renderer& renderer) const override { renderer.draw(get_primitive(), get_instances()); }
+	void draw(Renderer& renderer) const override { renderer.draw(to_primitive(), get_instances()); }
 
   private:
 	TextGeometry m_geometry{};
+	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	Texture const* m_texture{};
+	glm::vec2 m_size{};
 };
 
 class Text : public TextBase, public RenderInstance {

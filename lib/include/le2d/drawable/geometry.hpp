@@ -12,7 +12,7 @@ class GeometryBase : public Type, public IDrawable {
 
 	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
 
-	[[nodiscard]] auto get_primitive() const -> Primitive {
+	[[nodiscard]] auto to_primitive() const -> Primitive {
 		return Primitive{
 			.vertices = this->get_vertices(),
 			.indices = this->get_indices(),
@@ -21,7 +21,7 @@ class GeometryBase : public Type, public IDrawable {
 		};
 	}
 
-	void draw(Renderer& renderer) const override { renderer.draw(get_primitive(), get_instances()); }
+	void draw(Renderer& renderer) const override { renderer.draw(to_primitive(), get_instances()); }
 
 	ITexture const* texture{};
 };
@@ -31,7 +31,7 @@ class Geometry : public GeometryBase<Type>, public RenderInstance {
   public:
 	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
 
-	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->get_primitive().vertices, transform.to_model()); }
+	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->to_primitive().vertices, transform.to_model()); }
 };
 
 template <std::derived_from<IGeometry> Type>

@@ -1,4 +1,4 @@
-#include <le2d/text_buffer.hpp>
+#include <le2d/text/text_buffer.hpp>
 #include <algorithm>
 
 namespace le {
@@ -11,17 +11,10 @@ void TextBuffer::push_front(std::span<std::string> lines, kvf::Color color) {
 	refresh();
 }
 
-auto TextBuffer::get_primitive() const -> Primitive {
-	return Primitive{
-		.vertices = get_vertices(),
-		.indices = get_indices(),
-		.topology = get_topology(),
-		.texture = &m_atlas->get_texture(),
-	};
-}
+auto TextBuffer::to_primitive() const -> Primitive { return m_geometry.to_primitive(m_atlas->get_texture()); }
 
 void TextBuffer::refresh() {
-	m_verts.clear();
+	m_geometry.clear_vertices();
 	m_size = {};
 
 	auto pos = glm::vec2{};
@@ -31,7 +24,7 @@ void TextBuffer::refresh() {
 			m_atlas->push_layouts(m_layouts, line.text);
 			auto const& last_glyph = m_layouts.back();
 			m_size.x = std::max(m_size.x, last_glyph.baseline.x + last_glyph.glyph->size.x);
-			write_glyphs(m_verts, m_layouts, pos, line.color);
+			m_geometry.append_glyphs(m_layouts, pos, line.color);
 		}
 		pos.x = 0.0f;
 		pos.y += m_n_line_spacing * float(m_atlas->get_height());

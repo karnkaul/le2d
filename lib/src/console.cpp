@@ -7,7 +7,7 @@
 #include <le2d/console.hpp>
 #include <le2d/drawable/input_text.hpp>
 #include <le2d/drawable/shape.hpp>
-#include <le2d/text_buffer.hpp>
+#include <le2d/text/text_buffer.hpp>
 #include <algorithm>
 #include <ranges>
 
@@ -16,7 +16,7 @@
 namespace le::console {
 namespace {
 struct Caret {
-	VertexArray verts{};
+	TextGeometry geometry{};
 	Texture const* texture{};
 	RenderInstance instance{};
 	float text_x{};
@@ -26,16 +26,12 @@ struct Caret {
 		auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
 		layouts.reserve(2);
 		text_x = atlas.push_layouts(layouts, text).x;
-		write_glyphs(verts, layouts);
+		geometry.append_glyphs(layouts);
 		texture = &atlas.get_texture();
 	}
 
 	void draw(Renderer& renderer) const {
-		auto const primitive = Primitive{
-			.vertices = verts.vertices,
-			.indices = verts.indices,
-			.texture = texture,
-		};
+		auto const primitive = geometry.to_primitive(*texture);
 		renderer.draw(primitive, {&instance, 1});
 	}
 };
@@ -56,7 +52,7 @@ struct Buffer {
 	[[nodiscard]] auto get_height() const -> float { return m_text_buffer.get_size().y; }
 
 	void draw(Renderer& renderer) const {
-		auto const primitive = m_text_buffer.get_primitive();
+		auto const primitive = m_text_buffer.to_primitive();
 		auto const instance = RenderInstance{.transform = {.position = position}};
 		renderer.draw(primitive, {&instance, 1});
 	}
@@ -271,9 +267,6 @@ struct Terminal::Impl : Printer {
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
 		m_info.motion.scroll_speed = std::abs(m_info.motion.scroll_speed);
 
-		m_text_params.height = m_info.style.text_height;
-		m_text_params.expand = drawable::TextExpand::eRight;
-
 		m_caret.create(font.get_atlas(m_info.style.text_height), m_info.style.caret);
 
 		resize();
@@ -287,8 +280,8 @@ struct Terminal::Impl : Printer {
 		m_background.transform.position.y = 0.5f * m_background.get_size().y;
 		m_separator.transform.position.y = 1.5f * float(m_info.style.text_height);
 		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
-		m_input.instance.transform.position = m_caret.instance.transform.position;
-		m_input.instance.transform.position.x += m_caret.text_x;
+		m_input.transform.position = m_caret.instance.transform.position;
+		m_input.transform.position.x += m_caret.text_x;
 		m_hide_y = -0.5f * m_framebuffer_size.y;
 		m_show_y = 0.0f;
 		m_buffer_max_y = m_separator.transform.position.y + 0.5f * float(m_info.style.text_height);
@@ -446,7 +439,6 @@ struct Terminal::Impl : Printer {
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
 	ndc::vec2 m_n_cursor_pos{};
-	drawable::TextParams m_text_params;
 
 	std::vector<std::unique_ptr<Command>> m_commands{};
 	std::vector<klib::args::Arg> m_args{};

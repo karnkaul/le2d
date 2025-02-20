@@ -1,9 +1,9 @@
 #pragma once
 #include <kvf/time.hpp>
 #include <le2d/drawable/drawable.hpp>
-#include <le2d/drawable/text.hpp>
 #include <le2d/event.hpp>
-#include <le2d/line_input.hpp>
+#include <le2d/text/line_input.hpp>
+#include <le2d/text/text_geometry.hpp>
 
 namespace le {
 struct InputTextParams {
@@ -14,7 +14,7 @@ struct InputTextParams {
 };
 
 namespace drawable {
-class InputText : public IDrawable {
+class InputText : public RenderInstance, public IDrawable {
   public:
 	using Params = InputTextParams;
 
@@ -49,8 +49,6 @@ class InputText : public IDrawable {
 	void tick(kvf::Seconds dt);
 	void draw(Renderer& renderer) const override;
 
-	RenderInstance instance{};
-
   private:
 	void update();
 	void reset_blink();
@@ -58,7 +56,7 @@ class InputText : public IDrawable {
 	gsl::not_null<Font*> m_font;
 
 	LineInput m_line_input;
-	drawable::TextGeometry m_cursor{};
+	TextGeometry m_cursor{};
 	kvf::Color m_cursor_color;
 	kvf::Seconds m_blink_period;
 

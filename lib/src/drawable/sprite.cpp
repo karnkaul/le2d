@@ -29,7 +29,7 @@ void SpriteBase::set_resize_aspect(kvf::ResizeAspect const aspect) {
 	update(get_base_size(), get_origin(), get_uv());
 }
 
-auto SpriteBase::get_primitive() const -> Primitive {
+auto SpriteBase::to_primitive() const -> Primitive {
 	return Primitive{
 		.vertices = m_quad.get_vertices(),
 		.indices = m_quad.get_indices(),

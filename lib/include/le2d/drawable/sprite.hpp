@@ -11,7 +11,7 @@ class SpriteBase : public IDrawable {
 
 	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
 
-	void draw(Renderer& renderer) const final { renderer.draw(get_primitive(), get_instances()); }
+	void draw(Renderer& renderer) const final { renderer.draw(to_primitive(), get_instances()); }
 
 	[[nodiscard]] auto get_base_size() const -> glm::vec2 { return m_size; }
 	void set_base_size(glm::vec2 size);
@@ -30,7 +30,7 @@ class SpriteBase : public IDrawable {
 	[[nodiscard]] auto get_resize_aspect() const -> kvf::ResizeAspect { return m_aspect; }
 	void set_resize_aspect(kvf::ResizeAspect aspect);
 
-	[[nodiscard]] auto get_primitive() const -> Primitive;
+	[[nodiscard]] auto to_primitive() const -> Primitive;
 
   protected:
 	void update(glm::vec2 base_size, glm::vec2 origin, kvf::UvRect const& uv);
@@ -45,7 +45,7 @@ class Sprite : public SpriteBase, public RenderInstance {
   public:
 	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
 
-	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(get_primitive().vertices, transform.to_model()); }
+	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(to_primitive().vertices, transform.to_model()); }
 };
 
 class InstancedSprice : public SpriteBase {
