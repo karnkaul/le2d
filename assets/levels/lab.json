@@ -3,10 +3,14 @@
   "assets": {
     "textures": [
       "hog_bg.jpg",
-      "awesomeface.png"
+      "awesomeface.png",
+      "textures/runner.png"
     ],
     "animations": [
       "animations/lerp.json"
+    ],
+    "flipbooks": [
+      "flipbooks/runner.json"
     ]
   },
   "background": {
@@ -27,12 +31,27 @@
       },
       "texture": 1,
       "animation": 0
+    },
+    {
+      "name": "runner",
+      "transform": {
+        "position": [
+          200,
+          0
+        ]
+      },
+      "texture": 2,
+      "flipbook": 0
     }
   ],
   "collectibles": [
     {
       "prop": 0,
       "description": "awesome face"
+    },
+    {
+      "prop": 1,
+      "description": "runner"
     }
   ]
 }

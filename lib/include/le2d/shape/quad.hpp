@@ -1,47 +1,43 @@
 #pragma once
+#include <kvf/color.hpp>
 #include <kvf/rect.hpp>
-#include <le2d/render_instance.hpp>
-#include <le2d/shape/shape.hpp>
-#include <array>
+#include <le2d/geometry.hpp>
+#include <le2d/vertex_array.hpp>
 
-namespace le {
-struct QuadParams {
-	static constexpr auto rect_v = kvf::Rect<>::from_size(glm::vec2{200.0f});
-
-	kvf::Rect<> rect{rect_v};
-	kvf::Color color{kvf::white_v};
-	kvf::UvRect uv{kvf::uv_rect_v};
-};
-
-namespace shape {
-class Quad {
+namespace le::shape {
+class IQuad : public IGeometry {
   public:
-	using Params = QuadParams;
-
 	static constexpr std::size_t vertex_count_v{4};
-	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
+	static constexpr auto size_v = glm::vec2{200.0f};
 
-	explicit Quad(Params const& params = {}) { create(params); }
+	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_vertices; }
 
-	void create(glm::vec2 size) { create(Params{.rect = kvf::Rect<>::from_size(size)}); }
-	void create(Params const& params);
+	void create(glm::vec2 const size = size_v) { create(kvf::Rect<>::from_size(size)); }
+
+	void create(kvf::Rect<> const& rect, kvf::UvRect const& uv = kvf::uv_rect_v, kvf::Color color = kvf::white_v);
 
 	[[nodiscard]] auto get_rect() const -> kvf::Rect<>;
+	[[nodiscard]] auto get_uv() const -> kvf::UvRect;
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return get_rect().size(); }
 	[[nodiscard]] auto get_origin() const -> glm::vec2 { return get_rect().center(); }
-	[[nodiscard]] auto get_color() const -> kvf::Color { return get_vertices().front().color; }
-	[[nodiscard]] auto get_uv() const -> kvf::UvRect;
-
-	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const, 4> { return m_vertices; }
-
-	[[nodiscard]] auto get_primitive() const -> Primitive;
-
-	ITexture const* texture{};
 
   private:
 	std::array<Vertex, vertex_count_v> m_vertices{};
 };
 
-static_assert(ShapeT<Quad>);
-} // namespace shape
-} // namespace le
+class Quad : public IQuad {
+  public:
+	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
+
+	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return indices_v; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleList; }
+};
+
+class LineRect : public IQuad {
+  public:
+	static constexpr auto indices_v = std::array{0u, 1u, 2u, 3u, 0u};
+
+	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return indices_v; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eLineStrip; }
+};
+} // namespace le::shape

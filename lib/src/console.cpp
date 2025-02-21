@@ -7,7 +7,7 @@
 #include <le2d/console.hpp>
 #include <le2d/drawable/input_text.hpp>
 #include <le2d/drawable/shape.hpp>
-#include <le2d/shape/text_buffer.hpp>
+#include <le2d/text/text_buffer.hpp>
 #include <algorithm>
 #include <ranges>
 
@@ -16,7 +16,7 @@
 namespace le::console {
 namespace {
 struct Caret {
-	VertexArray verts{};
+	TextGeometry geometry{};
 	Texture const* texture{};
 	RenderInstance instance{};
 	float text_x{};
@@ -26,16 +26,12 @@ struct Caret {
 		auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
 		layouts.reserve(2);
 		text_x = atlas.push_layouts(layouts, text).x;
-		write_glyphs(verts, layouts);
+		geometry.append_glyphs(layouts);
 		texture = &atlas.get_texture();
 	}
 
 	void draw(Renderer& renderer) const {
-		auto const primitive = Primitive{
-			.vertices = verts.vertices,
-			.indices = verts.indices,
-			.texture = texture,
-		};
+		auto const primitive = geometry.to_primitive(*texture);
 		renderer.draw(primitive, {&instance, 1});
 	}
 };
@@ -56,7 +52,7 @@ struct Buffer {
 	[[nodiscard]] auto get_height() const -> float { return m_text_buffer.get_size().y; }
 
 	void draw(Renderer& renderer) const {
-		auto const primitive = m_text_buffer.get_primitive();
+		auto const primitive = m_text_buffer.to_primitive();
 		auto const instance = RenderInstance{.transform = {.position = position}};
 		renderer.draw(primitive, {&instance, 1});
 	}
@@ -64,7 +60,7 @@ struct Buffer {
 	glm::vec2 position{};
 
   private:
-	shape::TextBuffer m_text_buffer;
+	TextBuffer m_text_buffer;
 };
 
 struct Buffer::Printer {
@@ -163,9 +159,9 @@ struct Terminal::Impl : Printer {
 		add_command(std::make_unique<Closure>(name, description, std::move(command)));
 	}
 
-	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.instance.tint; }
+	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.tint; }
 
-	void set_background(kvf::Color const color) { m_background.instance.tint = color; }
+	void set_background(kvf::Color const color) { m_background.tint = color; }
 
 	void println(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.output); }
 	void printerr(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.error); }
@@ -225,12 +221,12 @@ struct Terminal::Impl : Printer {
 
 		void execute(Printer& printer) final {
 			if (opacity_was_set) {
-				impl.m_background.instance.tint.w = kvf::Color::to_u8(opacity);
+				impl.m_background.tint.w = kvf::Color::to_u8(opacity);
 			} else if (color_was_set) {
-				impl.m_background.instance.tint = kvf::util::color_from_hex(color);
+				impl.m_background.tint = kvf::util::color_from_hex(color);
 			} else {
-				auto text = std::format("opacity: {:.2f}", kvf::Color::to_f32(impl.m_background.instance.tint.w));
-				std::format_to(std::back_inserter(text), "\ncolor: {}", kvf::util::to_hex_string(impl.m_background.instance.tint));
+				auto text = std::format("opacity: {:.2f}", kvf::Color::to_f32(impl.m_background.tint.w));
+				std::format_to(std::back_inserter(text), "\ncolor: {}", kvf::util::to_hex_string(impl.m_background.tint));
 				printer.println(text);
 			}
 
@@ -264,15 +260,12 @@ struct Terminal::Impl : Printer {
 	void setup(Font& font) {
 		m_input.set_interactive(false);
 
-		m_separator.instance.tint = m_info.colors.separator;
-		m_background.instance.tint = kvf::Color{0x111111cc};
+		m_separator.tint = m_info.colors.separator;
+		m_background.tint = kvf::Color{0x111111cc};
 
 		m_info.style.text_height = m_input.get_atlas().get_height();
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
 		m_info.motion.scroll_speed = std::abs(m_info.motion.scroll_speed);
-
-		m_text_params.height = m_info.style.text_height;
-		m_text_params.expand = TextExpand::eRight;
 
 		m_caret.create(font.get_atlas(m_info.style.text_height), m_info.style.caret);
 
@@ -284,20 +277,20 @@ struct Terminal::Impl : Printer {
 		auto const width = m_framebuffer_size.x;
 		m_background.create({width, 0.5f * m_framebuffer_size.y});
 		m_separator.create({width, m_info.style.separator_height});
-		m_background.instance.transform.position.y = 0.5f * m_background.get_size().y;
-		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
+		m_background.transform.position.y = 0.5f * m_background.get_size().y;
+		m_separator.transform.position.y = 1.5f * float(m_info.style.text_height);
 		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
-		m_input.instance.transform.position = m_caret.instance.transform.position;
-		m_input.instance.transform.position.x += m_caret.text_x;
+		m_input.transform.position = m_caret.instance.transform.position;
+		m_input.transform.position.x += m_caret.text_x;
 		m_hide_y = -0.5f * m_framebuffer_size.y;
 		m_show_y = 0.0f;
-		m_buffer_max_y = m_separator.instance.transform.position.y + 0.5f * float(m_info.style.text_height);
+		m_buffer_max_y = m_separator.transform.position.y + 0.5f * float(m_info.style.text_height);
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
 	}
 
 	void draw_buffer(Renderer& renderer) const {
-		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
+		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.transform.position.y) / m_framebuffer_size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.set_scissor_rect(rect);
 		m_buffer.draw(renderer);
@@ -446,7 +439,6 @@ struct Terminal::Impl : Printer {
 	CreateInfo m_info;
 	glm::vec2 m_framebuffer_size;
 	ndc::vec2 m_n_cursor_pos{};
-	TextParams m_text_params;
 
 	std::vector<std::unique_ptr<Command>> m_commands{};
 	std::vector<klib::args::Arg> m_args{};

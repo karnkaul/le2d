@@ -91,4 +91,6 @@ class Flipbook : public BasicAnimation<kvf::UvRect> {
 };
 
 using FlipAnimator = BasicAnimator<kvf::UvRect>;
+
+[[nodiscard]] auto generate_flipbook_keyframes(glm::vec2 size, int rows, int cols, kvf::Seconds duration) -> std::vector<Flipbook::Keyframe>;
 } // namespace le

@@ -20,17 +20,21 @@ void App::run() {
 	m_blocker = m_context.create_device_block();
 
 	auto font_loader = le::asset::FontLoader{&m_context};
-	if (auto font = font_loader.load("mono.ttf")) {
+	auto main_font = font_loader.load("fonts/main.ttf");
+	if (!main_font) { throw std::runtime_error{"Failed to load main font"}; }
+	m_resources.emplace(std::move(main_font->asset));
+
+	if (auto font = font_loader.load("fonts/mono.ttf")) {
 		m_terminal.emplace(&font->asset, m_context.framebuffer_size());
 		m_terminal->add_command("quit", {}, [&](le::console::Printer& printer) {
 			printer.println("quitting");
 			m_context.shutdown();
 		});
-		m_asset_store.insert_base("mono.ttf", std::move(font));
+		m_resources->insert_base("mono.ttf", std::move(font));
 	}
 
 	m_services.bind(&m_context);
-	m_services.bind(&m_asset_store);
+	m_services.bind(&*m_resources);
 	m_services.bind(&m_input_dispatch);
 	m_services.bind<scene::ISwitcher>(this);
 

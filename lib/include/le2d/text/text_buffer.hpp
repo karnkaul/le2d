@@ -1,13 +1,13 @@
 #pragma once
 #include <le2d/font.hpp>
+#include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
-#include <le2d/shape/shape.hpp>
-#include <le2d/vertex_array.hpp>
+#include <le2d/text/text_geometry.hpp>
 #include <deque>
 #include <gsl/pointers>
 #include <span>
 
-namespace le::shape {
+namespace le {
 class TextBuffer {
   public:
 	explicit TextBuffer(gsl::not_null<FontAtlas*> atlas, std::size_t limit, float n_line_spacing = 1.5f);
@@ -17,7 +17,7 @@ class TextBuffer {
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 
-	[[nodiscard]] auto get_primitive() const -> Primitive;
+	[[nodiscard]] auto to_primitive() const -> Primitive;
 
   private:
 	struct Line {
@@ -34,7 +34,7 @@ class TextBuffer {
 	std::deque<Line> m_lines{};
 
 	std::vector<kvf::ttf::GlyphLayout> m_layouts{};
-	VertexArray m_verts{};
+	TextGeometry m_geometry{};
 	glm::vec4 m_size{};
 };
-} // namespace le::shape
+} // namespace le

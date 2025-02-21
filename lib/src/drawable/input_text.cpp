@@ -6,13 +6,13 @@
 namespace le::drawable {
 InputText::InputText(gsl::not_null<Font*> font, Params const& params)
 	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
-	auto const text_params = TextParams{
-		.height = m_line_input.get_height(),
-		.expand = TextExpand::eRight,
-	};
-	m_cursor.set_string(*font, {&params.cursor_symbol, 1}, text_params);
+	auto& atlas = m_line_input.get_atlas();
 
-	auto const rect = kvf::ttf::glyph_bounds(m_cursor.get_glyph_layouts());
+	auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
+	atlas.push_layouts(layouts, {&params.cursor_symbol, 1}, 1.5f, false);
+	m_cursor.append_glyphs(layouts);
+
+	auto const rect = kvf::ttf::glyph_bounds(layouts);
 	m_cursor_offset_x = -rect.lt.x;
 }
 
@@ -89,21 +89,23 @@ void InputText::tick(kvf::Seconds const dt) {
 }
 
 void InputText::draw(Renderer& renderer) const {
-	auto const primitive = Primitive{
-		.vertices = m_line_input.get_vertices().vertices,
-		.indices = m_line_input.get_vertices().indices,
-		.texture = &m_line_input.get_texture(),
-	};
-	renderer.draw(primitive, {&instance, 1});
+	auto const line_primitive = m_line_input.to_primitive();
+	renderer.draw(line_primitive, {static_cast<RenderInstance const*>(this), 1});
 	if (!is_interactive()) { return; }
 
+	auto const cursor_primitive = Primitive{
+		.vertices = m_cursor.get_vertices(),
+		.indices = m_cursor.get_indices(),
+		.topology = m_cursor.get_topology(),
+		.texture = line_primitive.texture,
+	};
 	auto cursor_instance = RenderInstance{
-		.transform = instance.transform,
+		.transform = transform,
 		.tint = m_cursor_color,
 	};
 	cursor_instance.transform.position.x += m_line_input.get_cursor_x() + m_cursor_offset_x;
 	cursor_instance.tint.w = kvf::Color::to_u8(m_cursor_alpha);
-	renderer.draw(m_cursor.get_primitive(), {&cursor_instance, 1});
+	renderer.draw(cursor_primitive, {&cursor_instance, 1});
 }
 
 void InputText::update() {

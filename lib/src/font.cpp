@@ -65,12 +65,8 @@ void le::write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> g
 	for (auto const& layout : glyphs) {
 		if (!kvf::is_positive(layout.glyph->size)) { continue; }
 
-		auto const quad_params = QuadParams{
-			.rect = layout.glyph->rect(position + layout.baseline),
-			.color = color,
-			.uv = layout.glyph->uv_rect,
-		};
-		auto const quad = shape::Quad{quad_params};
+		auto quad = shape::Quad{};
+		quad.create(layout.glyph->rect(position + layout.baseline), layout.glyph->uv_rect, color);
 		out.append(quad.get_vertices(), shape::Quad::indices_v);
 	}
 }

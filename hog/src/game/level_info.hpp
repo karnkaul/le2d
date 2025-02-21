@@ -28,6 +28,7 @@ struct LevelBackground {
 struct PropInfo {
 	std::string name{};
 	le::Transform transform{};
+	glm::vec2 sprite_size{200.0f};
 	std::size_t texture{};
 	std::optional<std::size_t> animation{};
 	std::optional<std::size_t> flipbook{};

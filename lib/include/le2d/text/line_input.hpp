@@ -1,11 +1,11 @@
 #pragma once
-#include <klib/polymorphic.hpp>
 #include <le2d/font.hpp>
-#include <le2d/vertex_array.hpp>
+#include <le2d/primitive.hpp>
+#include <le2d/text/text_geometry.hpp>
 #include <gsl/pointers>
 
 namespace le {
-class LineInput : public klib::Polymorphic {
+class LineInput {
   public:
 	explicit LineInput(gsl::not_null<Font*> font, TextHeight height = TextHeight::Default);
 
@@ -16,9 +16,10 @@ class LineInput : public klib::Polymorphic {
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
 
-	[[nodiscard]] auto get_vertices() const -> VertexArray const& { return m_vertices; }
 	[[nodiscard]] auto get_atlas() const -> FontAtlas& { return *m_atlas; }
 	[[nodiscard]] auto get_texture() const -> Texture const& { return get_atlas().get_texture(); }
+
+	[[nodiscard]] auto to_primitive() const -> Primitive;
 
 	void set_string(std::string line);
 	void append(std::string_view str);
@@ -31,7 +32,7 @@ class LineInput : public klib::Polymorphic {
 	void move_cursor(int delta);
 
   protected:
-	virtual void update();
+	void update();
 
   private:
 	void update_cursor_x();
@@ -39,7 +40,7 @@ class LineInput : public klib::Polymorphic {
 	gsl::not_null<FontAtlas*> m_atlas;
 
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
-	VertexArray m_vertices{};
+	TextGeometry m_geometry{};
 
 	std::string m_line{};
 	glm::vec2 m_size{};

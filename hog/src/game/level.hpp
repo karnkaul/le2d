@@ -1,7 +1,7 @@
 #pragma once
 #include <kvf/rect.hpp>
 #include <le2d/animation.hpp>
-#include <le2d/drawable/shape.hpp>
+#include <le2d/drawable/sprite.hpp>
 #include <string>
 
 namespace hog {

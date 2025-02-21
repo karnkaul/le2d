@@ -1,8 +1,10 @@
 #include <klib/assert.hpp>
-#include <le2d/line_input.hpp>
+#include <le2d/text/line_input.hpp>
 
 namespace le {
 LineInput::LineInput(gsl::not_null<Font*> font, TextHeight const height) : m_atlas(&font->get_atlas(height)) {}
+
+auto LineInput::to_primitive() const -> Primitive { return m_geometry.to_primitive(m_atlas->get_texture()); }
 
 void LineInput::set_string(std::string line) {
 	if (m_line == line) { return; }
@@ -48,7 +50,7 @@ void LineInput::set_cursor(int const cursor) {
 void LineInput::move_cursor(int const delta) { set_cursor(get_cursor() + delta); }
 
 void LineInput::update() {
-	m_vertices.clear();
+	m_geometry.clear_vertices();
 
 	if (m_line.empty()) {
 		m_cursor_x = 0.0f;
@@ -60,7 +62,7 @@ void LineInput::update() {
 	m_glyph_layouts.clear();
 	m_next_glyph_x = m_atlas->push_layouts(m_glyph_layouts, m_line).x;
 	m_size = kvf::ttf::glyph_bounds(m_glyph_layouts).size();
-	write_glyphs(m_vertices, m_glyph_layouts);
+	m_geometry.append_glyphs(m_glyph_layouts);
 	update_cursor_x();
 }
 
