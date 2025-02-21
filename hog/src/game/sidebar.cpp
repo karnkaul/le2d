@@ -21,6 +21,9 @@ void Sidebar::initialize_for(Level const& level) {
 		m_tiles.push_back(tile.get());
 		m_scroller.add_widget(std::move(tile));
 	}
+
+	layout_tiles();
+	m_scroller.widget_to_center(*m_tiles.front());
 }
 
 void Sidebar::collect(std::size_t const index) {
@@ -60,7 +63,23 @@ void Sidebar::resize(glm::vec2 const size) {
 	m_framebuffer_size = size;
 	m_scroller.background.create({tile_size, m_framebuffer_size.y});
 	m_scroller.background.transform.position.x = 0.5f * (m_framebuffer_size.x - tile_size) - right_pad;
-	m_scroller.reposition_widgets();
+
+	auto const* center_tile = m_scroller.widget_near_center();
+	layout_tiles();
+	if (center_tile == nullptr) { return; }
+	m_scroller.widget_to_center(*center_tile);
+}
+
+void Sidebar::layout_tiles() {
+	if (m_tiles.empty()) { return; }
+	auto const x = m_scroller.background.transform.position.x;
+	auto y = m_scroller.background.transform.position.y + (0.5f * m_scroller.background.get_size().y) - tile_pad_y;
+	for (auto* tile : m_tiles) {
+		auto const size = tile->get_hitbox().size();
+		y -= 0.5f * size.y;
+		tile->set_position({x, y});
+		y -= 0.5f * size.y + tile_pad_y;
+	}
 }
 
 void Sidebar::Tile::draw(le::Renderer& renderer) const {

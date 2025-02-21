@@ -33,6 +33,7 @@ class Sidebar {
 	glm::vec2 popup_size{350.0f, 120.0f};
 	kvf::Color popup_text{kvf::black_v};
 	float popup_pad{20.0f};
+	float tile_pad_y{20.0f};
 
   private:
 	struct Tile : ui::Widget {
@@ -65,6 +66,7 @@ class Sidebar {
 	[[nodiscard]] auto to_tile(Collectible const& collectible, Prop const& prop) const -> std::unique_ptr<Tile>;
 
 	void resize(glm::vec2 size);
+	void layout_tiles();
 
 	gsl::not_null<le::Context const*> m_context;
 

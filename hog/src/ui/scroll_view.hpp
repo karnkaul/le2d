@@ -22,24 +22,22 @@ class ScrollView : public le::input::Listener {
 
 	void add_widget(std::unique_ptr<Widget> widget);
 	void clear_widgets();
-
-	void reposition_widgets();
+	void move_widgets(float dy);
+	void widget_to_center(Widget const& widget);
 
 	void tick(kvf::Seconds dt);
 	void draw(le::Renderer& renderer) const;
 
 	[[nodiscard]] auto get_state() const -> State { return m_state; }
+	[[nodiscard]] auto widget_near_center() const -> Widget*;
 
 	le::drawable::Quad background{};
 	float scroll_speed{30.0f};
 	float scroll_threshold{5.0f};
 	float y_pad{20.0f};
 
-	float y_offset{};
-
   private:
 	void do_scroll(glm::vec2 cursor_pos);
-	void move_widgets(float dy);
 
 	void set_scissor(le::Renderer& renderer) const;
 

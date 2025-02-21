@@ -13,12 +13,15 @@ auto TextBase::to_primitive() const -> Primitive {
 void TextBase::set_string(Font& font, std::string_view const line, Params const& params) {
 	if (!font.is_loaded()) { return; }
 
+	m_geometry.clear_vertices();
+	m_glyph_layouts.clear();
+	m_size = {};
+
+	if (line.empty()) { return; }
+
 	auto const& font_atlas = font.get_atlas(params.height);
 	m_texture = &font_atlas.get_texture();
-	m_size = {};
-	m_geometry.clear_vertices();
 
-	m_glyph_layouts.clear();
 	font_atlas.push_layouts(m_glyph_layouts, line);
 
 	auto const rect = kvf::ttf::glyph_bounds(m_glyph_layouts);
