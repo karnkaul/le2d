@@ -2,6 +2,7 @@
 #include <detail/buffer_pool.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <detail/sampler_pool.hpp>
+#include <klib/assert.hpp>
 #include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
@@ -48,6 +49,76 @@ struct ResourcePool : IResourcePool {
   private:
 	kvf::DeviceBlock m_blocker;
 };
+
+struct Audio : IAudio {
+	explicit Audio(int sfx_sources) {
+		if (!m_device) {
+			// TODO: log error
+		}
+		static constexpr auto max_sfx_sources_v{256};
+		sfx_sources = std::clamp(sfx_sources, 1, max_sfx_sources_v);
+		m_sfx_sources.reserve(std::size_t(sfx_sources));
+		for (int i = 0; i < sfx_sources; ++i) {
+			auto& sfx_source = m_sfx_sources.emplace_back();
+			sfx_source.source = m_device.make_sound_source();
+		}
+	}
+
+	[[nodiscard]] auto get_sfx_gain() const -> float final { return m_sfx_gain; }
+
+	void set_sfx_gain(float gain) final {
+		if (std::abs(gain - m_sfx_gain) < 0.01f) { return; }
+		m_sfx_gain = gain;
+		for (auto& source : m_sfx_sources) {
+			if (source.source.state() != capo::State::ePlaying) { continue; }
+			source.source.set_gain(m_sfx_gain);
+		}
+	}
+
+	void play_sfx(capo::Clip const& clip) final {
+		auto* source = get_idle_source();
+		if (source == nullptr) { source = &get_oldest_source(); }
+		play_sfx(*source, clip);
+	}
+
+  private:
+	using Clock = std::chrono::steady_clock;
+
+	struct SfxSource {
+		capo::SoundSource source{};
+		Clock::time_point timestamp{};
+	};
+
+	[[nodiscard]] auto get_idle_source() -> SfxSource* {
+		for (auto& source : m_sfx_sources) {
+			if (source.source.state() != capo::State::ePlaying) { return &source; }
+		}
+		return nullptr;
+	}
+
+	[[nodiscard]] auto get_oldest_source() -> SfxSource& {
+		SfxSource* ret{};
+		for (auto& source : m_sfx_sources) {
+			if (ret == nullptr || source.timestamp < ret->timestamp) { ret = &source; }
+		}
+		KLIB_ASSERT(ret != nullptr);
+		return *ret;
+	}
+
+	void play_sfx(SfxSource& source, capo::Clip const& clip) const {
+		source.source.stop();
+		source.source.set_gain(m_sfx_gain);
+		source.source.set_clip(clip);
+		source.source.set_looping(false);
+		source.source.play();
+		source.timestamp = Clock::now();
+	}
+
+	capo::Device m_device{};
+
+	std::vector<SfxSource> m_sfx_sources{};
+	float m_sfx_gain{1.0f};
+};
 } // namespace
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
@@ -59,6 +130,8 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 		log::warn("Context: failed to create Default Shader: '{}' / '{}'", shader.vertex.get_string(), shader.fragment.get_string());
 	}
 	m_resource_pool = std::move(resource_pool);
+
+	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
 }
 
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }

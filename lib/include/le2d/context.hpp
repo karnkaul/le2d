@@ -1,5 +1,7 @@
 #pragma once
+#include <capo/capo.hpp>
 #include <le2d/asset/load_task.hpp>
+#include <le2d/audio.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
 #include <le2d/render_pass.hpp>
@@ -30,6 +32,7 @@ struct ContextCreateInfo {
 	} default_shader;
 
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
+	int sfx_buffers{16};
 };
 
 class Context {
@@ -51,6 +54,7 @@ class Context {
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
+	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
@@ -80,6 +84,7 @@ class Context {
 	RenderPass m_pass;
 
 	std::unique_ptr<IResourcePool> m_resource_pool{};
+	std::unique_ptr<IAudio> m_audio{};
 
 	float m_render_scale{1.0f};
 

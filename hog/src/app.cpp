@@ -34,6 +34,7 @@ void App::run() {
 	}
 
 	m_services.bind(&m_context);
+	m_services.bind(&m_context.get_audio());
 	m_services.bind(&*m_resources);
 	m_services.bind(&m_input_dispatch);
 	m_services.bind<scene::ISwitcher>(this);

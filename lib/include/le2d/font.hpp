@@ -20,7 +20,7 @@ class FontAtlas {
 	[[nodiscard]] auto get_glyphs() const -> std::span<Glyph const> { return m_glyphs; }
 	[[nodiscard]] auto get_texture() const -> Texture const& { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_height; }
-	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const*;
+	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const* { return m_face; }
 
 	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view text, float n_line_height = 1.5f, bool use_tofu = true) const -> glm::vec2;
 

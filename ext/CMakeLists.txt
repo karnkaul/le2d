@@ -2,3 +2,4 @@ file(ARCHIVE_EXTRACT INPUT "${CMAKE_CURRENT_SOURCE_DIR}/src.zip" DESTINATION "${
 
 add_subdirectory(src/kvf)
 add_subdirectory(src/djson)
+add_subdirectory(src/capo-lite)

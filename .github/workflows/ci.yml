@@ -16,7 +16,7 @@ jobs:
       - name: init
         run: sudo apt update -yqq; sudo apt install -yqq ninja-build xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
-        run: export CC=gcc-14; export CXX=g++-14; cmake -S . --preset=default -B build -DKVF_USE_FREETYPE=OFF
+        run: export CC=gcc-14; export CXX=g++-14; cmake -S . --preset=default -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -28,7 +28,7 @@ jobs:
       - name: init
         run: sudo apt update -yqq; sudo apt install -yqq ninja-build xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: configure
-        run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF
+        run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -50,7 +50,7 @@ jobs:
       - name: init
         run: choco install ninja
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
