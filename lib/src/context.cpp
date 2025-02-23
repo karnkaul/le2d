@@ -66,7 +66,7 @@ struct Audio : IAudio {
 
 	[[nodiscard]] auto get_sfx_gain() const -> float final { return m_sfx_gain; }
 
-	void set_sfx_gain(float gain) final {
+	void set_sfx_gain(float const gain) final {
 		if (std::abs(gain - m_sfx_gain) < 0.01f) { return; }
 		m_sfx_gain = gain;
 		for (auto& source : m_sfx_sources) {
@@ -80,6 +80,15 @@ struct Audio : IAudio {
 		auto* source = get_idle_source();
 		if (source == nullptr) { source = &get_oldest_source(); }
 		play_sfx(*source, clip);
+	}
+
+	[[nodiscard]] auto start_music(capo::Clip const& clip, float const gain) const -> capo::StreamSource final {
+		if (clip.samples.empty()) { return {}; }
+		auto ret = m_device.make_stream_source();
+		ret.set_stream(clip);
+		ret.set_gain(gain);
+		ret.play();
+		return ret;
 	}
 
   private:
@@ -170,7 +179,10 @@ auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Sha
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
-auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
+auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture {
+	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
+	return Texture{&m_pass.get_render_device(), bitmap};
+}
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
 
