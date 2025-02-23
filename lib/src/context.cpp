@@ -76,6 +76,7 @@ struct Audio : IAudio {
 	}
 
 	void play_sfx(capo::Clip const& clip) final {
+		if (clip.samples.empty()) { return; }
 		auto* source = get_idle_source();
 		if (source == nullptr) { source = &get_oldest_source(); }
 		play_sfx(*source, clip);
@@ -181,6 +182,7 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
 	ret->add_loader(std::make_unique<asset::AnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
+	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
 	return ret;
 }
 } // namespace le

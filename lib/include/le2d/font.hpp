@@ -33,6 +33,8 @@ class FontAtlas {
 
 class Font {
   public:
+	Font() = default;
+
 	explicit Font(gsl::not_null<kvf::RenderDevice*> render_device, std::vector<std::byte> bytes = {});
 
 	[[nodiscard]] auto is_loaded() const -> bool { return m_face.is_loaded(); }
@@ -43,7 +45,7 @@ class Font {
 	[[nodiscard]] auto get_atlas(TextHeight height) -> FontAtlas&;
 
   private:
-	kvf::RenderDevice* m_render_device;
+	kvf::RenderDevice* m_render_device{};
 
 	kvf::ttf::Typeface m_face;
 	std::unordered_map<TextHeight, FontAtlas> m_atlases{};

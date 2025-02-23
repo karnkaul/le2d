@@ -2,8 +2,11 @@
 #include <le2d/context.hpp>
 #include <le2d/json_io.hpp>
 #include <log.hpp>
+#include <filesystem>
 
 namespace le::asset {
+namespace fs = std::filesystem;
+
 namespace {
 auto load_bytes(Context const& context, std::string_view const type, Uri const& uri) -> std::vector<std::byte> {
 	auto ret = std::vector<std::byte>{};
@@ -36,6 +39,13 @@ template <typename T>
 auto to_wrap(Uri const& uri, std::string_view const type, T t) {
 	log::info("=='{}'== {} loaded", uri.get_string(), type);
 	return std::make_unique<Wrap<T>>(std::move(t));
+}
+
+constexpr auto to_compression(std::string_view const extension) {
+	if (extension == ".wav") { return capo::Compression::eWav; }
+	if (extension == ".mp3") { return capo::Compression::eMp3; }
+	if (extension == ".flac") { return capo::Compression::eFlac; }
+	return capo::Compression::eUnknown;
 }
 } // namespace
 
@@ -93,5 +103,19 @@ auto FlipbookLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Flipbook
 	auto flipbook = Flipbook{};
 	from_json(json, flipbook);
 	return to_wrap(uri, type_v, std::move(flipbook));
+}
+
+auto PcmLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Pcm>> {
+	static constexpr std::string_view type_v{"Pcm"};
+	auto const bytes = load_bytes(*m_context, type_v, uri);
+	if (bytes.empty()) { return {}; }
+	auto const extension = fs::path{uri.get_string()}.extension().string();
+	auto const compression = to_compression(extension);
+	auto result = capo::Pcm::make(bytes, compression);
+	if (!result) {
+		log::warn("'{}' Failed to load {}", uri.get_string(), type_v);
+		return {};
+	}
+	return to_wrap(uri, type_v, std::move(result.pcm));
 }
 } // namespace le::asset
