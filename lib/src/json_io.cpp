@@ -19,6 +19,14 @@ void do_to_json(dj::Json& json, AnimationT const& animation) {
 }
 } // namespace
 
+void le::from_json(dj::Json const& json, Uri& uri) {
+	auto str = std::string{};
+	from_json(json, str);
+	uri = std::move(str);
+}
+
+void le::to_json(dj::Json& json, Uri const& uri) { to_json(json, uri.get_string()); }
+
 void le::from_json(dj::Json const& json, kvf::Seconds& seconds) {
 	auto f = float{};
 	from_json(json, f);
