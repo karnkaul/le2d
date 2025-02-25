@@ -46,8 +46,13 @@ void Dispatch::update_listeners(Dispatch* target) const {
 
 template <typename FPtr, typename T>
 void Dispatch::dispatch(FPtr const fptr, T const& event) const {
+	auto consumed = false;
 	for (auto* listener : std::views::reverse(m_listeners)) {
-		if (std::invoke(fptr, listener, event)) { break; }
+		if (!consumed) {
+			consumed = std::invoke(fptr, listener, event);
+		} else {
+			listener->disengage_input();
+		}
 	}
 }
 } // namespace le::input
