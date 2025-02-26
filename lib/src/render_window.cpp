@@ -1,5 +1,6 @@
 #include <common.hpp>
 #include <klib/assert.hpp>
+#include <klib/visitor.hpp>
 #include <kvf/is_positive.hpp>
 #include <kvf/util.hpp>
 #include <le2d/error.hpp>
@@ -19,12 +20,8 @@ constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size)
 }
 } // namespace
 
-RenderWindow::RenderWindow(glm::ivec2 const size, klib::CString const title, bool const decorated)
-	: m_window(create_window(size, title, decorated)), m_render_device(m_window.get()) {
-	setup();
-}
-
-RenderWindow::RenderWindow(klib::CString title, GLFWmonitor* target) : m_window(create_window(title, target)), m_render_device(m_window.get()) { setup(); }
+RenderWindow::RenderWindow(WindowCreateInfo const& wci, kvf::RenderDeviceCreateInfo const& rdci)
+	: m_window(create_window(wci)), m_render_device(m_window.get(), rdci) {}
 
 auto RenderWindow::window_size() const -> glm::ivec2 {
 	auto ret = glm::ivec2{};
@@ -48,25 +45,18 @@ auto RenderWindow::next_frame() -> vk::CommandBuffer {
 
 void RenderWindow::present(kvf::RenderTarget const& render_target) { m_render_device.render(render_target); }
 
-void RenderWindow::setup() {
-	if (glfwRawMouseMotionSupported() == GLFW_TRUE) { glfwSetInputMode(m_window.get(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); }
-}
-
 auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
 
-auto RenderWindow::create_window(glm::ivec2 const size, klib::CString const title, bool const decorated) -> kvf::UniqueWindow {
-	auto ret = kvf::create_window(size, title, decorated);
+auto RenderWindow::create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow {
+	auto const visitor = klib::Visitor{
+		[](WindowInfo const& wi) { return kvf::create_window(wi.size, wi.title, wi.decorated); },
+		[](FullscreenInfo const& fi) { return kvf::create_fullscreen_window(fi.title, fi.target); },
+	};
+	auto ret = std::visit(visitor, wci);
 	KLIB_ASSERT(ret);
 	glfwSetWindowUserPointer(ret.get(), this);
 	set_glfw_callbacks(ret.get());
-	return ret;
-}
-
-auto RenderWindow::create_window(klib::CString const title, GLFWmonitor* target) -> kvf::UniqueWindow {
-	auto ret = kvf::create_fullscreen_window(title, target);
-	KLIB_ASSERT(ret);
-	glfwSetWindowUserPointer(ret.get(), this);
-	set_glfw_callbacks(ret.get());
+	if (glfwRawMouseMotionSupported() == GLFW_TRUE) { glfwSetInputMode(m_window.get(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); }
 	return ret;
 }
 

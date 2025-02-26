@@ -9,14 +9,6 @@
 
 namespace le {
 namespace {
-auto create_window(WindowCreateInfo const& create_info) {
-	struct Visitor {
-		auto operator()(WindowInfo const& info) const { return RenderWindow{info.size, info.title, info.decorated}; }
-		auto operator()(FullscreenInfo const& info) const { return RenderWindow{info.title, info.target}; }
-	};
-	return std::visit(Visitor{}, create_info);
-}
-
 struct ResourcePool : IResourcePool {
 	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device)
 		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device, white_bitmap_v),
@@ -132,13 +124,12 @@ struct Audio : IAudio {
 } // namespace
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
-	: m_data_loader(data_loader), m_window(create_window(create_info.window)), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
+	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
+	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
 	auto resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device());
-	auto const& shader = create_info.default_shader;
-	resource_pool->default_shader = create_shader(shader.vertex, shader.fragment);
-	if (!resource_pool->default_shader) {
-		log::warn("Context: failed to create Default Shader: '{}' / '{}'", shader.vertex.get_string(), shader.fragment.get_string());
-	}
+	auto const& shader = create_info.default_shader_uri;
+	resource_pool->default_shader = create_shader(std::string{shader.vertex}, std::string{shader.fragment});
+	if (!resource_pool->default_shader) { log::warn("Context: failed to create Default Shader: '{}' / '{}'", shader.vertex, shader.fragment); }
 	m_resource_pool = std::move(resource_pool);
 
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);

@@ -8,29 +8,16 @@
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
-#include <variant>
 
 namespace le {
-struct WindowInfo {
-	glm::ivec2 size{600};
-	klib::CString title;
-	bool decorated{true};
-};
-
-struct FullscreenInfo {
-	klib::CString title;
-	GLFWmonitor* target{nullptr};
-};
-
-using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
-
 struct ContextCreateInfo {
 	WindowCreateInfo window;
 	struct {
-		Uri vertex;
-		Uri fragment;
-	} default_shader;
+		std::string_view vertex;
+		std::string_view fragment;
+	} default_shader_uri;
 
+	kvf::RenderDeviceCreateInfo render_device{};
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
 	int sfx_buffers{16};
 };
@@ -55,6 +42,7 @@ class Context {
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
+	[[nodiscard]] auto get_default_shader() const -> Shader const& { return m_resource_pool->get_default_shader(); }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;

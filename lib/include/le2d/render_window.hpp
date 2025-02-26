@@ -5,12 +5,25 @@
 #include <kvf/render_device.hpp>
 #include <kvf/window.hpp>
 #include <le2d/event.hpp>
+#include <variant>
 
 namespace le {
+struct WindowInfo {
+	glm::ivec2 size{600};
+	klib::CString title;
+	bool decorated{true};
+};
+
+struct FullscreenInfo {
+	klib::CString title;
+	GLFWmonitor* target{nullptr};
+};
+
+using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
+
 class RenderWindow {
   public:
-	explicit RenderWindow(glm::ivec2 size, klib::CString title, bool decorated = true);
-	explicit RenderWindow(klib::CString title, GLFWmonitor* target = nullptr);
+	explicit RenderWindow(WindowCreateInfo const& wci, kvf::RenderDeviceCreateInfo const& rdci = {});
 
 	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& { return m_render_device; }
 	[[nodiscard]] auto get_render_device() -> kvf::RenderDevice& { return m_render_device; }
@@ -29,12 +42,9 @@ class RenderWindow {
 	void present(kvf::RenderTarget const& render_target);
 
   private:
-	void setup();
-
 	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow&;
 
-	[[nodiscard]] auto create_window(glm::ivec2 size, klib::CString title, bool decorated) -> kvf::UniqueWindow;
-	[[nodiscard]] auto create_window(klib::CString title, GLFWmonitor* target) -> kvf::UniqueWindow;
+	[[nodiscard]] auto create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow;
 
 	static void set_glfw_callbacks(GLFWwindow* window);
 
