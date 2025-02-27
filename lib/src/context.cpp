@@ -79,6 +79,7 @@ struct Audio : IAudio {
 		auto ret = m_device.make_stream_source();
 		ret.set_stream(clip);
 		ret.set_gain(gain);
+		ret.set_looping(true);
 		ret.play();
 		return ret;
 	}
