@@ -74,14 +74,13 @@ struct Audio : IAudio {
 		play_sfx(*source, clip);
 	}
 
-	[[nodiscard]] auto start_music(capo::Clip const& clip, float const gain) const -> capo::StreamSource final {
-		if (clip.samples.empty()) { return {}; }
-		auto ret = m_device.make_stream_source();
-		ret.set_stream(clip);
-		ret.set_gain(gain);
-		ret.set_looping(true);
-		ret.play();
-		return ret;
+	[[nodiscard]] auto create_stream_source() const -> capo::StreamSource final { return m_device.make_stream_source(); }
+
+	void start_music(capo::StreamSource& source, capo::Clip const& clip) const final {
+		source.stop();
+		if (clip.samples.empty()) { return; }
+		source.set_stream(clip);
+		source.play();
 	}
 
   private:

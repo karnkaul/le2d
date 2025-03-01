@@ -9,6 +9,7 @@ class IAudio : public klib::Polymorphic {
 	virtual void set_sfx_gain(float gain) = 0;
 	virtual void play_sfx(capo::Clip const& clip) = 0;
 
-	[[nodiscard]] virtual auto start_music(capo::Clip const& clip, float gain = 1.0f) const -> capo::StreamSource = 0;
+	[[nodiscard]] virtual auto create_stream_source() const -> capo::StreamSource = 0;
+	virtual void start_music(capo::StreamSource& source, capo::Clip const& clip) const = 0;
 };
 } // namespace le
