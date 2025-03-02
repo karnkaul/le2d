@@ -1,17 +1,17 @@
 #include <GLFW/glfw3.h>
-#include <klib/args/parse.hpp>
 #include <klib/assert.hpp>
 #include <klib/concepts.hpp>
 #include <klib/str_to_num.hpp>
 #include <kvf/util.hpp>
-#include <le2d/console.hpp>
+#include <le2d/console/terminal.hpp>
+#include <le2d/console/tweak.hpp>
 #include <le2d/drawable/input_text.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/text/text_buffer.hpp>
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <ranges>
-
-#include <print>
 
 namespace le::console {
 namespace {
@@ -94,17 +94,9 @@ constexpr auto longest_match(std::span<std::string_view const> candidates, std::
 	}
 	return ret;
 }
-
-template <klib::NumberT T>
-auto to_num(std::string_view str, T const fallback) -> T {
-	auto ret = T{};
-	auto [_, ec] = std::from_chars(str.data(), str.data() + str.size(), ret);
-	if (ec != std::errc{}) { return fallback; }
-	return ret;
-}
 } // namespace
 
-struct Terminal::Impl : Printer {
+struct Terminal::Impl : IPrinter {
 	static constexpr auto to_input_text_params(CreateInfo const& in) {
 		return InputTextParams{
 			.height = in.style.text_height,
@@ -118,8 +110,9 @@ struct Terminal::Impl : Printer {
 		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)),
 		  m_buffer(font.get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(font);
-		add_command(std::make_unique<Builtin>(*this));
-		add_command(std::make_unique<Help>(*this));
+		add_command("console.opacity", std::make_unique<Opacity>(*this));
+		m_builtin_map.insert_or_assign("help", [this] { print_help(); });
+		m_builtin_map.insert_or_assign("list", [this] { print_command_names(); });
 	}
 
 	void toggle_active() {
@@ -129,34 +122,14 @@ struct Terminal::Impl : Printer {
 
 	[[nodiscard]] auto is_active() const -> bool { return m_active; }
 
-	void add_command(std::unique_ptr<Command> command) {
-		if (!command) { return; }
-		auto const name = command->get_name();
-		if (name.empty()) { return; }
-		m_args.push_back(klib::args::command(command->get_args(), name, command->get_description()));
-		auto* p_command = command.get();
-		m_commands.push_back(std::move(command));
-		m_cmd_map.insert_or_assign(name, p_command);
+	void add_command(std::string_view const name, std::unique_ptr<ICommand> command) {
+		if (!command || name.empty()) { return; }
+		m_command_map.insert_or_assign(name, std::move(command));
 	}
 
-	void add_command(std::string_view const name, std::string_view const description, std::move_only_function<void(Printer&)> command) {
-		if (name.empty() || !command) { return; }
-
-		struct Closure : Command {
-			explicit Closure(std::string_view const name, std::string_view const description, std::move_only_function<void(Printer&)> func)
-				: m_name(name), m_description(description), m_func(std::move(func)) {}
-
-		  private:
-			[[nodiscard]] auto get_name() const -> std::string_view final { return m_name; }
-			[[nodiscard]] auto get_description() const -> std::string_view final { return m_description; }
-			void execute(Printer& printer) final { m_func(printer); }
-
-			std::string_view m_name;
-			std::string_view m_description;
-			std::move_only_function<void(Printer&)> m_func;
-		};
-
-		add_command(std::make_unique<Closure>(name, description, std::move(command)));
+	void remove_command(std::string_view const name) {
+		if (name.empty()) { return; }
+		m_command_map.erase(name);
 	}
 
 	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.tint; }
@@ -209,52 +182,31 @@ struct Terminal::Impl : Printer {
 	}
 
   private:
-	struct Builtin : Command {
-		explicit Builtin(Impl& impl) : impl(impl) {
-			args.push_back(klib::args::named_option(opacity, "o,opacity", {}, &opacity_was_set));
-			args.push_back(klib::args::named_option(color, "c,color", {}, &color_was_set));
+	struct Opacity : Tweak<float> {
+		explicit Opacity(Impl& impl) : m_impl(impl) {}
+
+	  private:
+		void set(float value) final {
+			value = std::clamp(value, 0.0f, 1.0f);
+			m_impl.m_background.tint.w = kvf::Color::to_u8(value);
 		}
 
-		[[nodiscard]] auto get_name() const -> std::string_view final { return "console"; }
-		[[nodiscard]] auto get_description() const -> std::string_view final { return "console styling"; }
-		[[nodiscard]] auto get_args() const -> std::span<klib::args::Arg const> final { return args; }
+		[[nodiscard]] auto get() const -> float final { return kvf::Color::to_f32(m_impl.m_background.tint.w); }
 
-		void execute(Printer& printer) final {
-			if (opacity_was_set) {
-				impl.m_background.tint.w = kvf::Color::to_u8(opacity);
-			} else if (color_was_set) {
-				impl.m_background.tint = kvf::util::color_from_hex(color);
-			} else {
-				auto text = std::format("opacity: {:.2f}", kvf::Color::to_f32(impl.m_background.tint.w));
-				std::format_to(std::back_inserter(text), "\ncolor: {}", kvf::util::to_hex_string(impl.m_background.tint));
-				printer.println(text);
-			}
-
-			opacity_was_set = false;
-			color_was_set = false;
-		}
-
-		Impl& impl;
-
-		std::vector<klib::args::Arg> args{};
-		float opacity{};
-		bool opacity_was_set{};
-		std::string_view color{};
-		bool color_was_set{};
+		Impl& m_impl;
 	};
 
-	struct Help : Command {
-		explicit Help(Impl& impl) : impl(impl) {}
+	struct Params {
+		std::string_view name{};
+		std::string_view value{};
 
-		[[nodiscard]] auto get_name() const -> std::string_view final { return "help"; }
-		[[nodiscard]] auto get_description() const -> std::string_view final { return "print help text"; }
-
-		void execute(Printer& printer) final {
-			auto const help_text = klib::args::HelpString{}(impl.m_args);
-			printer.println(help_text);
+		[[nodiscard]] static constexpr auto create(std::string_view const text) -> Params {
+			auto i = text.find_first_of(" =");
+			if (i == std::string_view::npos) { return Params{.name = text}; }
+			auto value = text.substr(i + 1);
+			while (!value.empty() && value.front() == ' ') { value = value.substr(1); }
+			return Params{.name = text.substr(0, i), .value = value};
 		}
-
-		Impl& impl;
 	};
 
 	void setup(Font& font) {
@@ -362,16 +314,47 @@ struct Terminal::Impl : Printer {
 	}
 
 	void try_run(std::string_view const text) {
-		auto const parse_result = klib::args::parse_string(m_args, text, this);
-		if (parse_result.early_return()) { return; }
+		auto const params = Params::create(text);
+		if (try_builtin(params.name)) { return; }
 
-		auto const cmd = parse_result.get_command_name();
-		if (auto const it = m_cmd_map.find(cmd); it != m_cmd_map.end()) {
-			it->second->execute(*this);
+		auto const it = m_command_map.find(params.name);
+		if (it == m_command_map.end()) {
+			printerr(std::format("unrecognized Command: '{}'", params.name));
 			return;
 		}
 
-		printerr(std::format("unrecognized command: '{}'", cmd));
+		m_str_buffer.clear();
+		auto& command = *it->second;
+		command.run(*this, params.value);
+	}
+
+	auto try_builtin(std::string_view const name) -> bool {
+		auto const it = m_builtin_map.find(name);
+		if (it == m_builtin_map.end()) { return false; }
+		it->second();
+		return true;
+	}
+
+	void append_command_names(std::string& out) const {
+		if (m_command_map.empty()) {
+			out = "[no Commands added]";
+			return;
+		}
+
+		for (auto const& [name, _] : m_command_map) { std::format_to(std::back_inserter(out), "  {}\n", name); }
+		out.pop_back();
+	}
+
+	void print_command_names() {
+		auto text = std::string{};
+		append_command_names(text);
+		println(text);
+	}
+
+	void print_help() {
+		auto text = std::string{"Usage:\n  <Command>[=VALUE]\n  help|list\n\nCommands:\n"};
+		append_command_names(text);
+		println(text);
 	}
 
 	void start_cycling() {
@@ -407,29 +390,36 @@ struct Terminal::Impl : Printer {
 
 	void autocomplete() {
 		auto prefix = m_input.get_string();
-		if (prefix.empty() || prefix.find_first_of(' ') != std::string_view::npos) { return; }
-		auto const candidates = [&] {
-			auto ret = std::vector<std::string_view>{};
-			ret.reserve(m_cmd_map.size());
-			for (auto const& command : m_commands) {
-				auto const name = command->get_name();
-				if (!name.starts_with(prefix)) { continue; }
-				ret.push_back(name);
-			}
-			return ret;
-		}();
-		if (candidates.empty()) { return; }
-		if (candidates.size() == 1) {
-			auto const name = candidates.front();
+		fill_autocomplete_candidates(prefix);
+
+		if (m_candidates_buffer.empty()) { return; }
+		if (m_candidates_buffer.size() == 1) {
+			auto const name = m_candidates_buffer.front();
 			m_input.set_string(std::format("{} ", name));
 			return;
 		}
-		prefix = longest_match(candidates, prefix);
-		m_input.set_string(std::string{prefix});
-		for (auto const candidate : candidates) {
-			auto const line = std::format("  {}", candidate);
-			println(line);
+
+		if (!prefix.empty()) {
+			prefix = longest_match(m_candidates_buffer, prefix);
+			m_input.set_string(std::string{prefix});
 		}
+		auto text = std::string{"\n"};
+		for (auto const candidate : m_candidates_buffer) { std::format_to(std::back_inserter(text), "  {}\n", candidate); }
+		text.pop_back();
+		println(text);
+	}
+
+	void fill_autocomplete_candidates(std::string_view const prefix) {
+		m_candidates_buffer.clear();
+		m_candidates_buffer.reserve(m_builtin_map.size() + m_command_map.size());
+		auto const push_names = [this, prefix](auto const& map) {
+			for (auto const& [name, _] : map) {
+				if (!prefix.empty() && !name.starts_with(prefix)) { continue; }
+				m_candidates_buffer.push_back(name);
+			}
+		};
+		push_names(m_builtin_map);
+		push_names(m_command_map);
 	}
 
 	void page_up() { move_buffer_y(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
@@ -440,9 +430,10 @@ struct Terminal::Impl : Printer {
 	glm::vec2 m_framebuffer_size;
 	ndc::vec2 m_n_cursor_pos{};
 
-	std::vector<std::unique_ptr<Command>> m_commands{};
-	std::vector<klib::args::Arg> m_args{};
-	std::unordered_map<std::string_view, Command*> m_cmd_map{};
+	std::map<std::string_view, std::move_only_function<void()>> m_builtin_map{};
+	std::map<std::string_view, std::unique_ptr<ICommand>> m_command_map{};
+	std::string m_str_buffer{};
+	std::vector<std::string_view> m_candidates_buffer{};
 
 	std::deque<std::string> m_history{};
 	drawable::Quad m_background{};
@@ -465,13 +456,11 @@ void Terminal::Deleter::operator()(Impl* ptr) const noexcept { std::default_dele
 Terminal::Terminal(gsl::not_null<Font*> font, glm::vec2 const framebuffer_size, CreateInfo const& create_info)
 	: m_impl(new Impl{*font, framebuffer_size, create_info}) {}
 
-void Terminal::add_command(std::unique_ptr<Command> command) { m_impl->add_command(std::move(command)); }
-
-void Terminal::add_command(std::string_view const name, std::string_view const description, std::move_only_function<void(Printer&)> command) {
-	m_impl->add_command(name, description, std::move(command));
-}
-
 auto Terminal::is_active() const -> bool { return m_impl->is_active(); }
+
+void Terminal::add_command(std::string_view const name, std::unique_ptr<ICommand> command) { m_impl->add_command(name, std::move(command)); }
+
+void Terminal::remove_command(std::string_view const name) { m_impl->remove_command(name); }
 
 void Terminal::println(std::string_view const text) { m_impl->println(text); }
 
