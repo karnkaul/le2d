@@ -1,3 +1,4 @@
+#include <imgui.h>
 #include <klib/assert.hpp>
 #include <le2d/input/dispatch.hpp>
 #include <functional>
@@ -28,26 +29,45 @@ void Dispatch::detach(gsl::not_null<Listener*> listener) {
 	std::erase(m_listeners, listener);
 }
 
-void Dispatch::on_cursor_move(glm::vec2 pos) { dispatch(&Listener::consume_cursor_move, pos); }
+void Dispatch::on_cursor_move(glm::vec2 pos) { dispatch(&Listener::consume_cursor_move, pos, Type::Mouse); }
 
-void Dispatch::on_codepoint(event::Codepoint codepoint) { dispatch(&Listener::consume_codepoint, codepoint); }
+void Dispatch::on_codepoint(event::Codepoint codepoint) { dispatch(&Listener::consume_codepoint, codepoint, Type::Keyboard); }
 
-void Dispatch::on_key(event::Key const& key) { dispatch(&Listener::consume_key, key); }
+void Dispatch::on_key(event::Key const& key) { dispatch(&Listener::consume_key, key, Type::Keyboard); }
 
-void Dispatch::on_mouse_button(event::MouseButton const& button) { dispatch(&Listener::consume_mouse_button, button); }
+void Dispatch::on_mouse_button(event::MouseButton const& button) { dispatch(&Listener::consume_mouse_button, button, Type::Mouse); }
 
-void Dispatch::on_scroll(event::Scroll const& scroll) { dispatch(&Listener::consume_scroll, scroll); }
+void Dispatch::on_scroll(event::Scroll const& scroll) { dispatch(&Listener::consume_scroll, scroll, Type::Mouse); }
 
-void Dispatch::on_drop(event::Drop const& drop) { dispatch(&Listener::consume_drop, drop); }
+void Dispatch::on_drop(event::Drop const& drop) { dispatch(&Listener::consume_drop, drop, Type::None); }
 
 void Dispatch::update_listeners(Dispatch* target) const {
 	for (auto* listener : m_listeners) { listener->m_dispatch = target; }
 }
 
 template <typename FPtr, typename T>
-void Dispatch::dispatch(FPtr const fptr, T const& event) const {
+void Dispatch::dispatch(FPtr const fptr, T const& event, Type const type) const {
+	if (honor_imgui_want_capture) {
+		switch (type) {
+		case Type::Keyboard: {
+			if (ImGui::GetIO().WantCaptureKeyboard) { return; }
+			break;
+		}
+		case Type::Mouse: {
+			if (ImGui::GetIO().WantCaptureMouse) { return; }
+			break;
+		}
+		case Type::None: break;
+		}
+	}
+
+	auto consumed = false;
 	for (auto* listener : std::views::reverse(m_listeners)) {
-		if (std::invoke(fptr, listener, event)) { break; }
+		if (!consumed) {
+			consumed = std::invoke(fptr, listener, event);
+		} else {
+			listener->disengage_input();
+		}
 	}
 }
 } // namespace le::input

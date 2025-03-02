@@ -1,4 +1,5 @@
 #pragma once
+#include <capo/pcm.hpp>
 #include <djson/json.hpp>
 #include <le2d/animation.hpp>
 #include <le2d/asset/loader.hpp>
@@ -50,6 +51,13 @@ class FlipbookLoader : public Loader<Flipbook> {
 	using Loader::Loader;
 
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Flipbook>> final;
+};
+
+class PcmLoader : public Loader<capo::Pcm> {
+  public:
+	using Loader::Loader;
+
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Pcm>> final;
 };
 } // namespace asset
 } // namespace le

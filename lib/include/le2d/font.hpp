@@ -20,7 +20,7 @@ class FontAtlas {
 	[[nodiscard]] auto get_glyphs() const -> std::span<Glyph const> { return m_glyphs; }
 	[[nodiscard]] auto get_texture() const -> Texture const& { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_height; }
-	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const*;
+	[[nodiscard]] auto get_face() const -> kvf::ttf::Typeface const* { return m_face; }
 
 	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view text, float n_line_height = 1.5f, bool use_tofu = true) const -> glm::vec2;
 
@@ -33,6 +33,8 @@ class FontAtlas {
 
 class Font {
   public:
+	Font() = default;
+
 	explicit Font(gsl::not_null<kvf::RenderDevice*> render_device, std::vector<std::byte> bytes = {});
 
 	[[nodiscard]] auto is_loaded() const -> bool { return m_face.is_loaded(); }
@@ -43,7 +45,7 @@ class Font {
 	[[nodiscard]] auto get_atlas(TextHeight height) -> FontAtlas&;
 
   private:
-	kvf::RenderDevice* m_render_device;
+	kvf::RenderDevice* m_render_device{};
 
 	kvf::ttf::Typeface m_face;
 	std::unordered_map<TextHeight, FontAtlas> m_atlases{};

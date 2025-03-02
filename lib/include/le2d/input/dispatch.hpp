@@ -24,11 +24,15 @@ class Dispatch {
 	void on_scroll(event::Scroll const& scroll);
 	void on_drop(event::Drop const& drop);
 
+	bool honor_imgui_want_capture{true};
+
   private:
+	enum class Type : std::int8_t { None, Keyboard, Mouse };
+
 	void update_listeners(Dispatch* target) const;
 
 	template <typename FPtr, typename T>
-	void dispatch(FPtr fptr, T const& event) const;
+	void dispatch(FPtr fptr, T const& event, Type type) const;
 
 	std::vector<Listener*> m_listeners{};
 };

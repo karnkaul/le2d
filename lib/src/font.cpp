@@ -34,8 +34,6 @@ auto FontAtlas::push_layouts(std::vector<GlyphLayout>& out, std::string_view con
 	return m_face->push_layouts(out, input, use_tofu);
 }
 
-auto FontAtlas::get_face() const -> kvf::ttf::Typeface const* { return m_face; }
-
 Font::Font(gsl::not_null<kvf::RenderDevice*> render_device, std::vector<std::byte> bytes) : m_render_device(render_device) { load_face(std::move(bytes)); }
 
 auto Font::load_face(std::vector<std::byte> font_bytes) -> bool {

@@ -84,7 +84,7 @@ class MouseButtonTrigger : public Trigger {
   public:
 	MouseButtonTrigger() = default;
 
-	explicit constexpr MouseButtonTrigger(int const key) : Trigger(key) {}
+	explicit constexpr MouseButtonTrigger(int const button) : Trigger(button) {}
 
 	constexpr auto on_event(event::MouseButton const& button) -> bool { return on_action(button.button, button.action); }
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <djson/json.hpp>
 #include <le2d/animation.hpp>
+#include <le2d/uri.hpp>
 
 namespace le {
 template <typename Type, glm::length_t Length>
@@ -29,6 +30,9 @@ void to_json(dj::Json& json, kvf::Rect<Type> const& rect) {
 	to_json(json["lt"], rect.lt);
 	to_json(json["rb"], rect.rb);
 }
+
+void from_json(dj::Json const& json, Uri& uri);
+void to_json(dj::Json& json, Uri const& uri);
 
 void from_json(dj::Json const& json, kvf::Seconds& seconds);
 void to_json(dj::Json& json, kvf::Seconds const& seconds);
