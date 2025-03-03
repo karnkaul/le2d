@@ -1,10 +1,15 @@
 #pragma once
+#include <klib/args/arg.hpp>
+#include <klib/args/printer.hpp>
 #include <klib/polymorphic.hpp>
-#include <le2d/console/printer.hpp>
 
 namespace le::console {
+using IPrinter = klib::args::IPrinter;
+
 class ICommand : public klib::Polymorphic {
   public:
-	virtual void run(IPrinter& printer, std::string_view input) = 0;
+	[[nodiscard]] virtual auto get_args() const -> std::span<klib::args::Arg const> { return {}; }
+	[[nodiscard]] virtual auto get_help_text() const -> std::string_view { return {}; }
+	virtual void run(IPrinter& printer) = 0;
 };
 } // namespace le::console

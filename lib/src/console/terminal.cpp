@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <klib/args/parse.hpp>
 #include <klib/assert.hpp>
 #include <klib/concepts.hpp>
 #include <klib/str_to_num.hpp>
@@ -111,8 +112,7 @@ struct Terminal::Impl : IPrinter {
 		  m_buffer(font.get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(font);
 		add_command("console.opacity", std::make_unique<Opacity>(*this));
-		m_builtin_map.insert_or_assign("help", [this] { print_help(); });
-		m_builtin_map.insert_or_assign("list", [this] { print_command_names(); });
+		add_command("help", std::make_unique<Help>(*this));
 	}
 
 	void toggle_active() {
@@ -125,11 +125,13 @@ struct Terminal::Impl : IPrinter {
 	void add_command(std::string_view const name, std::unique_ptr<ICommand> command) {
 		if (!command || name.empty()) { return; }
 		m_command_map.insert_or_assign(name, std::move(command));
+		fill_command_args();
 	}
 
 	void remove_command(std::string_view const name) {
 		if (name.empty()) { return; }
 		m_command_map.erase(name);
+		fill_command_args();
 	}
 
 	[[nodiscard]] auto get_background() const -> kvf::Color { return m_background.tint; }
@@ -193,6 +195,15 @@ struct Terminal::Impl : IPrinter {
 
 		[[nodiscard]] auto get() const -> float final { return kvf::Color::to_f32(m_impl.m_background.tint.w); }
 
+		Impl& m_impl;
+	};
+
+	struct Help : ICommand {
+		explicit Help(Impl& impl) : m_impl(impl) {}
+
+		void run(IPrinter& /*printer*/) final { m_impl.print_help(); }
+
+	  private:
 		Impl& m_impl;
 	};
 
@@ -314,18 +325,22 @@ struct Terminal::Impl : IPrinter {
 	}
 
 	void try_run(std::string_view const text) {
-		auto const params = Params::create(text);
-		if (try_builtin(params.name)) { return; }
+		auto const parse_info = klib::args::ParseStringInfo{
+			.printer = this,
+			.flags = klib::args::ParseFlag::OmitDefaultValues,
+		};
+		auto const parse_result = klib::args::parse_string(parse_info, m_command_args, text);
+		if (parse_result.early_return()) { return; }
 
-		auto const it = m_command_map.find(params.name);
+		auto const command_name = parse_result.get_command_name();
+		auto const it = m_command_map.find(command_name);
 		if (it == m_command_map.end()) {
-			printerr(std::format("unrecognized Command: '{}'", params.name));
+			printerr(std::format("unrecognized Command: '{}'", command_name));
 			return;
 		}
 
-		m_str_buffer.clear();
 		auto& command = *it->second;
-		command.run(*this, params.value);
+		command.run(*this);
 	}
 
 	auto try_builtin(std::string_view const name) -> bool {
@@ -352,8 +367,7 @@ struct Terminal::Impl : IPrinter {
 	}
 
 	void print_help() {
-		auto text = std::string{"Usage:\n  <Command>[=VALUE]\n  help|list\n\nCommands:\n"};
-		append_command_names(text);
+		auto const text = klib::args::HelpString{}(m_command_args);
 		println(text);
 	}
 
@@ -422,6 +436,14 @@ struct Terminal::Impl : IPrinter {
 		push_names(m_command_map);
 	}
 
+	void fill_command_args() {
+		m_command_args.clear();
+		m_command_args.reserve(m_command_map.size());
+		for (auto const& [name, command] : m_command_map) {
+			m_command_args.push_back(klib::args::command(command->get_args(), name, command->get_help_text()));
+		}
+	}
+
 	void page_up() { move_buffer_y(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
 
 	void page_down() { move_buffer_y(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
@@ -432,7 +454,7 @@ struct Terminal::Impl : IPrinter {
 
 	std::map<std::string_view, std::move_only_function<void()>> m_builtin_map{};
 	std::map<std::string_view, std::unique_ptr<ICommand>> m_command_map{};
-	std::string m_str_buffer{};
+	std::vector<klib::args::Arg> m_command_args{};
 	std::vector<std::string_view> m_candidates_buffer{};
 
 	std::deque<std::string> m_history{};
