@@ -201,9 +201,11 @@ struct Terminal::Impl : IPrinter {
 	struct Help : ICommand {
 		explicit Help(Impl& impl) : m_impl(impl) {}
 
+	  private:
+		[[nodiscard]] auto get_help_text() const -> std::string_view final { return "display this help text"; }
+
 		void run(IPrinter& /*printer*/) final { m_impl.print_help(); }
 
-	  private:
 		Impl& m_impl;
 	};
 

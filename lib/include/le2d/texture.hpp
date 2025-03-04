@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/polymorphic.hpp>
+#include <klib/base_types.hpp>
 #include <kvf/bitmap.hpp>
 #include <kvf/render_device_fwd.hpp>
 #include <kvf/vma.hpp>

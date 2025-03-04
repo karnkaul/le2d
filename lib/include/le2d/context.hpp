@@ -22,7 +22,7 @@ struct ContextCreateInfo {
 	int sfx_buffers{16};
 };
 
-class Context {
+class Context : klib::Pinned {
   public:
 	using CreateInfo = ContextCreateInfo;
 

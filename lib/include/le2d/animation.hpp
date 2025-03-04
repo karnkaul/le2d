@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/polymorphic.hpp>
+#include <klib/base_types.hpp>
 #include <kvf/rect.hpp>
 #include <kvf/time.hpp>
 #include <le2d/transform.hpp>
