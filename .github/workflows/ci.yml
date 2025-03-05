@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: configure
-        run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
+        run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -50,7 +50,7 @@ jobs:
       - name: init
         run: choco install ninja
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
