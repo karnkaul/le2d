@@ -16,7 +16,7 @@ jobs:
       - name: configure
         run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF
       - name: build debug
-        run: cmake --build build --config=Debug -- "-v:d"
+        run: cmake --build build --config=Debug
       - name: build release
         run: cmake --build build --config=Release
   windows-clang:
