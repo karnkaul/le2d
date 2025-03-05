@@ -12,7 +12,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PRIVATE
   klib::klib-warnings
   klib::klib-ndwerror
-  klib::klib-msbuild-mp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

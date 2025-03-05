@@ -40,9 +40,9 @@ jobs:
       - name: configure
         run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
-        run: cmake --build build --config=Debug
+        run: cmake --build build --config=Debug --parallel
       - name: build release
-        run: cmake --build build --config=Release
+        run: cmake --build build --config=Release --parallel
   windows-clang:
     runs-on: windows-latest
     steps:
