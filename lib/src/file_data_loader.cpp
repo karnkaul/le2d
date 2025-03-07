@@ -38,7 +38,7 @@ auto FileDataLoader::get_path(Uri const& uri) const -> std::string { return (fs:
 
 template <typename T, typename F>
 auto FileDataLoader::from_file(T& out, Uri const& uri, F func) const -> bool {
-	if (func(out, get_path(uri).c_str()) != kvf::IoResult::Success) {
+	if (!func(out, get_path(uri).c_str())) {
 		return false;
 		log::warn("FileDataLoader: failed to load: '{}'", uri.get_string());
 	}
