@@ -3,6 +3,7 @@
 #include <kvf/render_target.hpp>
 #include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
+#include <le2d/render_stats.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
 #include <le2d/user_draw_data.hpp>
@@ -36,6 +37,7 @@ class Renderer {
 	auto end_render() -> kvf::RenderTarget;
 
 	[[nodiscard]] auto command_buffer() const -> vk::CommandBuffer { return m_cmd; }
+	[[nodiscard]] auto get_stats() const -> RenderStats const& { return m_stats; }
 
 	explicit operator bool() const { return is_rendering(); }
 
@@ -56,5 +58,7 @@ class Renderer {
 
 	vk::Pipeline m_pipeline{};
 	float m_line_width{1.0f};
+
+	RenderStats m_stats{};
 };
 } // namespace le

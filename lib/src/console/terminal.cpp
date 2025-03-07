@@ -188,9 +188,10 @@ struct Terminal::Impl : IPrinter {
 		explicit Opacity(Impl& impl) : m_impl(impl) {}
 
 	  private:
-		void set(float value) final {
+		auto set(float value) -> bool final {
 			value = std::clamp(value, 0.0f, 1.0f);
 			m_impl.m_background.tint.w = kvf::Color::to_u8(value);
+			return true;
 		}
 
 		[[nodiscard]] auto get() const -> float final { return kvf::Color::to_f32(m_impl.m_background.tint.w); }

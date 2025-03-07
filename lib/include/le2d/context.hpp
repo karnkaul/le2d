@@ -4,10 +4,12 @@
 #include <le2d/audio.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
+#include <le2d/frame_stats.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
+#include <le2d/vsync.hpp>
 
 namespace le {
 struct ContextCreateInfo {
@@ -54,9 +56,15 @@ class Context : klib::Pinned {
 	[[nodiscard]] auto get_render_scale() const -> float { return m_render_scale; }
 	auto set_render_scale(float scale) -> bool;
 
+	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> { return m_supported_vsync; }
+	[[nodiscard]] auto get_vsync() const -> Vsync;
+	auto set_vsync(Vsync vsync) -> bool;
+
 	auto next_frame() -> vk::CommandBuffer;
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
 	void present();
+
+	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
 	[[nodiscard]] auto create_shader(Uri const& vertex, Uri const& fragment) const -> Shader;
@@ -66,10 +74,17 @@ class Context : klib::Pinned {
 	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
+	struct Fps {
+		std::int32_t counter{};
+		std::int32_t value{};
+		kvf::Seconds elapsed{};
+	};
+
 	IDataLoader const* m_data_loader;
 
 	RenderWindow m_window;
 	RenderPass m_pass;
+	std::vector<Vsync> m_supported_vsync{};
 
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudio> m_audio{};
@@ -77,5 +92,9 @@ class Context : klib::Pinned {
 	float m_render_scale{1.0f};
 
 	vk::CommandBuffer m_cmd{};
+
+	kvf::Clock::time_point m_frame_start{};
+	Fps m_fps{};
+	FrameStats m_frame_stats{};
 };
 } // namespace le

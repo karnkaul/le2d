@@ -8,7 +8,7 @@ template <typename Type>
 class Tweak : public ICommand {
   protected:
 	[[nodiscard]] virtual auto get() const -> Type = 0;
-	virtual void set(Type value) = 0;
+	virtual auto set(Type value) -> bool = 0;
 
   private:
 	[[nodiscard]] auto get_args() const -> std::span<klib::args::Arg const> final { return {&m_arg, 1}; }
@@ -20,7 +20,7 @@ class Tweak : public ICommand {
 		}
 
 		m_input_passed = false;
-		if (!assign_input()) {
+		if (!set(m_input)) {
 			printer.printerr(std::format("failed to set value to '{}'", m_input));
 			return;
 		}
@@ -32,11 +32,6 @@ class Tweak : public ICommand {
 		} else {
 			printer.println(std::format("{}", get()));
 		}
-	}
-
-	auto assign_input() -> bool {
-		set(m_input);
-		return true;
 	}
 
 	Type m_input{};
