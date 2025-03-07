@@ -24,14 +24,12 @@ struct ContextCreateInfo {
 	int sfx_buffers{16};
 };
 
-class Context : klib::Pinned {
+class Context {
   public:
 	using CreateInfo = ContextCreateInfo;
 
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
-
-	~Context() = default;
 
 	Context(Context const&) = delete;
 	Context(Context&&) = delete;
@@ -39,6 +37,7 @@ class Context : klib::Pinned {
 	auto operator=(Context&&) = delete;
 
 	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info = {});
+	~Context();
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }

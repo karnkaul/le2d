@@ -2,6 +2,7 @@
 #include <klib/args/parse.hpp>
 #include <klib/assert.hpp>
 #include <klib/concepts.hpp>
+#include <klib/log.hpp>
 #include <klib/str_to_num.hpp>
 #include <kvf/util.hpp>
 #include <le2d/console/terminal.hpp>
@@ -107,6 +108,8 @@ struct Terminal::Impl : IPrinter {
 		};
 	}
 
+	static constexpr std::string_view log_tag_v{"le::console"};
+
 	explicit Impl(Font& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
 		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)),
 		  m_buffer(font.get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
@@ -138,8 +141,15 @@ struct Terminal::Impl : IPrinter {
 
 	void set_background(kvf::Color const color) { m_background.tint = color; }
 
-	void println(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.output); }
-	void printerr(std::string_view const text) final { Buffer::Printer{m_buffer}.print(text, m_info.colors.error); }
+	void println(std::string_view const text) final {
+		Buffer::Printer{m_buffer}.print(text, m_info.colors.output);
+		klib::log::info(log_tag_v, "{}", text);
+	}
+
+	void printerr(std::string_view const text) final {
+		Buffer::Printer{m_buffer}.print(text, m_info.colors.error);
+		klib::log::error(log_tag_v, "{}", text);
+	}
 
 	void handle_events(std::span<Event const> events, bool* activated) {
 		auto const was_active = is_active();
@@ -263,7 +273,10 @@ struct Terminal::Impl : IPrinter {
 		renderer.set_scissor_rect(kvf::uv_rect_v);
 	}
 
-	void print_input(std::string line) { m_buffer.push({&line, 1}, m_info.colors.input); }
+	void print_input(std::string line) {
+		klib::log::info(log_tag_v, "{}", line);
+		m_buffer.push({&line, 1}, m_info.colors.input);
+	}
 
 	void move_buffer_y(float const dy) { set_buffer_y(m_buffer.position.y + dy); }
 

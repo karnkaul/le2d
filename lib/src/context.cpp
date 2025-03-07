@@ -157,7 +157,11 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
+
+	log::info("Context initialized");
 }
+
+Context::~Context() { log::info("Context shutting down"); }
 
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
 
