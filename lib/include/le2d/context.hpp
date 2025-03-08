@@ -73,6 +73,8 @@ class Context {
 	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
+	void update_stats(kvf::Clock::time_point present_start);
+
 	struct Fps {
 		std::int32_t counter{};
 		std::int32_t value{};
@@ -93,6 +95,7 @@ class Context {
 	vk::CommandBuffer m_cmd{};
 
 	kvf::Clock::time_point m_frame_start{};
+	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
 };

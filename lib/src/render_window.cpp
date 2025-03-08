@@ -49,6 +49,25 @@ auto RenderWindow::get_title() const -> klib::CString { return glfwGetWindowTitl
 
 void RenderWindow::set_title(klib::CString const title) const { glfwSetWindowTitle(m_window.get(), title.c_str()); }
 
+auto RenderWindow::get_refresh_rate() const -> std::int32_t {
+	if (auto* monitor = glfwGetWindowMonitor(m_window.get())) {
+		auto const* video_mode = glfwGetVideoMode(monitor);
+		if (video_mode == nullptr) { return 0; }
+		return video_mode->refreshRate;
+	}
+
+	auto count = int{};
+	auto const* p_monitors = glfwGetMonitors(&count);
+	auto const monitors = std::span{p_monitors, std::size_t(count)};
+	auto max_rate = std::int32_t{};
+	for (auto* monitor : monitors) {
+		auto const* video_mode = glfwGetVideoMode(monitor);
+		if (video_mode == nullptr) { continue; }
+		max_rate = std::max(max_rate, video_mode->refreshRate);
+	}
+	return max_rate;
+}
+
 auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
 
 auto RenderWindow::create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow {

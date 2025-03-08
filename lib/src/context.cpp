@@ -193,15 +193,7 @@ void Context::present() {
 	auto const present_start = kvf::Clock::now();
 	m_window.present(m_pass.get_render_target());
 	m_cmd = vk::CommandBuffer{};
-	auto const now = kvf::Clock::now();
-	m_frame_stats.present_dt = kvf::Seconds{now - present_start};
-	m_frame_stats.total_dt = kvf::Seconds{now - m_frame_start};
-	m_fps.elapsed += m_frame_stats.total_dt;
-	if (m_fps.elapsed >= 1s) {
-		m_fps.value = std::exchange(m_fps.counter, {});
-		m_fps.elapsed = {};
-	}
-	m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
+	update_stats(present_start);
 }
 
 auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Shader {
@@ -231,5 +223,19 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
 	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
 	return ret;
+}
+
+void Context::update_stats(kvf::Clock::time_point const present_start) {
+	auto const now = kvf::Clock::now();
+	m_frame_stats.present_dt = now - present_start;
+	m_frame_stats.total_dt = now - m_frame_start;
+	m_fps.elapsed += m_frame_stats.total_dt;
+	if (m_fps.elapsed >= 1s) {
+		m_fps.value = std::exchange(m_fps.counter, {});
+		m_fps.elapsed = {};
+	}
+	m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
+	++m_frame_stats.total_frames;
+	m_frame_stats.run_time = now - m_runtime_start;
 }
 } // namespace le

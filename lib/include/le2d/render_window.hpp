@@ -45,6 +45,8 @@ class RenderWindow {
 	[[nodiscard]] auto get_title() const -> klib::CString;
 	void set_title(klib::CString title) const;
 
+	[[nodiscard]] auto get_refresh_rate() const -> std::int32_t;
+
   private:
 	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow&;
 
