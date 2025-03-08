@@ -27,6 +27,7 @@ class RenderWindow {
 
 	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& { return m_render_device; }
 	[[nodiscard]] auto get_render_device() -> kvf::RenderDevice& { return m_render_device; }
+	[[nodiscard]] auto get_window() const -> GLFWwindow* { return m_window.get(); }
 
 	[[nodiscard]] auto window_size() const -> glm::ivec2;
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
@@ -40,6 +41,9 @@ class RenderWindow {
 
 	auto next_frame() -> vk::CommandBuffer;
 	void present(kvf::RenderTarget const& render_target);
+
+	[[nodiscard]] auto get_title() const -> klib::CString;
+	void set_title(klib::CString title) const;
 
   private:
 	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow&;

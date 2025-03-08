@@ -8,9 +8,11 @@
 #include <le2d/shader.hpp>
 #include <le2d/user_draw_data.hpp>
 
-namespace le {
+namespace kvf {
 class RenderPass;
+}
 
+namespace le {
 class Renderer {
   public:
 	using UserData = UserDrawData;
@@ -22,7 +24,7 @@ class Renderer {
 
 	Renderer() = default;
 
-	explicit Renderer(RenderPass& render_pass, IResourcePool& resource_pool, vk::CommandBuffer command_buffer);
+	explicit Renderer(kvf::RenderPass& render_pass, IResourcePool& resource_pool);
 	~Renderer() { end_render(); }
 
 	auto set_line_width(float width) -> bool;
@@ -47,7 +49,7 @@ class Renderer {
   private:
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
-	RenderPass* m_pass{};
+	kvf::RenderPass* m_pass{};
 	IResourcePool* m_resource_pool{};
 	vk::CommandBuffer m_cmd{};
 

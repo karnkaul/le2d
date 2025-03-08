@@ -1,8 +1,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <klib/assert.hpp>
+#include <kvf/is_positive.hpp>
 #include <kvf/render_device.hpp>
+#include <kvf/render_pass.hpp>
 #include <kvf/util.hpp>
-#include <le2d/render_pass.hpp>
 #include <le2d/renderer.hpp>
 #include <le2d/resource_pool.hpp>
 
@@ -73,13 +74,20 @@ constexpr auto triangle_count(std::size_t const vertices, std::size_t const indi
 }
 } // namespace
 
-Renderer::Renderer(RenderPass& render_pass, IResourcePool& resource_pool, vk::CommandBuffer const command_buffer)
-	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(command_buffer), m_shader(&m_resource_pool->get_default_shader()),
-	  m_viewport(render_pass.m_render_pass.to_viewport(kvf::uv_rect_v)), m_scissor(render_pass.m_render_pass.to_scissor(kvf::uv_rect_v)) {
+Renderer::Renderer(kvf::RenderPass& render_pass, IResourcePool& resource_pool)
+	: m_pass(&render_pass), m_resource_pool(&resource_pool), m_cmd(render_pass.get_command_buffer()), m_shader(&resource_pool.get_default_shader()) {
+	if (!m_cmd) {
+		m_pass = nullptr;
+		return;
+	}
+
 	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) {
 		end_render();
 		return;
 	}
+
+	m_viewport = render_pass.to_viewport(kvf::uv_rect_v);
+	m_scissor = render_pass.to_scissor(kvf::uv_rect_v);
 }
 
 auto Renderer::set_line_width(float const width) -> bool {
@@ -100,13 +108,13 @@ auto Renderer::set_shader(Shader const& shader) -> bool {
 
 auto Renderer::set_render_area(kvf::UvRect const& n_rect) -> bool {
 	if (!is_rendering()) { return false; }
-	m_viewport = m_pass->m_render_pass.to_viewport(n_rect);
+	m_viewport = m_pass->to_viewport(n_rect);
 	return true;
 }
 
 auto Renderer::set_scissor_rect(kvf::UvRect const& n_rect) -> bool {
 	if (!is_rendering()) { return false; }
-	m_scissor = m_pass->m_render_pass.to_scissor(n_rect);
+	m_scissor = m_pass->to_scissor(n_rect);
 	return true;
 }
 
@@ -126,7 +134,7 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
 	auto const set_layouts = m_resource_pool->get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == descriptor_sets.size());
-	if (!m_pass->m_render_device->allocate_sets(descriptor_sets, set_layouts)) { return false; }
+	if (!m_pass->get_render_device().allocate_sets(descriptor_sets, set_layouts)) { return false; }
 
 	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
 	auto& vbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
@@ -162,7 +170,7 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 		buffer_wds(dbis[2], vk::DescriptorType::eStorageBuffer, descriptor_sets[2], 0),
 		image_wds(diis[1], descriptor_sets[2], 1),
 	};
-	m_pass->m_render_device->get_device().updateDescriptorSets(descriptor_writes, {});
+	m_pass->get_render_device().get_device().updateDescriptorSets(descriptor_writes, {});
 
 	m_cmd.setViewport(0, m_viewport);
 	m_cmd.setScissor(0, m_scissor);
@@ -187,8 +195,8 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 auto Renderer::end_render() -> kvf::RenderTarget {
 	if (!is_rendering()) { return {}; }
 
-	m_pass->m_render_pass.end_render();
-	auto const& ret = m_pass->m_render_pass.render_target();
+	m_pass->end_render();
+	auto const& ret = m_pass->render_target();
 	m_pass = nullptr;
 	return ret;
 }
@@ -208,7 +216,7 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 
 	if (m_pipeline == pipeline) { return true; }
 
-	m_pass->m_render_pass.bind_pipeline(pipeline);
+	m_pass->bind_pipeline(pipeline);
 	m_pipeline = pipeline;
 
 	return true;

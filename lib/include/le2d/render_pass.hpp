@@ -6,8 +6,6 @@
 #include <le2d/resource_pool.hpp>
 
 namespace le {
-class Renderer;
-
 class RenderPass {
   public:
 	static constexpr auto min_size_v{32};
@@ -29,7 +27,5 @@ class RenderPass {
 	kvf::RenderPass m_render_pass;
 
 	kvf::DeviceBlock m_blocker;
-
-	friend class Renderer;
 };
 } // namespace le

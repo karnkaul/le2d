@@ -45,6 +45,10 @@ auto RenderWindow::next_frame() -> vk::CommandBuffer {
 
 void RenderWindow::present(kvf::RenderTarget const& render_target) { m_render_device.render(render_target); }
 
+auto RenderWindow::get_title() const -> klib::CString { return glfwGetWindowTitle(m_window.get()); }
+
+void RenderWindow::set_title(klib::CString const title) const { glfwSetWindowTitle(m_window.get(), title.c_str()); }
+
 auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
 
 auto RenderWindow::create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow {

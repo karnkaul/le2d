@@ -22,6 +22,6 @@ void RenderPass::set_clear_color(kvf::Color const color) { m_render_pass.clear_c
 auto RenderPass::begin_render(IResourcePool& resource_pool, vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer {
 	size = clamp_size(size);
 	m_render_pass.begin_render(command_buffer, kvf::util::to_vk_extent(size));
-	return Renderer{*this, resource_pool, command_buffer};
+	return Renderer{m_render_pass, resource_pool};
 }
 } // namespace le
