@@ -49,7 +49,7 @@ class RenderWindow {
 
 	[[nodiscard]] auto is_fullscreen() const -> bool;
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
-	void set_windowed();
+	void set_windowed(glm::ivec2 size = {1280, 720});
 
   private:
 	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow&;
@@ -63,11 +63,6 @@ class RenderWindow {
 
 	kvf::UniqueWindow m_window;
 	kvf::RenderDevice m_render_device;
-
-	struct {
-		glm::ivec2 size{1280, 720};
-		glm::ivec2 pos{};
-	} m_saved_window{};
 
 	std::vector<Event> m_event_queue{};
 	std::vector<std::string> m_drops{};

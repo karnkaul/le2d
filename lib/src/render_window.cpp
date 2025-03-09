@@ -104,15 +104,14 @@ auto RenderWindow::set_fullscreen(GLFWmonitor* target) -> bool {
 	auto const display = target_display(target);
 	if (!display) { return false; }
 	auto const* vm = display->video_mode.get();
-	glfwGetWindowSize(m_window.get(), &m_saved_window.size.x, &m_saved_window.size.y);
-	glfwGetWindowPos(m_window.get(), &m_saved_window.pos.x, &m_saved_window.pos.y);
 	glfwSetWindowMonitor(m_window.get(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
 	return true;
 }
 
-void RenderWindow::set_windowed() {
+void RenderWindow::set_windowed(glm::ivec2 size) {
 	if (!is_fullscreen()) { return; }
-	glfwSetWindowMonitor(m_window.get(), nullptr, m_saved_window.pos.x, m_saved_window.pos.y, m_saved_window.size.x, m_saved_window.size.y, 0);
+	if (!kvf::is_positive(size)) { size = {1280, 720}; }
+	glfwSetWindowMonitor(m_window.get(), nullptr, 0, 0, size.x, size.y, 0);
 }
 
 auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
