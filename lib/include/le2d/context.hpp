@@ -59,6 +59,9 @@ class Context {
 	[[nodiscard]] auto get_vsync() const -> Vsync;
 	auto set_vsync(Vsync vsync) -> bool;
 
+	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window.set_fullscreen(target); }
+	void set_windowed() { m_window.set_windowed(); }
+
 	auto next_frame() -> vk::CommandBuffer;
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
 	void present();

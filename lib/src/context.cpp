@@ -173,7 +173,10 @@ auto Context::set_render_scale(float const scale) -> bool {
 
 auto Context::get_vsync() const -> Vsync { return to_vsync(m_window.get_render_device().get_present_mode()); }
 
-auto Context::set_vsync(Vsync const vsync) -> bool { return m_window.get_render_device().set_present_mode(to_mode(vsync)); }
+auto Context::set_vsync(Vsync const vsync) -> bool {
+	if (vsync == get_vsync()) { return true; }
+	return m_window.get_render_device().set_present_mode(to_mode(vsync));
+}
 
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window.next_frame();

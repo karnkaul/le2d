@@ -5,10 +5,16 @@
 #include <kvf/util.hpp>
 #include <le2d/error.hpp>
 #include <le2d/render_window.hpp>
+#include <optional>
 #include <span>
 
 namespace le {
 namespace {
+struct Display {
+	gsl::not_null<GLFWmonitor*> monitor;
+	gsl::not_null<GLFWvidmode const*> video_mode;
+};
+
 template <klib::EnumT E>
 constexpr auto to_focus(int const f) {
 	return f == GLFW_TRUE ? E::True : E::False;
@@ -17,6 +23,42 @@ constexpr auto to_focus(int const f) {
 constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size) -> glm::vec2 {
 	if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
 	return fb_size / w_size;
+}
+
+auto window_display(GLFWwindow* window) -> std::optional<Display> {
+	auto* monitor = glfwGetWindowMonitor(window);
+	if (monitor == nullptr) { return {}; }
+	auto const* video_mode = glfwGetVideoMode(monitor);
+	if (video_mode == nullptr) { return {}; }
+	return Display{.monitor = monitor, .video_mode = video_mode};
+}
+
+auto fastest_display() {
+	auto count = int{};
+	auto const* p_monitors = glfwGetMonitors(&count);
+	auto const monitors = std::span{p_monitors, std::size_t(count)};
+	auto ret = std::optional<Display>{};
+	for (auto* monitor : monitors) {
+		auto const* video_mode = glfwGetVideoMode(monitor);
+		if (video_mode == nullptr) { continue; }
+		if (!ret || video_mode->refreshRate > ret->video_mode->refreshRate) { ret = Display{.monitor = monitor, .video_mode = video_mode}; }
+	}
+	return ret;
+}
+
+auto target_display(GLFWmonitor* desired) -> std::optional<Display> {
+	GLFWvidmode const* video_mode{};
+	if (desired == nullptr) {
+		auto const fastest_monitor = fastest_display();
+		if (!fastest_monitor) { return {}; }
+		desired = fastest_monitor->monitor;
+		video_mode = fastest_monitor->video_mode;
+	}
+	if (video_mode == nullptr) {
+		video_mode = glfwGetVideoMode(desired);
+		if (video_mode == nullptr) { return {}; }
+	}
+	return Display{.monitor = desired, .video_mode = video_mode};
 }
 } // namespace
 
@@ -50,22 +92,27 @@ auto RenderWindow::get_title() const -> klib::CString { return glfwGetWindowTitl
 void RenderWindow::set_title(klib::CString const title) const { glfwSetWindowTitle(m_window.get(), title.c_str()); }
 
 auto RenderWindow::get_refresh_rate() const -> std::int32_t {
-	if (auto* monitor = glfwGetWindowMonitor(m_window.get())) {
-		auto const* video_mode = glfwGetVideoMode(monitor);
-		if (video_mode == nullptr) { return 0; }
-		return video_mode->refreshRate;
-	}
+	if (auto const display = window_display(m_window.get())) { return display->video_mode->refreshRate; }
+	if (auto const display = fastest_display()) { return display->video_mode->refreshRate; }
+	return 0;
+}
 
-	auto count = int{};
-	auto const* p_monitors = glfwGetMonitors(&count);
-	auto const monitors = std::span{p_monitors, std::size_t(count)};
-	auto max_rate = std::int32_t{};
-	for (auto* monitor : monitors) {
-		auto const* video_mode = glfwGetVideoMode(monitor);
-		if (video_mode == nullptr) { continue; }
-		max_rate = std::max(max_rate, video_mode->refreshRate);
-	}
-	return max_rate;
+auto RenderWindow::is_fullscreen() const -> bool { return glfwGetWindowMonitor(m_window.get()) != nullptr; }
+
+auto RenderWindow::set_fullscreen(GLFWmonitor* target) -> bool {
+	if (is_fullscreen()) { return true; }
+	auto const display = target_display(target);
+	if (!display) { return false; }
+	auto const* vm = display->video_mode.get();
+	glfwGetWindowSize(m_window.get(), &m_saved_window.size.x, &m_saved_window.size.y);
+	glfwGetWindowPos(m_window.get(), &m_saved_window.pos.x, &m_saved_window.pos.y);
+	glfwSetWindowMonitor(m_window.get(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
+	return true;
+}
+
+void RenderWindow::set_windowed() {
+	if (!is_fullscreen()) { return; }
+	glfwSetWindowMonitor(m_window.get(), nullptr, m_saved_window.pos.x, m_saved_window.pos.y, m_saved_window.size.x, m_saved_window.size.y, 0);
 }
 
 auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
