@@ -31,6 +31,7 @@
       "inherits": "default",
       "binaryDir": "${sourceDir}/out/ubsan",
       "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=undefined",
         "CMAKE_CXX_FLAGS": "-fsanitize=undefined"
       }
     },
@@ -40,6 +41,7 @@
       "inherits": "default",
       "binaryDir": "${sourceDir}/out/asan",
       "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=address",
         "CMAKE_CXX_FLAGS": "-fsanitize=address"
       }
     },
@@ -49,6 +51,7 @@
       "inherits": "default",
       "binaryDir": "${sourceDir}/out/tsan",
       "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=thread",
         "CMAKE_CXX_FLAGS": "-fsanitize=thread"
       }
     },

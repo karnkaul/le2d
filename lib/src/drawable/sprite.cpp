@@ -32,6 +32,13 @@ void SpriteBase::set_texture(ITexture const* texture, kvf::UvRect const& uv) {
 	update(get_base_size(), get_origin(), uv);
 }
 
+void SpriteBase::set_tile(TileSet const* tile_set, TileId const tile_id) {
+	auto const uv = tile_set != nullptr ? tile_set->get_uv(tile_id) : kvf::uv_rect_v;
+	if (tile_set == m_texture && uv == get_uv()) { return; }
+	m_texture = tile_set;
+	update(get_base_size(), get_origin(), uv);
+}
+
 void SpriteBase::set_resize_aspect(kvf::ResizeAspect const aspect) {
 	if (aspect == m_aspect) { return; }
 	m_aspect = aspect;

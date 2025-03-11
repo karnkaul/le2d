@@ -1,9 +1,10 @@
 #pragma once
-#include <klib/polymorphic.hpp>
+#include <klib/base_types.hpp>
 #include <kvf/bitmap.hpp>
 #include <kvf/render_device_fwd.hpp>
 #include <kvf/vma.hpp>
 #include <le2d/texture_sampler.hpp>
+#include <le2d/tile.hpp>
 #include <gsl/pointers>
 
 namespace le {
@@ -31,5 +32,18 @@ class Texture : public ITexture {
 	gsl::not_null<kvf::RenderDevice*> m_render_device;
 
 	kvf::vma::Image m_image{};
+};
+
+class TileSet : public Texture {
+  public:
+	explicit TileSet(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}) : Texture(render_device, bitmap) {}
+
+	[[nodiscard]] auto get_tiles() const -> std::span<Tile const> { return m_tiles; }
+	void set_tiles(std::vector<Tile> tiles);
+
+	[[nodiscard]] auto get_uv(TileId id) const -> kvf::UvRect;
+
+  protected:
+	std::vector<Tile> m_tiles{};
 };
 } // namespace le

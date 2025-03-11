@@ -1,3 +1,4 @@
+#include <kvf/is_positive.hpp>
 #include <le2d/util.hpp>
 #include <array>
 
@@ -25,6 +26,28 @@ auto util::exe_path() -> std::string {
 	ret = std::string{buffer.data(), std::size_t(length)};
 #endif
 
+	return ret;
+}
+
+auto util::divide_into_tiles(glm::vec2 const size, int const rows, int const cols) -> std::vector<Tile> {
+	if (!kvf::is_positive(size) || rows <= 0 || cols <= 0) { return {}; }
+	auto const tile_size = glm::vec2{size.x / float(cols), size.y / float(rows)};
+	auto ret = std::vector<Tile>{};
+	ret.reserve(std::size_t(rows * cols));
+	auto const size_inv = 1.0f / size;
+	auto lt = glm::vec2{};
+	auto id = std::to_underlying(TileId{1});
+	for (auto row = 0; row < rows; ++row) {
+		for (auto col = 0; col < cols; ++col) {
+			auto tile = Tile{.id = TileId{id++}, .uv = kvf::UvRect{.lt = lt, .rb = lt + tile_size}};
+			tile.uv.lt *= size_inv;
+			tile.uv.rb *= size_inv;
+			ret.push_back(tile);
+			lt.x += tile_size.x;
+		}
+		lt.x = 0;
+		lt.y += tile_size.y;
+	}
 	return ret;
 }
 } // namespace le

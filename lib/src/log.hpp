@@ -2,7 +2,7 @@
 #include <klib/log.hpp>
 
 namespace le::log {
-constexpr std::string_view tag_v{"le2d"};
+constexpr std::string_view tag_v{"le"};
 
 template <typename... Args>
 void error(klib::log::Fmt<Args...> const& fmt, Args&&... args) {

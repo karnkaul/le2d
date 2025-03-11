@@ -9,6 +9,26 @@
 
 namespace le {
 namespace {
+constexpr auto to_vsync(vk::PresentModeKHR const mode) {
+	switch (mode) {
+	case vk::PresentModeKHR::eFifoRelaxed: return Vsync::Adaptive;
+	case vk::PresentModeKHR::eMailbox: return Vsync::MultiBuffer;
+	case vk::PresentModeKHR::eImmediate: return Vsync::Off;
+	default:
+	case vk::PresentModeKHR::eFifo: return Vsync::Strict;
+	}
+}
+
+constexpr auto to_mode(Vsync const vsync) {
+	switch (vsync) {
+	case Vsync::Adaptive: return vk::PresentModeKHR::eFifoRelaxed;
+	case Vsync::MultiBuffer: return vk::PresentModeKHR::eMailbox;
+	case Vsync::Off: return vk::PresentModeKHR::eImmediate;
+	default:
+	case Vsync::Strict: return vk::PresentModeKHR::eFifo;
+	}
+}
+
 struct ResourcePool : IResourcePool {
 	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device)
 		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device, white_bitmap_v),
@@ -133,7 +153,15 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	m_resource_pool = std::move(resource_pool);
 
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
+
+	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();
+	m_supported_vsync.reserve(supported_modes.size());
+	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
+
+	log::info("Context initialized");
 }
+
+Context::~Context() { log::info("Context shutting down"); }
 
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
 
@@ -143,9 +171,18 @@ auto Context::set_render_scale(float const scale) -> bool {
 	return true;
 }
 
+auto Context::get_vsync() const -> Vsync { return to_vsync(m_window.get_render_device().get_present_mode()); }
+
+auto Context::set_vsync(Vsync const vsync) -> bool {
+	if (vsync == get_vsync()) { return true; }
+	return m_window.get_render_device().set_present_mode(to_mode(vsync));
+}
+
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window.next_frame();
 	static_cast<ResourcePool*>(m_resource_pool.get())->next_frame(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+	++m_fps.counter;
+	m_frame_start = kvf::Clock::now();
 	return m_cmd;
 }
 
@@ -156,8 +193,10 @@ auto Context::begin_render(kvf::Color const clear) -> Renderer {
 }
 
 void Context::present() {
+	auto const present_start = kvf::Clock::now();
 	m_window.present(m_pass.get_render_target());
 	m_cmd = vk::CommandBuffer{};
+	update_stats(present_start);
 }
 
 auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Shader {
@@ -175,6 +214,11 @@ auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture {
 	return Texture{&m_pass.get_render_device(), bitmap};
 }
 
+auto Context::create_tileset(kvf::Bitmap bitmap) const -> TileSet {
+	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
+	return TileSet{&m_pass.get_render_device(), bitmap};
+}
+
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
 
 auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
@@ -183,9 +227,24 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
-	ret->add_loader(std::make_unique<asset::AnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
+	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
+	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
+	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
 	return ret;
+}
+
+void Context::update_stats(kvf::Clock::time_point const present_start) {
+	auto const now = kvf::Clock::now();
+	m_frame_stats.present_dt = now - present_start;
+	m_frame_stats.total_dt = now - m_frame_start;
+	m_fps.elapsed += m_frame_stats.total_dt;
+	if (m_fps.elapsed >= 1s) {
+		m_fps.value = std::exchange(m_fps.counter, {});
+		m_fps.elapsed = {};
+	}
+	m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
+	++m_frame_stats.total_frames;
+	m_frame_stats.run_time = now - m_runtime_start;
 }
 } // namespace le

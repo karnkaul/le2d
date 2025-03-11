@@ -1,6 +1,6 @@
 #pragma once
 #include <capo/capo.hpp>
-#include <klib/polymorphic.hpp>
+#include <klib/base_types.hpp>
 
 namespace le {
 class IAudio : public klib::Polymorphic {

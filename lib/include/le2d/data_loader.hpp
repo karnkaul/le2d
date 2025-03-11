@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/polymorphic.hpp>
+#include <klib/base_types.hpp>
 #include <le2d/uri.hpp>
 #include <cstddef>
 #include <cstdint>

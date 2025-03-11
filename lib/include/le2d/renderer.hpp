@@ -3,13 +3,16 @@
 #include <kvf/render_target.hpp>
 #include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
+#include <le2d/render_stats.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader.hpp>
 #include <le2d/user_draw_data.hpp>
 
-namespace le {
+namespace kvf {
 class RenderPass;
+}
 
+namespace le {
 class Renderer {
   public:
 	using UserData = UserDrawData;
@@ -21,7 +24,7 @@ class Renderer {
 
 	Renderer() = default;
 
-	explicit Renderer(RenderPass& render_pass, IResourcePool& resource_pool, vk::CommandBuffer command_buffer);
+	explicit Renderer(kvf::RenderPass& render_pass, IResourcePool& resource_pool);
 	~Renderer() { end_render(); }
 
 	auto set_line_width(float width) -> bool;
@@ -36,6 +39,7 @@ class Renderer {
 	auto end_render() -> kvf::RenderTarget;
 
 	[[nodiscard]] auto command_buffer() const -> vk::CommandBuffer { return m_cmd; }
+	[[nodiscard]] auto get_stats() const -> RenderStats const& { return m_stats; }
 
 	explicit operator bool() const { return is_rendering(); }
 
@@ -45,7 +49,7 @@ class Renderer {
   private:
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
-	RenderPass* m_pass{};
+	kvf::RenderPass* m_pass{};
 	IResourcePool* m_resource_pool{};
 	vk::CommandBuffer m_cmd{};
 
@@ -56,5 +60,7 @@ class Renderer {
 
 	vk::Pipeline m_pipeline{};
 	float m_line_width{1.0f};
+
+	RenderStats m_stats{};
 };
 } // namespace le

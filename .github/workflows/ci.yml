@@ -14,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: sudo apt update -yqq; sudo apt install -yqq ninja-build xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: sudo apt update -yqq; sudo apt install -yqq ninja-build mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
-        run: export CC=gcc-14; export CXX=g++-14; cmake -S . --preset=default -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
+        run: export CC=gcc-14; export CXX=g++-14; cmake -S . --preset=default -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -26,9 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: sudo apt update -yqq; sudo apt install -yqq ninja-build xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: sudo apt update -yqq; sudo apt install -yqq ninja-build mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug
       - name: build release
@@ -40,9 +40,9 @@ jobs:
       - name: configure
         run: cmake -S . --preset=vs22 -B build -DKVF_USE_FREETYPE=OFF -DCAPO_USE_OPENAL=OFF
       - name: build debug
-        run: cmake --build build --config=Debug
+        run: cmake --build build --config=Debug --parallel
       - name: build release
-        run: cmake --build build --config=Release
+        run: cmake --build build --config=Release --parallel
   windows-clang:
     runs-on: windows-latest
     steps:

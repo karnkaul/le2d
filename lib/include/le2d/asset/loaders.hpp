@@ -1,7 +1,7 @@
 #pragma once
 #include <capo/pcm.hpp>
 #include <djson/json.hpp>
-#include <le2d/animation.hpp>
+#include <le2d/anim/animation.hpp>
 #include <le2d/asset/loader.hpp>
 #include <le2d/asset/spir_v.hpp>
 #include <le2d/font.hpp>
@@ -39,18 +39,25 @@ class TextureLoader : public Loader<Texture> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>> final;
 };
 
-class AnimationLoader : public Loader<Animation> {
+class TileSetLoader : public Loader<TileSet> {
   public:
 	using Loader::Loader;
 
-	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Animation>> final;
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> final;
 };
 
-class FlipbookLoader : public Loader<Flipbook> {
+class TransformAnimationLoader : public Loader<anim::Animation<Transform>> {
   public:
 	using Loader::Loader;
 
-	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Flipbook>> final;
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<Transform>>> final;
+};
+
+class TileAnimationLoader : public Loader<anim::Animation<TileId>> {
+  public:
+	using Loader::Loader;
+
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<TileId>>> final;
 };
 
 class PcmLoader : public Loader<capo::Pcm> {
