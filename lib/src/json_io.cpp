@@ -4,28 +4,36 @@ namespace {
 using namespace le;
 
 template <typename PayloadT>
-void do_from_json(dj::Json const& json, anim::Animation<PayloadT>& animation) {
+void timeline_from_json(dj::Json const& json, anim::Timeline<PayloadT>& timeline) {
+	from_json(json["duration"], timeline.duration);
+	auto const& in_keyframes = json["keyframes"].array_view();
+	timeline.keyframes.reserve(in_keyframes.size());
+	for (auto const& in_keyframe : in_keyframes) { from_json(in_keyframe, timeline.keyframes.emplace_back()); }
+}
+
+template <typename PayloadT>
+void timeline_to_json(dj::Json& json, anim::Timeline<PayloadT> const& timeline) {
+	to_json(json["duration"], timeline.duration);
+	if (!timeline.keyframes.empty()) {
+		auto& out_keyframes = json["keyframes"];
+		for (auto const& keyframe : timeline.keyframes) { to_json(out_keyframes.push_back({}), keyframe); }
+	}
+}
+
+template <typename PayloadT>
+void animation_from_json(dj::Json const& json, anim::Animation<PayloadT>& animation) {
 	from_json(json["name"], animation.name);
 	if (auto const& repeat = json["repeat"]) { from_json(repeat, animation.repeat); }
 	auto timeline = anim::Timeline<PayloadT>{};
-	auto const& in_timeline = json["timeline"];
-	from_json(in_timeline["duration"], timeline.duration);
-	auto const& in_keyframes = in_timeline["keyframes"].array_view();
-	timeline.keyframes.reserve(in_keyframes.size());
-	for (auto const& in_keyframe : in_keyframes) { from_json(in_keyframe, timeline.keyframes.emplace_back()); }
+	from_json(json["timeline"], timeline);
 	animation.set_timeline(std::move(timeline));
 }
 
 template <typename PayloadT>
-void do_to_json(dj::Json& json, anim::Animation<PayloadT> const& animation) {
+void animation_to_json(dj::Json& json, anim::Animation<PayloadT> const& animation) {
 	to_json(json["name"], animation.name);
-	auto const& in_timeline = animation.get_timeline();
-	auto& out_timeline = json["timeline"];
-	to_json(out_timeline["duration"], in_timeline.duration);
-	if (!in_timeline.keyframes.empty()) {
-		auto& out_keyframes = out_timeline["keyframes"];
-		for (auto const& keyframe : in_timeline.keyframes) { to_json(out_keyframes.push_back({}), keyframe); }
-	}
+	to_json(json["repeat"], animation.repeat);
+	to_json(json["timeline"], animation.get_timeline());
 }
 } // namespace
 
@@ -85,9 +93,13 @@ void le::to_json(dj::Json& json, anim::Keyframe<Transform> const& keyframe) {
 	to_json(json["transform"], keyframe.payload);
 }
 
-void le::from_json(dj::Json const& json, anim::TransformAnimation& animation) { do_from_json(json, animation); }
+void le::from_json(dj::Json const& json, anim::Timeline<Transform>& timeline) { timeline_from_json(json, timeline); }
 
-void le::to_json(dj::Json& json, anim::TransformAnimation const& animation) { do_to_json(json, animation); }
+void le::to_json(dj::Json& json, anim::Timeline<Transform> const& timeline) { timeline_to_json(json, timeline); }
+
+void le::from_json(dj::Json const& json, anim::Animation<Transform>& animation) { animation_from_json(json, animation); }
+
+void le::to_json(dj::Json& json, anim::Animation<Transform> const& animation) { animation_to_json(json, animation); }
 
 void le::from_json(dj::Json const& json, anim::Keyframe<TileId>& keyframe) {
 	from_json(json["timestamp"], keyframe.timestamp);
@@ -99,6 +111,10 @@ void le::to_json(dj::Json& json, anim::Keyframe<TileId> const& keyframe) {
 	to_json(json["tile"], keyframe.payload);
 }
 
-void le::from_json(dj::Json const& json, anim::FlipbookAnimation& animation) { do_from_json(json, animation); }
+void le::from_json(dj::Json const& json, anim::Timeline<TileId>& timeline) { timeline_from_json(json, timeline); }
 
-void le::to_json(dj::Json& json, anim::FlipbookAnimation const& animation) { do_to_json(json, animation); }
+void le::to_json(dj::Json& json, anim::Timeline<TileId> const& timeline) { timeline_to_json(json, timeline); }
+
+void le::from_json(dj::Json const& json, anim::Animation<TileId>& animation) { animation_from_json(json, animation); }
+
+void le::to_json(dj::Json& json, anim::Animation<TileId> const& animation) { animation_to_json(json, animation); }

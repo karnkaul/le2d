@@ -50,4 +50,17 @@ auto util::divide_into_tiles(glm::vec2 const size, int const rows, int const col
 	}
 	return ret;
 }
+
+auto util::generate_flipbook_timeline(std::span<Tile const> tiles, kvf::Seconds duration) -> anim::Timeline<TileId> {
+	if (tiles.empty() || duration <= 0s) { return {}; }
+	auto ret = anim::Timeline<TileId>{.duration = duration};
+	ret.keyframes.reserve(tiles.size());
+	auto const tile_time = duration / tiles.size();
+	auto timestamp = kvf::Seconds{0s};
+	for (auto const& tile : tiles) {
+		ret.keyframes.push_back(anim::Keyframe<TileId>{.timestamp = timestamp, .payload = tile.id});
+		timestamp += tile_time;
+	}
+	return ret;
+}
 } // namespace le
