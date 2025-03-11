@@ -7,7 +7,7 @@ namespace le {
 namespace {
 template <typename KeyframeT>
 auto get_upper_bound(std::span<KeyframeT const> timeline, kvf::Seconds const time) {
-	return std::ranges::upper_bound(timeline, time, std::ranges::less{}, [](KeyframeT const& f) { return f.timestamp; });
+	return std::ranges::upper_bound(timeline, time, {}, [](KeyframeT const& f) { return f.timestamp; });
 }
 
 template <typename TimelineT>

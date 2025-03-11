@@ -1,6 +1,8 @@
 #pragma once
 #include <djson/json.hpp>
+#include <le2d/anim/animation.hpp>
 #include <le2d/animation.hpp>
+#include <le2d/tile.hpp>
 #include <le2d/uri.hpp>
 
 namespace le {
@@ -37,6 +39,12 @@ void to_json(dj::Json& json, Uri const& uri);
 void from_json(dj::Json const& json, kvf::Seconds& seconds);
 void to_json(dj::Json& json, kvf::Seconds const& seconds);
 
+void from_json(dj::Json const& json, TileId& tile_id);
+void to_json(dj::Json& json, TileId const& tile_id);
+
+void from_json(dj::Json const& json, Tile& tile);
+void to_json(dj::Json& json, Tile const& tile);
+
 void from_json(dj::Json const& json, Transform& transform);
 void to_json(dj::Json& json, Transform const& transform);
 
@@ -51,4 +59,16 @@ void to_json(dj::Json& json, Flipbook::Keyframe const& keyframe);
 
 void from_json(dj::Json const& json, Flipbook& flipbook);
 void to_json(dj::Json& json, Flipbook const& flipbook);
+
+void from_json(dj::Json const& json, anim::Keyframe<Transform>& keyframe);
+void to_json(dj::Json& json, anim::Keyframe<Transform> const& keyframe);
+
+void from_json(dj::Json const& json, anim::Animation<Transform>& animation);
+void to_json(dj::Json& json, anim::Animation<Transform> const& animation);
+
+void from_json(dj::Json const& json, anim::Keyframe<TileId>& keyframe);
+void to_json(dj::Json& json, anim::Keyframe<TileId> const& keyframe);
+
+void from_json(dj::Json const& json, anim::Animation<TileId>& animation);
+void to_json(dj::Json& json, anim::Animation<TileId> const& animation);
 } // namespace le

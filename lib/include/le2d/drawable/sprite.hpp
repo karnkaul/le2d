@@ -24,6 +24,7 @@ class SpriteBase : public IDrawPrimitive {
 
 	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_texture; }
 	void set_texture(ITexture const* texture, kvf::UvRect const& uv = kvf::uv_rect_v);
+	void set_tile(TileSet const* tile_set, TileId tile_id);
 
 	[[nodiscard]] auto get_resize_aspect() const -> kvf::ResizeAspect { return m_aspect; }
 	void set_resize_aspect(kvf::ResizeAspect aspect);
