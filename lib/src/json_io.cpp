@@ -3,19 +3,8 @@
 namespace {
 using namespace le;
 
-template <typename AnimationT>
-void do_from_json(dj::Json const& json, AnimationT& animation) {
-	from_json(json["name"], animation.name);
-	if (auto const& repeat = json["repeat"]) { from_json(repeat, animation.repeat); }
-	auto timeline = std::vector<typename AnimationT::Keyframe>{};
-	auto const& in_timeline = json["timeline"].array_view();
-	timeline.reserve(in_timeline.size());
-	for (auto const& in_keyframe : in_timeline) { from_json(in_keyframe, timeline.emplace_back()); }
-	animation.set_timeline(std::move(timeline));
-}
-
 template <typename PayloadT>
-void do_from_json2(dj::Json const& json, anim::Animation<PayloadT>& animation) {
+void do_from_json(dj::Json const& json, anim::Animation<PayloadT>& animation) {
 	from_json(json["name"], animation.name);
 	if (auto const& repeat = json["repeat"]) { from_json(repeat, animation.repeat); }
 	auto timeline = anim::Timeline<PayloadT>{};
@@ -27,16 +16,10 @@ void do_from_json2(dj::Json const& json, anim::Animation<PayloadT>& animation) {
 	animation.set_timeline(std::move(timeline));
 }
 
-template <typename AnimationT>
-void do_to_json(dj::Json& json, AnimationT const& animation) {
-	to_json(json["name"], animation.name);
-	for (auto const& keyframe : animation.get_timeline()) { to_json(json["timeline"].push_back({}), keyframe); }
-}
-
 template <typename PayloadT>
-void do_to_json2(dj::Json& json, anim::Animation<PayloadT> const& animation) {
+void do_to_json(dj::Json& json, anim::Animation<PayloadT> const& animation) {
 	to_json(json["name"], animation.name);
-	auto const in_timeline = animation.get_timeline();
+	auto const& in_timeline = animation.get_timeline();
 	auto& out_timeline = json["timeline"];
 	to_json(out_timeline["duration"], in_timeline.duration);
 	if (!in_timeline.keyframes.empty()) {
@@ -92,34 +75,6 @@ void le::to_json(dj::Json& json, Transform const& transform) {
 	to_json(json["scale"], transform.scale);
 }
 
-void le::from_json(dj::Json const& json, Animation::Keyframe& keyframe) {
-	from_json(json["timestamp"], keyframe.timestamp);
-	from_json(json["transform"], keyframe.payload);
-}
-
-void le::to_json(dj::Json& json, Animation::Keyframe const& keyframe) {
-	to_json(json["timestamp"], keyframe.timestamp);
-	to_json(json["transform"], keyframe.payload);
-}
-
-void le::from_json(dj::Json const& json, Animation& animation) { do_from_json(json, animation); }
-
-void le::to_json(dj::Json& json, Animation const& animation) { do_to_json(json, animation); }
-
-void le::from_json(dj::Json const& json, Flipbook::Keyframe& keyframe) {
-	from_json(json["timestamp"], keyframe.timestamp);
-	from_json(json["rect"], keyframe.payload);
-}
-
-void le::to_json(dj::Json& json, Flipbook::Keyframe const& keyframe) {
-	to_json(json["timestamp"], keyframe.timestamp);
-	to_json(json["rect"], keyframe.payload);
-}
-
-void le::from_json(dj::Json const& json, Flipbook& flipbook) { do_from_json(json, flipbook); }
-
-void le::to_json(dj::Json& json, Flipbook const& flipbook) { do_to_json(json, flipbook); }
-
 void le::from_json(dj::Json const& json, anim::Keyframe<Transform>& keyframe) {
 	from_json(json["timestamp"], keyframe.timestamp);
 	from_json(json["transform"], keyframe.payload);
@@ -130,9 +85,9 @@ void le::to_json(dj::Json& json, anim::Keyframe<Transform> const& keyframe) {
 	to_json(json["transform"], keyframe.payload);
 }
 
-void le::from_json(dj::Json const& json, anim::Animation<Transform>& animation) { do_from_json2(json, animation); }
+void le::from_json(dj::Json const& json, anim::TransformAnimation& animation) { do_from_json(json, animation); }
 
-void le::to_json(dj::Json& json, anim::Animation<Transform> const& animation) { do_to_json2(json, animation); }
+void le::to_json(dj::Json& json, anim::TransformAnimation const& animation) { do_to_json(json, animation); }
 
 void le::from_json(dj::Json const& json, anim::Keyframe<TileId>& keyframe) {
 	from_json(json["timestamp"], keyframe.timestamp);
@@ -144,6 +99,6 @@ void le::to_json(dj::Json& json, anim::Keyframe<TileId> const& keyframe) {
 	to_json(json["tile"], keyframe.payload);
 }
 
-void le::from_json(dj::Json const& json, anim::Animation<TileId>& animation) { do_from_json2(json, animation); }
+void le::from_json(dj::Json const& json, anim::FlipbookAnimation& animation) { do_from_json(json, animation); }
 
-void le::to_json(dj::Json& json, anim::Animation<TileId> const& animation) { do_to_json2(json, animation); }
+void le::to_json(dj::Json& json, anim::FlipbookAnimation const& animation) { do_to_json(json, animation); }

@@ -104,24 +104,6 @@ auto TileSetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>>
 	return to_wrap(uri, type_v, std::move(tile_set));
 }
 
-auto AnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Animation>> {
-	static constexpr std::string_view type_v{"Animation"};
-	auto const json = load_json(*m_context, type_v, uri);
-	if (!json) { return {}; }
-	auto animation = Animation{};
-	from_json(json, animation);
-	return to_wrap(uri, type_v, std::move(animation));
-}
-
-auto FlipbookLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Flipbook>> {
-	static constexpr std::string_view type_v{"Flipbook"};
-	auto const json = load_json(*m_context, type_v, uri);
-	if (!json) { return {}; }
-	auto flipbook = Flipbook{};
-	from_json(json, flipbook);
-	return to_wrap(uri, type_v, std::move(flipbook));
-}
-
 auto TransformAnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<Transform>>> {
 	static constexpr std::string_view type_v{"TransformAnimation"};
 	auto const json = load_json(*m_context, type_v, uri);

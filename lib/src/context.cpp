@@ -228,8 +228,6 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
 	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
-	ret->add_loader(std::make_unique<asset::AnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::FlipbookLoader>(this));
 	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
