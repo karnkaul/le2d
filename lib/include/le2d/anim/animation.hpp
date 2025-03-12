@@ -1,6 +1,6 @@
 #pragma once
 #include <le2d/anim/timeline.hpp>
-#include <le2d/tile.hpp>
+#include <le2d/tile/tile_id.hpp>
 #include <le2d/transform.hpp>
 
 namespace le::anim {

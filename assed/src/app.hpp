@@ -2,14 +2,20 @@
 #include <applet/applet.hpp>
 #include <kvf/time.hpp>
 #include <le2d/context.hpp>
+#include <le2d/file_data_loader.hpp>
 #include <le2d/input/dispatch.hpp>
 #include <le2d/service_locator.hpp>
 #include <memory>
 
 namespace le::assed {
-class App {
+struct ShaderUris {
+	std::string_view vertex{"shaders/default.vert"};
+	std::string_view fragment{"shaders/default.frag"};
+};
+
+class App : public klib::Pinned {
   public:
-	explicit App(gsl::not_null<IDataLoader const*> data_loader);
+	explicit App(FileDataLoader data_loader, ShaderUris const& shader_uris = {});
 
 	void run();
 
@@ -31,6 +37,8 @@ class App {
 	void main_menu();
 	void file_menu();
 	void applet_menu();
+
+	FileDataLoader m_data_loader;
 
 	Context m_context;
 	input::Dispatch m_input_dispatch{};

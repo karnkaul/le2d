@@ -6,11 +6,13 @@
 
 namespace le::assed {
 namespace {
-constexpr auto context_create_info_v = ContextCreateInfo{
-	.window = WindowInfo{.size = {600, 600}, .title = "Asset Editor", .decorated = true},
-	.default_shader_uri = {.vertex = "default.vert", .fragment = "default.frag"},
-	.framebuffer_samples = vk::SampleCountFlagBits::e2,
-};
+constexpr auto context_create_info_v(ShaderUris const& shader_uris) {
+	return ContextCreateInfo{
+		.window = WindowInfo{.size = {600, 600}, .title = "Asset Editor", .decorated = true},
+		.default_shader_uri = {.vertex = shader_uris.vertex, .fragment = shader_uris.fragment},
+		.framebuffer_samples = vk::SampleCountFlagBits::e2,
+	};
+}
 
 template <std::derived_from<Applet> T>
 auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique_ptr<Applet> {
@@ -18,11 +20,13 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 }
 } // namespace
 
-App::App(gsl::not_null<IDataLoader const*> data_loader) : m_context(data_loader, context_create_info_v) {}
+App::App(FileDataLoader data_loader, ShaderUris const& shader_uris)
+	: m_data_loader(std::move(data_loader)), m_context(&m_data_loader, context_create_info_v(shader_uris)) {}
 
 void App::run() {
 	m_blocker = m_context.get_render_window().get_render_device().get_device();
 
+	m_service_locator.bind(&m_data_loader);
 	m_service_locator.bind(&m_context);
 	m_service_locator.bind(&m_input_dispatch);
 	create_factories();

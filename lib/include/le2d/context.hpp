@@ -72,7 +72,7 @@ class Context {
 	[[nodiscard]] auto create_shader(Uri const& vertex, Uri const& fragment) const -> Shader;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 	[[nodiscard]] auto create_texture(kvf::Bitmap bitmap = {}) const -> Texture;
-	[[nodiscard]] auto create_tileset(kvf::Bitmap bitmap = {}) const -> TileSet;
+	[[nodiscard]] auto create_tilesheet(kvf::Bitmap bitmap = {}) const -> TileSheet;
 	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
 	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 

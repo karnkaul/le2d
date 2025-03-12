@@ -16,6 +16,7 @@ class FileDataLoader : public IDataLoader {
 	auto set_root_dir(std::string_view root_dir) -> bool;
 
 	[[nodiscard]] auto get_path(Uri const& uri) const -> std::string;
+	[[nodiscard]] auto get_uri(std::string_view path) const -> Uri;
 
   private:
 	template <typename T, typename F>

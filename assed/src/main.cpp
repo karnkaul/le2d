@@ -7,10 +7,9 @@
 
 namespace le::assed {
 namespace {
-void run(std::string spirv_dir) {
-	if (spirv_dir.empty()) { spirv_dir = FileDataLoader::upfind("spir_v", util::exe_path()); }
-	auto const data_loader = FileDataLoader{spirv_dir};
-	auto app = App{&data_loader};
+void run(std::string assets_dir, ShaderUris const& shader_uris) {
+	if (assets_dir.empty()) { assets_dir = FileDataLoader::upfind("assets", util::exe_path()); }
+	auto app = App{FileDataLoader{assets_dir}, shader_uris};
 	app.run();
 }
 } // namespace
@@ -18,13 +17,16 @@ void run(std::string spirv_dir) {
 
 auto main(int argc, char** argv) -> int {
 	try {
-		auto spirv_dir = std::string{};
+		auto assets_dir = std::string{};
+		auto shader_uris = le::assed::ShaderUris{};
 		auto const args = std::array{
-			klib::args::named_option(spirv_dir, "s,spirv-dir", "(relative) path to directory containing SPIR-V shaders"),
+			klib::args::named_option(assets_dir, "a,assets", "path to assets directory"),
+			klib::args::named_option(shader_uris.vertex, "v,vertex", "vertex shader URI (SPIR-V)"),
+			klib::args::named_option(shader_uris.fragment, "f,fragment", "fragment shader URI (SPIR-V)"),
 		};
 		auto const parse_result = klib::args::parse_main(args, argc, argv);
 		if (parse_result.early_return()) { return parse_result.get_return_code(); }
-		le::assed::run(spirv_dir);
+		le::assed::run(assets_dir, shader_uris);
 	} catch (std::exception const& e) {
 		le::assed::log::error("PANIC: {}", e.what());
 		return EXIT_FAILURE;

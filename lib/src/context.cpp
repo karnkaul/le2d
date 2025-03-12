@@ -214,9 +214,9 @@ auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture {
 	return Texture{&m_pass.get_render_device(), bitmap};
 }
 
-auto Context::create_tileset(kvf::Bitmap bitmap) const -> TileSet {
+auto Context::create_tilesheet(kvf::Bitmap bitmap) const -> TileSheet {
 	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
-	return TileSet{&m_pass.get_render_device(), bitmap};
+	return TileSheet{&m_pass.get_render_device(), bitmap};
 }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
@@ -227,7 +227,7 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
 	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
+	ret->add_loader(std::make_unique<asset::TileSheetLoader>(this));
 	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
