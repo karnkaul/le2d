@@ -1,7 +1,7 @@
 #pragma once
 #include <djson/json.hpp>
 #include <le2d/anim/animation.hpp>
-#include <le2d/tile/tile.hpp>
+#include <le2d/tile/tile_set.hpp>
 #include <le2d/uri.hpp>
 
 namespace le {
@@ -43,6 +43,9 @@ void to_json(dj::Json& json, TileId const& tile_id);
 
 void from_json(dj::Json const& json, Tile& tile);
 void to_json(dj::Json& json, Tile const& tile);
+
+void from_json(dj::Json const& json, TileSet& tile_set);
+void to_json(dj::Json& json, TileSet const& tile_set);
 
 void from_json(dj::Json const& json, Transform& transform);
 void to_json(dj::Json& json, Transform const& transform);

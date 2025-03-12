@@ -78,6 +78,15 @@ auto FontLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Font>> {
 	return to_wrap(uri, type_v, std::move(font));
 }
 
+auto TileSetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> {
+	static constexpr std::string_view type_v{"TileSet"};
+	auto const json = load_json(*m_context, type_v, uri);
+	if (!json) { return {}; }
+	auto tile_set = TileSet{};
+	from_json(json, tile_set);
+	return to_wrap(uri, type_v, std::move(tile_set));
+}
+
 auto TextureLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>> {
 	static constexpr std::string_view type_v{"Texture"};
 	auto const bytes = load_bytes(*m_context, type_v, uri);
@@ -91,17 +100,19 @@ auto TileSheetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileShe
 	static constexpr std::string_view type_v{"TileSheet"};
 	auto const json = load_json(*m_context, type_v, uri);
 	if (!json) { return {}; }
+
+	auto const tile_set_loader = TileSetLoader{m_context};
+	auto tile_set = tile_set_loader.load(json["tile_set"].as<std::string>());
+	if (!tile_set) { return {}; }
+
 	auto const texture_uri = Uri{json["texture"].as<std::string>()};
 	auto const bytes = load_bytes(*m_context, type_v, texture_uri);
 	if (bytes.empty()) { return {}; }
-	auto tile_set = m_context->create_tilesheet();
-	if (!try_load(uri, type_v, tile_set, &TileSheet::load_and_write, bytes)) { return {}; }
-	auto tiles = std::vector<Tile>{};
-	auto const& in_tiles = json["tiles"].array_view();
-	tiles.reserve(in_tiles.size());
-	for (auto const& in_tile : in_tiles) { from_json(in_tile, tiles.emplace_back()); }
-	tile_set.set_tiles(std::move(tiles));
-	return to_wrap(uri, type_v, std::move(tile_set));
+	auto tile_sheet = m_context->create_tilesheet();
+	if (!try_load(uri, type_v, tile_sheet, &TileSheet::load_and_write, bytes)) { return {}; }
+
+	tile_sheet.tile_set = std::move(tile_set->asset);
+	return to_wrap(uri, type_v, std::move(tile_sheet));
 }
 
 auto TransformAnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<Transform>>> {

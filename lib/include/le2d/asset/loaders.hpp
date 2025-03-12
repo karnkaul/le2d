@@ -32,6 +32,13 @@ class FontLoader : public Loader<Font> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Font>> final;
 };
 
+class TileSetLoader : public Loader<TileSet> {
+  public:
+	using Loader::Loader;
+
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> final;
+};
+
 class TextureLoader : public Loader<Texture> {
   public:
 	using Loader::Loader;

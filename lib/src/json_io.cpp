@@ -71,6 +71,19 @@ void le::to_json(dj::Json& json, Tile const& tile) {
 	to_json(json["uv"], tile.uv);
 }
 
+void le::from_json(dj::Json const& json, TileSet& tile_set) {
+	auto tiles = std::vector<Tile>{};
+	auto const& in_tiles = json.array_view();
+	tiles.reserve(in_tiles.size());
+	for (auto const& in_tile : in_tiles) { from_json(in_tile, tiles.emplace_back()); }
+	tile_set.set_tiles(std::move(tiles));
+}
+
+void le::to_json(dj::Json& json, TileSet const& tile_set) {
+	auto const tiles = tile_set.get_tiles();
+	for (auto const& tile : tiles) { to_json(json.push_back({}), tile); }
+}
+
 void le::from_json(dj::Json const& json, Transform& transform) {
 	from_json(json["position"], transform.position);
 	from_json(json["orientation"], transform.orientation);
