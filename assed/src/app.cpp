@@ -101,7 +101,7 @@ void App::main_menu() {
 
 void App::file_menu() {
 	if (ImGui::BeginMenu("File")) {
-		if (ImGui::MenuItem("Save", nullptr, false, m_applet->has_unsaved_changes())) { m_applet->on_save(); }
+		m_applet->populate_file_menu();
 		ImGui::Separator();
 		if (ImGui::MenuItem("Exit")) { m_context.shutdown(); }
 		ImGui::EndMenu();
