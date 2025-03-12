@@ -17,6 +17,8 @@ class Applet : public input::Listener {
 	[[nodiscard]] virtual auto has_unsaved_changes() const -> bool { return false; }
 	virtual void on_save() {}
 
+	virtual void populate_menu_bar() {}
+
   protected:
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 

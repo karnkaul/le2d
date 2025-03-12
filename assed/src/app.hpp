@@ -7,14 +7,9 @@
 #include <memory>
 
 namespace le::assed {
-struct ShaderUris {
-	std::string_view vertex{"shaders/default.vert"};
-	std::string_view fragment{"shaders/default.frag"};
-};
-
 class App {
   public:
-	explicit App(gsl::not_null<IDataLoader const*> data_loader, ShaderUris const& shader_uris = {});
+	explicit App(gsl::not_null<IDataLoader const*> data_loader);
 
 	void run();
 
