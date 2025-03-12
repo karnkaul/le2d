@@ -1,7 +1,7 @@
 #pragma once
 #include <djson/json.hpp>
 #include <le2d/anim/animation.hpp>
-#include <le2d/tile.hpp>
+#include <le2d/tile/tile.hpp>
 #include <le2d/uri.hpp>
 
 namespace le {

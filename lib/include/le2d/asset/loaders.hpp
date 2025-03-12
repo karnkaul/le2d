@@ -39,11 +39,11 @@ class TextureLoader : public Loader<Texture> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>> final;
 };
 
-class TileSetLoader : public Loader<TileSet> {
+class TileSheetLoader : public Loader<TileSheet> {
   public:
 	using Loader::Loader;
 
-	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> final;
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSheet>> final;
 };
 
 class TransformAnimationLoader : public Loader<anim::Animation<Transform>> {

@@ -4,7 +4,7 @@
 #include <kvf/render_device_fwd.hpp>
 #include <kvf/vma.hpp>
 #include <le2d/texture_sampler.hpp>
-#include <le2d/tile.hpp>
+#include <le2d/tile/tile.hpp>
 #include <gsl/pointers>
 
 namespace le {
@@ -34,9 +34,9 @@ class Texture : public ITexture {
 	kvf::vma::Image m_image{};
 };
 
-class TileSet : public Texture {
+class TileSheet : public Texture {
   public:
-	explicit TileSet(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}) : Texture(render_device, bitmap) {}
+	explicit TileSheet(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}) : Texture(render_device, bitmap) {}
 
 	[[nodiscard]] auto get_tiles() const -> std::span<Tile const> { return m_tiles; }
 	void set_tiles(std::vector<Tile> tiles);

@@ -36,6 +36,11 @@ auto FileDataLoader::set_root_dir(std::string_view root_dir) -> bool {
 
 auto FileDataLoader::get_path(Uri const& uri) const -> std::string { return (fs::path{m_root_dir} / uri.get_string()).generic_string(); }
 
+auto FileDataLoader::get_uri(std::string_view const path) const -> Uri {
+	if (path.empty()) { return {}; }
+	return fs::path{path}.lexically_relative(m_root_dir).generic_string();
+}
+
 template <typename T, typename F>
 auto FileDataLoader::from_file(T& out, Uri const& uri, F func) const -> bool {
 	if (!func(out, get_path(uri).c_str())) {
