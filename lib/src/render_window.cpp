@@ -146,6 +146,7 @@ void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 		push_event(window, event::MouseButton{.button = button, .action = action, .mods = mods});
 	});
 	glfwSetScrollCallback(window, [](GLFWwindow* window, double x, double y) { push_event(window, event::Scroll{x, y}); });
+	glfwSetDropCallback(window, [](GLFWwindow* window, int const count, char const** paths) { self(window).on_drop(count, paths); });
 }
 
 void RenderWindow::on_cursor_pos(window::vec2 const pos) {
