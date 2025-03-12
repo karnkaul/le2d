@@ -33,16 +33,4 @@ auto Texture::load_and_write(std::span<std::byte const> compressed_image) -> boo
 	if (!bitmap.is_loaded()) { return false; }
 	return kvf::util::write_to(m_image, bitmap.bitmap());
 }
-
-void TileSheet::set_tiles(std::vector<Tile> tiles) {
-	m_tiles = std::move(tiles);
-	std::ranges::sort(m_tiles, [](Tile const& a, Tile const& b) { return a.id < b.id; });
-}
-
-auto TileSheet::get_uv(TileId const id) const -> kvf::UvRect {
-	if (id == TileId::None) { return kvf::uv_rect_v; }
-	auto const [first, _] = std::ranges::equal_range(m_tiles, id, {}, [](Tile const& t) { return t.id; });
-	if (first == m_tiles.end()) { return kvf::uv_rect_v; }
-	return first->uv;
-}
 } // namespace le
