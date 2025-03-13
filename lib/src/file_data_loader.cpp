@@ -38,7 +38,9 @@ auto FileDataLoader::get_path(Uri const& uri) const -> std::string { return (fs:
 
 auto FileDataLoader::get_uri(std::string_view const path) const -> Uri {
 	if (path.empty()) { return {}; }
-	return fs::path{path}.lexically_relative(m_root_dir).generic_string();
+	auto ret = fs::path{path}.lexically_relative(m_root_dir).generic_string();
+	if (ret.starts_with(".")) { return {}; }
+	return ret;
 }
 
 template <typename T, typename F>
