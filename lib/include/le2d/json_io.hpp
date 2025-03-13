@@ -5,6 +5,34 @@
 #include <le2d/uri.hpp>
 
 namespace le {
+template <typename Type>
+constexpr auto json_type_name_v = std::string_view{};
+
+template <>
+inline constexpr auto json_type_name_v<TileSet> = std::string_view{"TileSet"};
+template <>
+inline constexpr auto json_type_name_v<anim::Keyframe<Transform>> = std::string_view{"anim::Keyframe<Transform>"};
+template <>
+inline constexpr auto json_type_name_v<anim::Keyframe<Tile>> = std::string_view{"anim::Keyframe<Tile>"};
+template <>
+inline constexpr auto json_type_name_v<anim::Timeline<Transform>> = std::string_view{"anim::Timeline<Transform>"};
+template <>
+inline constexpr auto json_type_name_v<anim::Timeline<TileId>> = std::string_view{"anim::Timeline<TileId>"};
+
+[[nodiscard]] auto get_json_type_name(dj::Json const& json) -> std::string_view;
+void set_json_type_name(dj::Json& json, std::string_view type_name);
+[[nodiscard]] auto json_type_name_match(dj::Json const& json, std::string_view type_name) -> bool;
+
+template <typename Type>
+auto is_json_type(dj::Json const& json, Type const& /*unused*/ = Type{}) -> bool {
+	return json_type_name_match(json, json_type_name_v<Type>);
+}
+
+template <typename Type>
+void set_json_type(dj::Json& json, Type const& /*unused*/ = Type{}) {
+	set_json_type_name(json, json_type_name_v<Type>);
+}
+
 template <typename Type, glm::length_t Length>
 void from_json(dj::Json const& json, glm::vec<Length, Type>& vec) {
 	if (!json.is_array()) { return; }
@@ -44,11 +72,11 @@ void to_json(dj::Json& json, TileId const& tile_id);
 void from_json(dj::Json const& json, Tile& tile);
 void to_json(dj::Json& json, Tile const& tile);
 
-void from_json(dj::Json const& json, TileSet& tile_set);
-void to_json(dj::Json& json, TileSet const& tile_set);
-
 void from_json(dj::Json const& json, Transform& transform);
 void to_json(dj::Json& json, Transform const& transform);
+
+void from_json(dj::Json const& json, TileSet& tile_set);
+void to_json(dj::Json& json, TileSet const& tile_set);
 
 void from_json(dj::Json const& json, anim::Keyframe<Transform>& keyframe);
 void to_json(dj::Json& json, anim::Keyframe<Transform> const& keyframe);
