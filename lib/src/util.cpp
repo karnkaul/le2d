@@ -29,19 +29,16 @@ auto util::exe_path() -> std::string {
 	return ret;
 }
 
-auto util::divide_into_tiles(glm::vec2 const size, int const rows, int const cols) -> std::vector<Tile> {
-	if (!kvf::is_positive(size) || rows <= 0 || cols <= 0) { return {}; }
-	auto const tile_size = glm::vec2{size.x / float(cols), size.y / float(rows)};
+auto util::divide_into_tiles(int const rows, int const cols) -> std::vector<Tile> {
+	if (rows <= 0 || cols <= 0) { return {}; }
+	auto const tile_size = glm::vec2{1.0f / float(cols), 1.0f / float(rows)};
 	auto ret = std::vector<Tile>{};
 	ret.reserve(std::size_t(rows * cols));
-	auto const size_inv = 1.0f / size;
 	auto lt = glm::vec2{};
 	auto id = std::to_underlying(TileId{1});
 	for (auto row = 0; row < rows; ++row) {
 		for (auto col = 0; col < cols; ++col) {
-			auto tile = Tile{.id = TileId{id++}, .uv = kvf::UvRect{.lt = lt, .rb = lt + tile_size}};
-			tile.uv.lt *= size_inv;
-			tile.uv.rb *= size_inv;
+			auto const tile = Tile{.id = TileId{id++}, .uv = kvf::UvRect{.lt = lt, .rb = lt + tile_size}};
 			ret.push_back(tile);
 			lt.x += tile_size.x;
 		}
