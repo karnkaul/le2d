@@ -3,6 +3,7 @@
 #include <djson/json.hpp>
 #include <kvf/time.hpp>
 #include <le2d/context.hpp>
+#include <le2d/file_data_loader.hpp>
 #include <le2d/input/listener.hpp>
 #include <le2d/renderer.hpp>
 #include <le2d/service_locator.hpp>
@@ -17,11 +18,12 @@ class Applet : public input::Listener {
   protected:
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
+	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
 	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().framebuffer_size(); }
 
-	[[nodiscard]] static auto bytes_from_file(klib::CString path) -> std::vector<std::byte>;
-	[[nodiscard]] static auto string_from_file(klib::CString path) -> std::string;
-	[[nodiscard]] static auto json_from_file(klib::CString path) -> dj::Json;
+	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
+	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;
+	[[nodiscard]] auto load_json(Uri const& uri) const -> dj::Json;
 
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 
