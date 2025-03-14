@@ -1,5 +1,4 @@
 #include <applet/tileset_editor.hpp>
-#include <imcpp.hpp>
 #include <klib/assert.hpp>
 #include <klib/fixed_string.hpp>
 #include <le2d/asset/loaders.hpp>
@@ -44,20 +43,20 @@ auto TilesetEditor::consume_drop(event::Drop const& drop) -> bool {
 	auto const& first_path = drop.paths.front();
 	auto uri = get_data_loader().get_uri(first_path);
 	if (uri.get_string().empty()) {
-		// TODO: raise error
+		raise_error(std::format("Path is not in asset directory\n{}", first_path));
 		return true;
 	}
 
 	auto const extension = fs::path{uri.get_string()}.extension().string();
 	if (extension == ".json") {
-		try_load_tileset(std::move(uri));
+		try_load_json(std::move(uri));
 	} else {
 		try_load_texture(std::move(uri));
 	}
 	return true;
 }
 
-void TilesetEditor::tick(kvf::Seconds const /*dt*/) {
+void TilesetEditor::tick(kvf::Seconds const dt) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
@@ -70,6 +69,7 @@ void TilesetEditor::tick(kvf::Seconds const /*dt*/) {
 	}
 
 	inspect();
+	m_error_modal.tick(dt);
 }
 
 void TilesetEditor::render(Renderer& renderer) const {
@@ -120,11 +120,22 @@ void TilesetEditor::inspect_selected() {
 	}
 }
 
+void TilesetEditor::try_load_json(Uri uri) {
+	auto const json_type_name = get_data_loader().get_json_type_name(uri);
+	if (json_type_name == json_type_name_v<TileSet>) {
+		try_load_tileset(std::move(uri));
+	} else if (json_type_name == json_type_name_v<TileSheet>) {
+		raise_error("TileSheet not implemented");
+	} else {
+		raise_error(std::format("Unsupported asset: {}\n{}", json_type_name, uri.get_string()));
+	}
+}
+
 void TilesetEditor::try_load_tileset(Uri uri) {
 	auto loader = asset::TileSetLoader{&get_context()};
 	auto tile_set = loader.load(uri);
 	if (!tile_set) {
-		// TODO: raise error modal
+		raise_error(std::format("Failed to load TileSet: '{}'", uri.get_string()));
 		return;
 	}
 
@@ -140,7 +151,7 @@ void TilesetEditor::try_load_texture(Uri uri) {
 	auto loader = asset::TextureLoader{&get_context()};
 	auto texture = loader.load(uri);
 	if (!texture) {
-		// TODO: raise error modal
+		raise_error(std::format("Failed to load Texture: '{}'", uri.get_string()));
 		return;
 	}
 
@@ -186,5 +197,10 @@ void TilesetEditor::on_click() {
 		}
 		break;
 	}
+}
+
+void TilesetEditor::raise_error(std::string message) {
+	m_error_modal.message = std::move(message);
+	m_error_modal.set_open();
 }
 } // namespace le::assed
