@@ -15,18 +15,6 @@ namespace fs = std::filesystem;
 namespace {
 constexpr auto min_scale_v{0.1f};
 constexpr auto max_scale_v{10.0f};
-
-constexpr auto to_n_vec(glm::vec2 tex_coords) {
-	tex_coords.x -= 0.5f;
-	tex_coords.y = 0.5f - tex_coords.y;
-	return tex_coords;
-}
-
-constexpr auto to_rect(kvf::UvRect uv, glm::vec2 const texture_size) {
-	uv.lt = to_n_vec(uv.lt) * texture_size;
-	uv.rb = to_n_vec(uv.rb) * texture_size;
-	return uv;
-}
 } // namespace
 
 TilesetEditor::TilesetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
@@ -115,20 +103,16 @@ void TilesetEditor::inspect() {
 			auto const texture_size = m_texture.get_size();
 			auto& selected_tile = m_tiles.at(*m_selected_tile);
 			ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
-			auto tex_rect = selected_tile.uv;
-			tex_rect.lt *= texture_size;
-			tex_rect.rb *= texture_size;
+			auto const tex_rect = selected_tile.uv * texture_size;
 			auto modified = false;
 			auto left_right = glm::ivec2{tex_rect.lt.x, tex_rect.rb.x};
 			auto top_bottom = glm::ivec2{tex_rect.lt.y, tex_rect.rb.y};
 			modified |= ImGui::DragInt2("left-right", &left_right.x, 1.0f, 0, texture_size.x);
 			modified |= ImGui::DragInt2("top-bottom", &top_bottom.x, 1.0f, 0, texture_size.y);
 			if (modified) {
-				selected_tile.uv = kvf::UvRect{.lt = {left_right.x, top_bottom.x}, .rb = {left_right.y, top_bottom.y}};
-				selected_tile.uv.lt /= texture_size;
-				selected_tile.uv.rb /= texture_size;
+				selected_tile.uv = kvf::UvRect{.lt = {left_right.x, top_bottom.x}, .rb = {left_right.y, top_bottom.y}} / texture_size;
 				auto& tile_frame = m_tile_frames.at(*m_selected_tile);
-				auto const rect = to_rect(selected_tile.uv, texture_size);
+				auto const rect = uv_to_world(selected_tile.uv, texture_size);
 				tile_frame.create(rect.size());
 				tile_frame.transform.position = rect.center();
 			}
@@ -178,7 +162,7 @@ void TilesetEditor::setup_tile_frames() {
 	m_tile_frames.clear();
 	m_tile_frames.reserve(m_tiles.size());
 	for (auto const& tile : m_tiles) {
-		auto const rect = to_rect(tile.uv, texture_size);
+		auto const rect = uv_to_world(tile.uv, texture_size);
 		auto tile_frame = drawable::LineRect{};
 		tile_frame.create(rect.size());
 		tile_frame.transform.position = rect.center();
