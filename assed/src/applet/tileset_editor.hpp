@@ -23,8 +23,12 @@ class TilesetEditor : public Applet {
 	void inspect_selected();
 
 	void try_load_json(Uri uri);
+	void try_load_tilesheet(Uri uri);
 	void try_load_tileset(Uri uri);
 	void try_load_texture(Uri uri);
+
+	void set_tiles(std::span<Tile const> tiles);
+	void set_texture(Texture texture);
 
 	void setup_tile_frames();
 	void generate_tiles();

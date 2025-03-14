@@ -125,10 +125,26 @@ void TilesetEditor::try_load_json(Uri uri) {
 	if (json_type_name == json_type_name_v<TileSet>) {
 		try_load_tileset(std::move(uri));
 	} else if (json_type_name == json_type_name_v<TileSheet>) {
-		raise_error("TileSheet not implemented");
+		try_load_tilesheet(std::move(uri));
 	} else {
 		raise_error(std::format("Unsupported asset: {}\n{}", json_type_name, uri.get_string()));
 	}
+}
+
+void TilesetEditor::try_load_tilesheet(Uri uri) {
+	auto loader = asset::TileSheetLoader{&get_context()};
+	auto tile_sheet = loader.load(uri);
+	if (!tile_sheet) {
+		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
+		return;
+	}
+
+	set_tiles(tile_sheet->asset.tile_set.get_tiles());
+	set_texture(static_cast<Texture&&>(tile_sheet->asset));
+	setup_tile_frames();
+	m_loaded_uri = std::move(uri);
+
+	log::info("loaded TileSheet: '{}'", m_loaded_uri.get_string());
 }
 
 void TilesetEditor::try_load_tileset(Uri uri) {
@@ -139,10 +155,9 @@ void TilesetEditor::try_load_tileset(Uri uri) {
 		return;
 	}
 
-	auto const tiles = tile_set->asset.get_tiles();
-	m_tiles = {tiles.begin(), tiles.end()};
-	m_loaded_uri = std::move(uri);
+	set_tiles(tile_set->asset.get_tiles());
 	setup_tile_frames();
+	m_loaded_uri = std::move(uri);
 
 	log::info("loaded TileSet: '{}'", m_loaded_uri.get_string());
 }
@@ -155,15 +170,22 @@ void TilesetEditor::try_load_texture(Uri uri) {
 		return;
 	}
 
-	wait_idle();
-	m_texture = std::move(texture->asset);
-
-	m_quad.create(m_texture.get_size());
+	set_texture(std::move(texture->asset));
+	setup_tile_frames();
 	m_loaded_uri = std::move(uri);
-	m_tile_frames.clear();
-	m_selected_tile.reset();
 
 	log::info("loaded Texture: '{}'", m_loaded_uri.get_string());
+}
+
+void TilesetEditor::set_tiles(std::span<Tile const> tiles) {
+	m_tiles = {tiles.begin(), tiles.end()};
+	m_selected_tile.reset();
+}
+
+void TilesetEditor::set_texture(Texture texture) {
+	wait_idle();
+	m_texture = std::move(texture);
+	m_quad.create(m_texture.get_size());
 }
 
 void TilesetEditor::setup_tile_frames() {
