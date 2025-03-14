@@ -1,4 +1,5 @@
 #include <applet/tileset_editor.hpp>
+#include <imcpp.hpp>
 #include <klib/assert.hpp>
 #include <klib/fixed_string.hpp>
 #include <le2d/asset/loaders.hpp>
@@ -100,26 +101,23 @@ void TilesetEditor::inspect() {
 
 		ImGui::Separator();
 		if (m_selected_tile && ImGui::TreeNode("selected")) {
-			auto const texture_size = m_texture.get_size();
-			auto& selected_tile = m_tiles.at(*m_selected_tile);
-			ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
-			auto const tex_rect = selected_tile.uv * texture_size;
-			auto modified = false;
-			auto left_right = glm::ivec2{tex_rect.lt.x, tex_rect.rb.x};
-			auto top_bottom = glm::ivec2{tex_rect.lt.y, tex_rect.rb.y};
-			modified |= ImGui::DragInt2("left-right", &left_right.x, 1.0f, 0, texture_size.x);
-			modified |= ImGui::DragInt2("top-bottom", &top_bottom.x, 1.0f, 0, texture_size.y);
-			if (modified) {
-				selected_tile.uv = kvf::UvRect{.lt = {left_right.x, top_bottom.x}, .rb = {left_right.y, top_bottom.y}} / texture_size;
-				auto& tile_frame = m_tile_frames.at(*m_selected_tile);
-				auto const rect = uv_to_world(selected_tile.uv, texture_size);
-				tile_frame.create(rect.size());
-				tile_frame.transform.position = rect.center();
-			}
+			inspect_selected();
 			ImGui::TreePop();
 		}
 	}
 	ImGui::End();
+}
+
+void TilesetEditor::inspect_selected() {
+	auto const texture_size = m_texture.get_size();
+	auto& selected_tile = m_tiles.at(*m_selected_tile);
+	ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
+	if (imcpp::drag_tex_rect(selected_tile.uv, m_texture.get_size())) {
+		auto& tile_frame = m_tile_frames.at(*m_selected_tile);
+		auto const rect = uv_to_world(selected_tile.uv, texture_size);
+		tile_frame.create(rect.size());
+		tile_frame.transform.position = rect.center();
+	}
 }
 
 void TilesetEditor::try_load_tileset(Uri uri) {

@@ -19,6 +19,7 @@ class TilesetEditor : public Applet {
 	void render(Renderer& renderer) const final;
 
 	void inspect();
+	void inspect_selected();
 
 	void try_load_tileset(Uri uri);
 	void try_load_texture(Uri uri);
