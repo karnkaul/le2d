@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
 #include <kvf/is_positive.hpp>
+#include <kvf/util.hpp>
 
 namespace le {
 namespace ndc {
@@ -18,9 +19,7 @@ struct tvec2 : glm::tvec2<Type> {
 
 	[[nodiscard]] constexpr auto to_ndc(glm::vec2 const window_size) const -> ndc::vec2 {
 		if (!kvf::is_positive(window_size)) { return {}; }
-		auto ret = glm::vec2{*this} / window_size;
-		ret.x -= 0.5f;
-		ret.y = 0.5f - ret.y;
+		auto const ret = kvf::util::uv_to_ndc(*this / window_size);
 		return {ret.x, ret.y};
 	}
 };
