@@ -96,7 +96,7 @@ auto TextureLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>>
 	return to_wrap(uri, type_v, std::move(texture));
 }
 
-auto TileSheetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSheet>> {
+auto TileSheetLoader::load(Uri const& uri, Uri& out_texture_uri) const -> std::unique_ptr<Wrap<TileSheet>> {
 	static constexpr std::string_view type_v{"TileSheet"};
 	auto const json = load_json(*m_context, type_v, uri);
 	if (!json) { return {}; }
@@ -105,14 +105,20 @@ auto TileSheetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileShe
 	auto tile_set = tile_set_loader.load(json["tile_set"].as<std::string>());
 	if (!tile_set) { return {}; }
 
-	auto const texture_uri = Uri{json["texture"].as<std::string>()};
-	auto const bytes = load_bytes(*m_context, type_v, texture_uri);
+	out_texture_uri = json["texture"].as<std::string>();
+	auto const bytes = load_bytes(*m_context, type_v, out_texture_uri);
 	if (bytes.empty()) { return {}; }
+
 	auto tile_sheet = m_context->create_tilesheet();
 	if (!try_load(uri, type_v, tile_sheet, &TileSheet::load_and_write, bytes)) { return {}; }
 
 	tile_sheet.tile_set = std::move(tile_set->asset);
 	return to_wrap(uri, type_v, std::move(tile_sheet));
+}
+
+auto TileSheetLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSheet>> {
+	auto texture_uri = Uri{};
+	return load(uri, texture_uri);
 }
 
 auto TransformAnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<Transform>>> {

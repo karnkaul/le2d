@@ -91,7 +91,8 @@ void TilesetEditor::render(Renderer& renderer) const {
 
 void TilesetEditor::inspect() {
 	if (ImGui::Begin("Info")) {
-		ImGui::TextUnformatted(klib::FixedString<256>{"URI: {}", m_loaded_uri.get_string()}.c_str());
+		ImGui::TextUnformatted(klib::FixedString<256>{"TileSheet: {}", m_uri.tile_sheet.get_string()}.c_str());
+		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
 		auto const size = m_texture.get_size();
 		ImGui::TextUnformatted(klib::FixedString{"{}x{}", size.x, size.y}.c_str());
 
@@ -113,17 +114,15 @@ void TilesetEditor::inspect_selected() {
 	auto& selected_tile = m_tiles.at(*m_selected_tile);
 	ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
 	if (imcpp::drag_tex_rect(selected_tile.uv, m_texture.get_size())) {
-		auto& tile_frame = m_tile_frames.at(*m_selected_tile);
 		auto const rect = uv_to_world(selected_tile.uv, texture_size);
-		tile_frame.create(rect.size());
-		tile_frame.transform.position = rect.center();
+		m_tile_frames.at(*m_selected_tile) = create_tile_frame(rect);
 	}
 }
 
 void TilesetEditor::try_load_json(Uri uri) {
 	auto const json_type_name = get_data_loader().get_json_type_name(uri);
 	if (json_type_name == json_type_name_v<TileSet>) {
-		try_load_tileset(std::move(uri));
+		try_load_tileset(uri);
 	} else if (json_type_name == json_type_name_v<TileSheet>) {
 		try_load_tilesheet(std::move(uri));
 	} else {
@@ -133,7 +132,8 @@ void TilesetEditor::try_load_json(Uri uri) {
 
 void TilesetEditor::try_load_tilesheet(Uri uri) {
 	auto loader = asset::TileSheetLoader{&get_context()};
-	auto tile_sheet = loader.load(uri);
+	auto texture_uri = Uri{};
+	auto tile_sheet = loader.load(uri, texture_uri);
 	if (!tile_sheet) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
@@ -142,12 +142,13 @@ void TilesetEditor::try_load_tilesheet(Uri uri) {
 	set_tiles(tile_sheet->asset.tile_set.get_tiles());
 	set_texture(static_cast<Texture&&>(tile_sheet->asset));
 	setup_tile_frames();
-	m_loaded_uri = std::move(uri);
+	m_uri.tile_sheet = std::move(uri);
+	m_uri.texture = std::move(texture_uri);
 
-	log::info("loaded TileSheet: '{}'", m_loaded_uri.get_string());
+	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
-void TilesetEditor::try_load_tileset(Uri uri) {
+void TilesetEditor::try_load_tileset(Uri const& uri) {
 	auto loader = asset::TileSetLoader{&get_context()};
 	auto tile_set = loader.load(uri);
 	if (!tile_set) {
@@ -157,9 +158,8 @@ void TilesetEditor::try_load_tileset(Uri uri) {
 
 	set_tiles(tile_set->asset.get_tiles());
 	setup_tile_frames();
-	m_loaded_uri = std::move(uri);
 
-	log::info("loaded TileSet: '{}'", m_loaded_uri.get_string());
+	log::info("loaded TileSet: '{}'", uri.get_string());
 }
 
 void TilesetEditor::try_load_texture(Uri uri) {
@@ -172,9 +172,9 @@ void TilesetEditor::try_load_texture(Uri uri) {
 
 	set_texture(std::move(texture->asset));
 	setup_tile_frames();
-	m_loaded_uri = std::move(uri);
+	m_uri.texture = std::move(uri);
 
-	log::info("loaded Texture: '{}'", m_loaded_uri.get_string());
+	log::info("loaded Texture: '{}'", m_uri.texture.get_string());
 }
 
 void TilesetEditor::set_tiles(std::span<Tile const> tiles) {
@@ -188,16 +188,21 @@ void TilesetEditor::set_texture(Texture texture) {
 	m_quad.create(m_texture.get_size());
 }
 
+auto TilesetEditor::create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect {
+	auto tile_frame = drawable::LineRect{};
+	tile_frame.create(rect.size());
+	tile_frame.transform.position = rect.center();
+	tile_frame.tint = m_frame_color;
+	return tile_frame;
+}
+
 void TilesetEditor::setup_tile_frames() {
 	glm::vec2 const texture_size = m_texture.get_size();
 	m_tile_frames.clear();
 	m_tile_frames.reserve(m_tiles.size());
 	for (auto const& tile : m_tiles) {
 		auto const rect = uv_to_world(tile.uv, texture_size);
-		auto tile_frame = drawable::LineRect{};
-		tile_frame.create(rect.size());
-		tile_frame.transform.position = rect.center();
-		m_tile_frames.push_back(std::move(tile_frame));
+		m_tile_frames.push_back(create_tile_frame(rect));
 	}
 }
 
