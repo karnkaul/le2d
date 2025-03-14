@@ -60,12 +60,14 @@ void TilesetEditor::tick(kvf::Seconds const dt) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
+	if (m_selected_tile && *m_selected_tile >= m_tile_frames.size()) { m_selected_tile.reset(); }
+
 	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
 		if (m_selected_tile && *m_selected_tile == std::size_t(index)) {
-			tile_frame.tint = kvf::green_v;
+			tile_frame.tint = m_selected_color;
 			continue;
 		}
-		tile_frame.tint = kvf::white_v;
+		tile_frame.tint = m_frame_color;
 	}
 
 	inspect();
@@ -76,6 +78,7 @@ void TilesetEditor::render(Renderer& renderer) const {
 	renderer.view = m_render_view;
 	m_quad.draw(renderer);
 
+	renderer.set_line_width(m_frame_width);
 	drawable::LineRect const* selected_tile{};
 	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
 		if (m_selected_tile && *m_selected_tile == std::size_t(index)) {
@@ -95,6 +98,22 @@ void TilesetEditor::inspect() {
 		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
 		auto const size = m_texture.get_size();
 		ImGui::TextUnformatted(klib::FixedString{"{}x{}", size.x, size.y}.c_str());
+
+		ImGui::Separator();
+		auto color = m_frame_color.to_vec4();
+		if (ImGui::ColorEdit4("frame color", &color.x)) {
+			m_frame_color = color;
+			for (auto [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
+				if (m_selected_tile && *m_selected_tile == std::size_t(index)) { continue; }
+				tile_frame.tint = m_frame_color;
+			}
+		}
+		color = m_selected_color.to_vec4();
+		if (ImGui::ColorEdit4("selected color", &color.x)) {
+			m_selected_color = color;
+			if (m_selected_tile) { m_tile_frames.at(*m_selected_tile).tint = m_selected_color; }
+		}
+		ImGui::DragFloat("frame width", &m_frame_width, 0.5f, 1.0f, 100.0f);
 
 		ImGui::Separator();
 		ImGui::DragInt2("cols x rows", &m_split_dims.x, 1.0f, 1, 100);

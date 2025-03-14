@@ -57,6 +57,7 @@ class TilesetEditor : public Applet {
 
 	glm::ivec2 m_split_dims{1, 1};
 	kvf::Color m_frame_color{kvf::white_v};
+	kvf::Color m_selected_color{kvf::green_v};
 	float m_frame_width{2.0f};
 };
 } // namespace le::assed
