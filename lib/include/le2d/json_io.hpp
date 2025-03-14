@@ -11,13 +11,13 @@ constexpr auto json_type_name_v = std::string_view{};
 template <>
 inline constexpr auto json_type_name_v<TileSet> = std::string_view{"TileSet"};
 template <>
-inline constexpr auto json_type_name_v<anim::Keyframe<Transform>> = std::string_view{"anim::Keyframe<Transform>"};
-template <>
-inline constexpr auto json_type_name_v<anim::Keyframe<Tile>> = std::string_view{"anim::Keyframe<Tile>"};
-template <>
 inline constexpr auto json_type_name_v<anim::Timeline<Transform>> = std::string_view{"anim::Timeline<Transform>"};
 template <>
 inline constexpr auto json_type_name_v<anim::Timeline<TileId>> = std::string_view{"anim::Timeline<TileId>"};
+template <>
+inline constexpr auto json_type_name_v<anim::Animation<Transform>> = std::string_view{"anim::Animation<Transform>"};
+template <>
+inline constexpr auto json_type_name_v<anim::Animation<TileId>> = std::string_view{"anim::Animation<TileId>"};
 
 [[nodiscard]] auto get_json_type_name(dj::Json const& json) -> std::string_view;
 void set_json_type_name(dj::Json& json, std::string_view type_name);

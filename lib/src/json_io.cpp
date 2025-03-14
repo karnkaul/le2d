@@ -3,7 +3,7 @@
 namespace {
 template <typename PayloadT>
 void timeline_from_json(dj::Json const& json, le::anim::Timeline<PayloadT>& timeline) {
-	if (!is_json_type(json, timeline)) { return; }
+	if (!le::is_json_type(json, timeline)) { return; }
 	le::from_json(json["duration"], timeline.duration);
 	auto const& in_keyframes = json["keyframes"].array_view();
 	timeline.keyframes.reserve(in_keyframes.size());
@@ -12,7 +12,7 @@ void timeline_from_json(dj::Json const& json, le::anim::Timeline<PayloadT>& time
 
 template <typename PayloadT>
 void timeline_to_json(dj::Json& json, le::anim::Timeline<PayloadT> const& timeline) {
-	set_json_type(json, timeline);
+	le::set_json_type(json, timeline);
 	le::to_json(json["duration"], timeline.duration);
 	if (!timeline.keyframes.empty()) {
 		auto& out_keyframes = json["keyframes"];
@@ -112,13 +112,11 @@ void le::to_json(dj::Json& json, TileSet const& tile_set) {
 }
 
 void le::from_json(dj::Json const& json, anim::Keyframe<Transform>& keyframe) {
-	if (!is_json_type(json, keyframe)) { return; }
 	from_json(json["timestamp"], keyframe.timestamp);
 	from_json(json["transform"], keyframe.payload);
 }
 
 void le::to_json(dj::Json& json, anim::Keyframe<Transform> const& keyframe) {
-	set_json_type(json, keyframe);
 	to_json(json["timestamp"], keyframe.timestamp);
 	to_json(json["transform"], keyframe.payload);
 }
@@ -132,13 +130,11 @@ void le::from_json(dj::Json const& json, anim::Animation<Transform>& animation) 
 void le::to_json(dj::Json& json, anim::Animation<Transform> const& animation) { animation_to_json(json, animation); }
 
 void le::from_json(dj::Json const& json, anim::Keyframe<TileId>& keyframe) {
-	if (!is_json_type(json, keyframe)) { return; }
 	from_json(json["timestamp"], keyframe.timestamp);
 	from_json(json["tile"], keyframe.payload);
 }
 
 void le::to_json(dj::Json& json, anim::Keyframe<TileId> const& keyframe) {
-	set_json_type(json, keyframe);
 	to_json(json["timestamp"], keyframe.timestamp);
 	to_json(json["tile"], keyframe.payload);
 }
