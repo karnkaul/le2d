@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include <app.hpp>
+#include <applet/tileset_editor.hpp>
 #include <klib/visitor.hpp>
 #include <log.hpp>
 #include <algorithm>
@@ -46,6 +47,7 @@ void App::run() {
 void App::create_factories() {
 	m_factories = {
 		Factory{.name = "Applet", .create = &create_applet<Applet>},
+		Factory{.name = "Tileset Editor", .create = &create_applet<TilesetEditor>},
 	};
 }
 
