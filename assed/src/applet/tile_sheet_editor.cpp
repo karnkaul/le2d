@@ -1,4 +1,4 @@
-#include <applet/tileset_editor.hpp>
+#include <applet/tile_sheet_editor.hpp>
 #include <klib/assert.hpp>
 #include <klib/fixed_string.hpp>
 #include <le2d/asset/loaders.hpp>
@@ -17,28 +17,28 @@ constexpr auto min_scale_v{0.1f};
 constexpr auto max_scale_v{10.0f};
 } // namespace
 
-TilesetEditor::TilesetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
+TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
 	m_quad.create();
 	m_quad.texture = &m_texture;
 }
 
-auto TilesetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
+auto TileSheetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
 	m_cursor_pos = cursor;
 	return true;
 }
 
-auto TilesetEditor::consume_mouse_button(event::MouseButton const& button) -> bool {
+auto TileSheetEditor::consume_mouse_button(event::MouseButton const& button) -> bool {
 	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) { return false; }
 	on_click();
 	return true;
 }
 
-auto TilesetEditor::consume_scroll(event::Scroll const& scroll) -> bool {
+auto TileSheetEditor::consume_scroll(event::Scroll const& scroll) -> bool {
 	m_render_view.scale.x += scroll.y * m_zoom_speed; // y is adjusted in tick().
 	return true;
 }
 
-auto TilesetEditor::consume_drop(event::Drop const& drop) -> bool {
+auto TileSheetEditor::consume_drop(event::Drop const& drop) -> bool {
 	KLIB_ASSERT(!drop.paths.empty());
 	auto const& first_path = drop.paths.front();
 	auto uri = get_data_loader().get_uri(first_path);
@@ -56,7 +56,7 @@ auto TilesetEditor::consume_drop(event::Drop const& drop) -> bool {
 	return true;
 }
 
-void TilesetEditor::tick(kvf::Seconds const /*dt*/) {
+void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
@@ -73,7 +73,7 @@ void TilesetEditor::tick(kvf::Seconds const /*dt*/) {
 	inspect();
 }
 
-void TilesetEditor::render(Renderer& renderer) const {
+void TileSheetEditor::render(Renderer& renderer) const {
 	renderer.view = m_render_view;
 	m_quad.draw(renderer);
 
@@ -91,7 +91,7 @@ void TilesetEditor::render(Renderer& renderer) const {
 	renderer.view = {};
 }
 
-void TilesetEditor::inspect() {
+void TileSheetEditor::inspect() {
 	if (ImGui::Begin("Info")) {
 		ImGui::TextUnformatted(klib::FixedString<256>{"TileSheet: {}", m_uri.tile_sheet.get_string()}.c_str());
 		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
@@ -115,7 +115,7 @@ void TilesetEditor::inspect() {
 	ImGui::End();
 }
 
-void TilesetEditor::inspect_selected() {
+void TileSheetEditor::inspect_selected() {
 	auto const texture_size = m_texture.get_size();
 	auto& selected_tile = m_tiles.at(*m_selected_tile);
 	ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
@@ -125,7 +125,7 @@ void TilesetEditor::inspect_selected() {
 	}
 }
 
-void TilesetEditor::inspect_frame_config() {
+void TileSheetEditor::inspect_frame_config() {
 	auto color = m_frame_color.to_vec4();
 	if (ImGui::ColorEdit4("frame color", &color.x)) {
 		m_frame_color = color;
@@ -142,7 +142,7 @@ void TilesetEditor::inspect_frame_config() {
 	ImGui::DragFloat("frame width", &m_frame_width, 0.5f, 1.0f, 100.0f);
 }
 
-void TilesetEditor::try_load_json(Uri uri) {
+void TileSheetEditor::try_load_json(Uri uri) {
 	auto const json_type_name = get_data_loader().get_json_type_name(uri);
 	if (json_type_name == json_type_name_v<TileSet>) {
 		try_load_tileset(uri);
@@ -153,7 +153,7 @@ void TilesetEditor::try_load_json(Uri uri) {
 	}
 }
 
-void TilesetEditor::try_load_tilesheet(Uri uri) {
+void TileSheetEditor::try_load_tilesheet(Uri uri) {
 	auto loader = asset::TileSheetLoader{&get_context()};
 	auto texture_uri = Uri{};
 	auto tile_sheet = loader.load(uri, texture_uri);
@@ -171,7 +171,7 @@ void TilesetEditor::try_load_tilesheet(Uri uri) {
 	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
-void TilesetEditor::try_load_tileset(Uri const& uri) {
+void TileSheetEditor::try_load_tileset(Uri const& uri) {
 	auto loader = asset::TileSetLoader{&get_context()};
 	auto tile_set = loader.load(uri);
 	if (!tile_set) {
@@ -185,7 +185,7 @@ void TilesetEditor::try_load_tileset(Uri const& uri) {
 	log::info("loaded TileSet: '{}'", uri.get_string());
 }
 
-void TilesetEditor::try_load_texture(Uri uri) {
+void TileSheetEditor::try_load_texture(Uri uri) {
 	auto loader = asset::TextureLoader{&get_context()};
 	auto texture = loader.load(uri);
 	if (!texture) {
@@ -200,18 +200,18 @@ void TilesetEditor::try_load_texture(Uri uri) {
 	log::info("loaded Texture: '{}'", m_uri.texture.get_string());
 }
 
-void TilesetEditor::set_tiles(std::span<Tile const> tiles) {
+void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
 	m_tiles = {tiles.begin(), tiles.end()};
 	m_selected_tile.reset();
 }
 
-void TilesetEditor::set_texture(Texture texture) {
+void TileSheetEditor::set_texture(Texture texture) {
 	wait_idle();
 	m_texture = std::move(texture);
 	m_quad.create(m_texture.get_size());
 }
 
-auto TilesetEditor::create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect {
+auto TileSheetEditor::create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect {
 	auto tile_frame = drawable::LineRect{};
 	tile_frame.create(rect.size());
 	tile_frame.transform.position = rect.center();
@@ -219,7 +219,7 @@ auto TilesetEditor::create_tile_frame(kvf::Rect<> const& rect) const -> drawable
 	return tile_frame;
 }
 
-void TilesetEditor::setup_tile_frames() {
+void TileSheetEditor::setup_tile_frames() {
 	glm::vec2 const texture_size = m_texture.get_size();
 	m_tile_frames.clear();
 	m_tile_frames.reserve(m_tiles.size());
@@ -229,13 +229,13 @@ void TilesetEditor::setup_tile_frames() {
 	}
 }
 
-void TilesetEditor::generate_tiles() {
+void TileSheetEditor::generate_tiles() {
 	m_tiles = util::divide_into_tiles(m_split_dims.y, m_split_dims.x);
 	setup_tile_frames();
 	m_selected_tile.reset();
 }
 
-void TilesetEditor::on_click() {
+void TileSheetEditor::on_click() {
 	auto const cursor_pos = m_cursor_pos / m_render_view.scale;
 	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
 		if (!tile_frame.bounding_rect().contains(cursor_pos)) { continue; }

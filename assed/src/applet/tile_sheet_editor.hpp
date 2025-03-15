@@ -5,9 +5,9 @@
 #include <optional>
 
 namespace le::assed {
-class TilesetEditor : public Applet {
+class TileSheetEditor : public Applet {
   public:
-	explicit TilesetEditor(gsl::not_null<ServiceLocator const*> services);
+	explicit TileSheetEditor(gsl::not_null<ServiceLocator const*> services);
 
   private:
 	auto consume_cursor_move(glm::vec2 cursor) -> bool final;
