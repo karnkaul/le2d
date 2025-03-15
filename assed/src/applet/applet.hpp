@@ -28,12 +28,13 @@ class Applet : public input::Listener {
 
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 
-	void raise_error(std::string message, std::string title = "Error!");
+	void raise_dialog(std::string message, std::string title);
+	void raise_error(std::string message) { raise_dialog(std::move(message), "Error!"); }
 
 	SaveModal m_save_modal{};
 
   private:
-	struct ErrorModal {
+	struct Dialog {
 		std::string title{};
 		std::string message{};
 
@@ -49,7 +50,7 @@ class Applet : public input::Listener {
 	virtual void populate_menu_bar() {}
 
 	gsl::not_null<ServiceLocator const*> m_services;
-	ErrorModal m_error_modal{};
+	Dialog m_dialog{};
 
 	friend class App;
 };

@@ -284,5 +284,6 @@ void TileSheetEditor::on_save() {
 		return;
 	}
 	log::info("saved TileSheet: '{}'", m_save_modal.uri.as_view());
+	raise_dialog(std::format("Saved {}", m_save_modal.uri.as_view()), "Success");
 }
 } // namespace le::assed

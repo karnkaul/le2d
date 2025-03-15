@@ -22,17 +22,17 @@ auto Applet::load_string(Uri const& uri) const -> std::string { return load<std:
 
 auto Applet::load_json(Uri const& uri) const -> dj::Json { return load<dj::Json>(get_data_loader(), uri, &IDataLoader::load_json); }
 
-void Applet::raise_error(std::string message, std::string title) {
-	m_error_modal = ErrorModal{.title = std::move(title), .message = std::move(message)};
-	ImGui::OpenPopup(m_error_modal.title.c_str());
+void Applet::raise_dialog(std::string message, std::string title) {
+	m_dialog = Dialog{.title = std::move(title), .message = std::move(message)};
+	ImGui::OpenPopup(m_dialog.title.c_str());
 }
 
 void Applet::do_tick(kvf::Seconds const dt) {
 	tick(dt);
-	m_error_modal();
+	m_dialog();
 }
 
-void Applet::ErrorModal::operator()() const {
+void Applet::Dialog::operator()() const {
 	if (imcpp::begin_modal(title.c_str())) {
 		ImGui::TextUnformatted(message.c_str());
 		ImGui::Separator();
