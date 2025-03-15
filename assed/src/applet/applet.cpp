@@ -12,7 +12,10 @@ auto load(IDataLoader const& data_loader, Uri const& uri, F func) -> T {
 }
 } // namespace
 
-Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_services(services) { services->get<input::Dispatch>().attach(this); }
+Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_services(services) {
+	services->get<input::Dispatch>().attach(this);
+	m_save_modal.root_dir = services->get<FileDataLoader>().get_root_dir();
+}
 
 auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> {
 	return load<std::vector<std::byte>>(get_data_loader(), uri, &IDataLoader::load_bytes);

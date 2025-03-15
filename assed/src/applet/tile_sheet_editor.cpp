@@ -107,10 +107,7 @@ void TileSheetEditor::populate_file_menu() {
 		m_uri = {};
 	}
 
-	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) {
-		m_save_modal.uri.set_text(m_uri.tile_sheet.get_string());
-		m_save_modal.set_open = true;
-	}
+	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) { m_save_modal.set_open(m_uri.tile_sheet.get_string()); }
 }
 
 void TileSheetEditor::inspect() {
@@ -278,12 +275,12 @@ void TileSheetEditor::on_save() {
 	auto tile_set = TileSet{};
 	tile_set.set_tiles(m_tiles);
 	to_json(json["tile_set"], tile_set);
-	auto const uri = std::string{m_save_modal.uri.as_view()};
+	auto const uri = std::string{m_save_modal.uri_input.as_view()};
 	if (!get_data_loader().save_string(to_string(json), uri)) {
-		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri.as_view()));
+		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri_input.as_view()));
 		return;
 	}
-	log::info("saved TileSheet: '{}'", m_save_modal.uri.as_view());
-	raise_dialog(std::format("Saved {}", m_save_modal.uri.as_view()), "Success");
+	log::info("saved TileSheet: '{}'", m_save_modal.uri_input.as_view());
+	raise_dialog(std::format("Saved {}", m_save_modal.uri_input.as_view()), "Success");
 }
 } // namespace le::assed
