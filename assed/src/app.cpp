@@ -32,7 +32,7 @@ void App::run() {
 	m_service_locator.bind(&m_input_dispatch);
 	create_factories();
 
-	m_applet = m_factories.front().create(&m_service_locator);
+	set_applet(m_factories.front());
 
 	while (m_context.is_running()) {
 		m_context.next_frame();
@@ -46,7 +46,7 @@ void App::run() {
 
 void App::create_factories() {
 	m_factories = {
-		Factory{.name = "Tileset Editor", .create = &create_applet<TileSheetEditor>},
+		Factory{.name = "TileSheet Editor", .create = &create_applet<TileSheetEditor>},
 	};
 }
 
@@ -61,9 +61,7 @@ void App::swap_applet() {
 		return;
 	}
 
-	m_blocker.get().waitIdle();
-	m_applet = it->create(&m_service_locator);
-	log::info("loaded '{}'", name);
+	set_applet(*it);
 }
 
 void App::handle_events() {
@@ -116,5 +114,12 @@ void App::applet_menu() {
 		}
 		ImGui::EndMenu();
 	}
+}
+
+void App::set_applet(Factory const& factory) {
+	m_blocker.get().waitIdle();
+	m_applet = factory.create(&m_service_locator);
+	m_context.get_render_window().set_title(factory.name);
+	log::info("loaded '{}'", factory.name.as_view());
 }
 } // namespace le::assed

@@ -38,6 +38,8 @@ class App : public klib::Pinned {
 	void file_menu();
 	void applet_menu();
 
+	void set_applet(Factory const& factory);
+
 	FileDataLoader m_data_loader;
 
 	Context m_context;
