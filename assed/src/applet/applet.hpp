@@ -17,6 +17,13 @@ class Applet : public input::Listener {
 	explicit Applet(gsl::not_null<ServiceLocator const*> services);
 
   protected:
+	virtual void setup() {}
+	virtual void tick(kvf::Seconds dt) = 0;
+	virtual void render(Renderer& renderer) const = 0;
+
+	virtual void populate_file_menu() {}
+	virtual void populate_menu_bar() {}
+
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
 	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
@@ -41,13 +48,7 @@ class Applet : public input::Listener {
 		void operator()() const;
 	};
 
-	virtual void setup() {}
 	virtual void do_tick(kvf::Seconds dt);
-	virtual void tick(kvf::Seconds /*dt*/) {}
-	virtual void render(Renderer& /*renderer*/) const {}
-
-	virtual void populate_file_menu() {}
-	virtual void populate_menu_bar() {}
 
 	gsl::not_null<ServiceLocator const*> m_services;
 	Dialog m_dialog{};

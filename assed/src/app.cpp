@@ -46,7 +46,7 @@ void App::run() {
 
 void App::create_factories() {
 	m_factories = {
-		Factory{.name = "TileSheet Editor", .create = &create_applet<TileSheetEditor>},
+		Factory{.name = TileSheetEditor::name_v, .create = &create_applet<TileSheetEditor>},
 	};
 }
 
@@ -119,6 +119,7 @@ void App::applet_menu() {
 void App::set_applet(Factory const& factory) {
 	m_blocker.get().waitIdle();
 	m_applet = factory.create(&m_service_locator);
+	m_applet->setup();
 	m_context.get_render_window().set_title(factory.name);
 	log::info("loaded '{}'", factory.name.as_view());
 }

@@ -7,6 +7,8 @@
 namespace le::assed {
 class TileSheetEditor : public Applet {
   public:
+	static constexpr klib::CString name_v{"TileSheet Editor"};
+
 	explicit TileSheetEditor(gsl::not_null<ServiceLocator const*> services);
 
   private:
