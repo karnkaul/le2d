@@ -3,7 +3,7 @@
 #include <kvf/image_bitmap.hpp>
 #include <kvf/util.hpp>
 #include <le2d/texture.hpp>
-#include <algorithm>
+#include <le2d/util.hpp>
 
 namespace le {
 namespace {
@@ -19,7 +19,7 @@ constexpr auto texture_ici() {
 
 Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap)
 	: m_render_device(render_device), m_image(render_device, texture_ici(), kvf::util::to_vk_extent(bitmap.size)) {
-	if (bitmap.bytes.empty() || bitmap.size.x <= 0 || bitmap.size.y <= 0) { bitmap = white_bitmap_v; }
+	if (bitmap.bytes.empty() || bitmap.size.x <= 0 || bitmap.size.y <= 0) { bitmap = util::white_bitmap_v; }
 	write(bitmap);
 }
 

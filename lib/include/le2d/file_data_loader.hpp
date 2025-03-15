@@ -12,6 +12,9 @@ class FileDataLoader : public IDataLoader {
 	auto load_spirv(std::vector<std::uint32_t>& out, Uri const& uri) const -> bool final;
 	auto load_string(std::string& out, Uri const& uri) const -> bool final;
 
+	[[nodiscard]] auto save_bytes(std::span<std::byte const> bytes, Uri const& uri) const -> bool;
+	[[nodiscard]] auto save_string(std::string_view text, Uri const& uri) const -> bool;
+
 	[[nodiscard]] auto get_root_dir() const -> std::string_view { return m_root_dir; }
 	auto set_root_dir(std::string_view root_dir) -> bool;
 

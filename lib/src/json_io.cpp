@@ -108,7 +108,10 @@ void le::from_json(dj::Json const& json, TileSet& tile_set) {
 void le::to_json(dj::Json& json, TileSet const& tile_set) {
 	set_json_type(json, tile_set);
 	auto const tiles = tile_set.get_tiles();
-	for (auto const& tile : tiles) { to_json(json.push_back({}), tile); }
+	if (!tiles.empty()) {
+		auto& out_tiles = json["tiles"];
+		for (auto const& tile : tiles) { to_json(out_tiles.push_back({}), tile); }
+	}
 }
 
 void le::from_json(dj::Json const& json, anim::Keyframe<Transform>& keyframe) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <djson/json.hpp>
 #include <le2d/anim/animation.hpp>
+#include <le2d/texture.hpp>
 #include <le2d/tile/tile_set.hpp>
 #include <le2d/uri.hpp>
 
@@ -10,6 +11,8 @@ constexpr auto json_type_name_v = std::string_view{};
 
 template <>
 inline constexpr auto json_type_name_v<TileSet> = std::string_view{"TileSet"};
+template <>
+inline constexpr auto json_type_name_v<TileSheet> = std::string_view{"TileSheet"};
 template <>
 inline constexpr auto json_type_name_v<anim::Timeline<Transform>> = std::string_view{"anim::Timeline<Transform>"};
 template <>
@@ -24,12 +27,22 @@ void set_json_type_name(dj::Json& json, std::string_view type_name);
 [[nodiscard]] auto json_type_name_match(dj::Json const& json, std::string_view type_name) -> bool;
 
 template <typename Type>
-auto is_json_type(dj::Json const& json, Type const& /*unused*/ = Type{}) -> bool {
+auto is_json_type(dj::Json const& json, Type const& /*unused*/) -> bool {
 	return json_type_name_match(json, json_type_name_v<Type>);
 }
 
 template <typename Type>
-void set_json_type(dj::Json& json, Type const& /*unused*/ = Type{}) {
+auto is_json_type(dj::Json const& json) -> bool {
+	return json_type_name_match(json, json_type_name_v<Type>);
+}
+
+template <typename Type>
+void set_json_type(dj::Json& json, Type const& /*unused*/) {
+	set_json_type_name(json, json_type_name_v<Type>);
+}
+
+template <typename Type>
+void set_json_type(dj::Json& json) {
 	set_json_type_name(json, json_type_name_v<Type>);
 }
 
