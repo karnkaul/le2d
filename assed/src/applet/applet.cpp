@@ -33,7 +33,7 @@ void Applet::do_tick(kvf::Seconds const dt) {
 }
 
 void Applet::ErrorModal::operator()() const {
-	if (ImGui::BeginPopupModal(title.c_str())) {
+	if (imcpp::begin_modal(title.c_str())) {
 		ImGui::TextUnformatted(message.c_str());
 		ImGui::Separator();
 		if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }

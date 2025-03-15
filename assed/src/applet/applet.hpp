@@ -8,6 +8,7 @@
 #include <le2d/renderer.hpp>
 #include <le2d/service_locator.hpp>
 #include <log.hpp>
+#include <save_modal.hpp>
 #include <gsl/pointers>
 
 namespace le::assed {
@@ -28,6 +29,8 @@ class Applet : public input::Listener {
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 
 	void raise_error(std::string message, std::string title = "Error!");
+
+	SaveModal m_save_modal{};
 
   private:
 	struct ErrorModal {

@@ -18,6 +18,8 @@ class TileSheetEditor : public Applet {
 	void tick(kvf::Seconds dt) final;
 	void render(Renderer& renderer) const final;
 
+	void populate_file_menu() final;
+
 	void inspect();
 	void inspect_selected();
 	void inspect_frame_config();
@@ -35,6 +37,7 @@ class TileSheetEditor : public Applet {
 	void generate_tiles();
 
 	void on_click();
+	void on_save();
 
 	Texture m_texture;
 	drawable::Quad m_quad{};

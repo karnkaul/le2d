@@ -34,4 +34,6 @@ class InputText : public klib::Polymorphic {
 
 	std::vector<char> m_buffer{};
 };
+
+[[nodiscard]] auto begin_modal(klib::CString label) -> bool;
 } // namespace le::assed::imcpp

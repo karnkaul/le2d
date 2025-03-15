@@ -31,8 +31,7 @@ constexpr auto to_mode(Vsync const vsync) {
 
 struct ResourcePool : IResourcePool {
 	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device)
-		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device, white_bitmap_v),
-		  m_blocker(render_device->get_device()) {}
+		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device), m_blocker(render_device->get_device()) {}
 
 	[[nodiscard]] auto allocate_buffer(vk::BufferUsageFlags const usage, vk::DeviceSize const size) -> kvf::vma::Buffer& final {
 		return buffers.allocate(usage, size);
@@ -209,15 +208,9 @@ auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Sha
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
-auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture {
-	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
-	return Texture{&m_pass.get_render_device(), bitmap};
-}
+auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
 
-auto Context::create_tilesheet(kvf::Bitmap bitmap) const -> TileSheet {
-	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
-	return TileSheet{&m_pass.get_render_device(), bitmap};
-}
+auto Context::create_tilesheet(kvf::Bitmap bitmap) const -> TileSheet { return TileSheet{&m_pass.get_render_device(), bitmap}; }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
 

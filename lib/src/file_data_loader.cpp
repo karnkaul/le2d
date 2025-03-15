@@ -2,6 +2,7 @@
 #include <le2d/file_data_loader.hpp>
 #include <log.hpp>
 #include <filesystem>
+#include <fstream>
 
 namespace le {
 namespace fs = std::filesystem;
@@ -22,6 +23,20 @@ auto FileDataLoader::load_bytes(std::vector<std::byte>& out, Uri const& uri) con
 auto FileDataLoader::load_spirv(std::vector<std::uint32_t>& out, Uri const& uri) const -> bool { return from_file(out, uri, &kvf::util::spirv_from_file); }
 
 auto FileDataLoader::load_string(std::string& out, Uri const& uri) const -> bool { return from_file(out, uri, &kvf::util::string_from_file); }
+
+auto FileDataLoader::save_bytes(std::span<std::byte const> bytes, Uri const& uri) const -> bool {
+	if (uri.get_string().empty()) { return false; }
+	auto file = std::ofstream{get_path(uri), std::ios::binary};
+	if (!file.is_open()) { return false; }
+	if (bytes.empty()) { return true; }
+	auto const* data = static_cast<void const*>(bytes.data());
+	return !!file.write(static_cast<char const*>(data), std::streamsize(bytes.size()));
+}
+
+auto FileDataLoader::save_string(std::string_view text, Uri const& uri) const -> bool {
+	auto const* data = static_cast<void const*>(text.data());
+	return save_bytes(std::span{static_cast<std::byte const*>(data), text.size()}, uri);
+}
 
 auto FileDataLoader::set_root_dir(std::string_view root_dir) -> bool {
 	if (root_dir.empty()) { root_dir = "."; }

@@ -20,6 +20,7 @@ constexpr auto max_scale_v{10.0f};
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
 	m_quad.create();
 	m_quad.texture = &m_texture;
+	m_save_modal.title = "Save TileSheet";
 }
 
 auto TileSheetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
@@ -71,6 +72,11 @@ void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
 	}
 
 	inspect();
+
+	switch (m_save_modal.update()) {
+	case SaveModal::Result::Save: on_save(); break;
+	default: break;
+	}
 }
 
 void TileSheetEditor::render(Renderer& renderer) const {
@@ -89,6 +95,22 @@ void TileSheetEditor::render(Renderer& renderer) const {
 	if (selected_tile != nullptr) { selected_tile->draw(renderer); }
 
 	renderer.view = {};
+}
+
+void TileSheetEditor::populate_file_menu() {
+	if (ImGui::MenuItem("New")) {
+		wait_idle();
+		m_texture.write(util::white_bitmap_v);
+		m_quad.create();
+		m_tiles.clear();
+		m_tile_frames.clear();
+		m_uri = {};
+	}
+
+	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) {
+		m_save_modal.uri.set_text(m_uri.tile_sheet.get_string());
+		m_save_modal.set_open = true;
+	}
 }
 
 void TileSheetEditor::inspect() {
@@ -247,5 +269,20 @@ void TileSheetEditor::on_click() {
 		}
 		break;
 	}
+}
+
+void TileSheetEditor::on_save() {
+	auto json = dj::Json{};
+	set_json_type<TileSheet>(json);
+	to_json(json["texture"], m_uri.texture.get_string());
+	auto tile_set = TileSet{};
+	tile_set.set_tiles(m_tiles);
+	to_json(json["tile_set"], tile_set);
+	auto const uri = std::string{m_save_modal.uri.as_view()};
+	if (!get_data_loader().save_string(to_string(json), uri)) {
+		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri.as_view()));
+		return;
+	}
+	log::info("saved TileSheet: '{}'", m_save_modal.uri.as_view());
 }
 } // namespace le::assed

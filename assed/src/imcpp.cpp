@@ -1,7 +1,8 @@
 #include <imcpp.hpp>
 #include <kvf/is_positive.hpp>
 
-namespace le::assed::imcpp {
+namespace le::assed {
+namespace imcpp {
 auto InputText::update(klib::CString const name, glm::vec2 const multi_size) -> bool {
 	static constexpr auto flags_v = ImGuiInputTextFlags_CallbackResize;
 	if (m_buffer.empty()) { m_buffer.resize(init_size_v, '\0'); }
@@ -35,4 +36,11 @@ void InputText::resize_buffer(ImGuiInputTextCallbackData& data) {
 	data.Buf = m_buffer.data();
 	data.BufDirty = true;
 }
-} // namespace le::assed::imcpp
+} // namespace imcpp
+
+auto imcpp::begin_modal(klib::CString const label) -> bool {
+	auto const center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2{0.5f, 0.5f});
+	return ImGui::BeginPopupModal(label.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+}
+} // namespace le::assed

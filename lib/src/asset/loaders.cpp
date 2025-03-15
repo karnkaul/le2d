@@ -99,11 +99,7 @@ auto TextureLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>>
 auto TileSheetLoader::load(Uri const& uri, Uri& out_texture_uri) const -> std::unique_ptr<Wrap<TileSheet>> {
 	static constexpr std::string_view type_v{"TileSheet"};
 	auto const json = load_json(*m_context, type_v, uri);
-	if (!json) { return {}; }
-
-	auto const tile_set_loader = TileSetLoader{m_context};
-	auto tile_set = tile_set_loader.load(json["tile_set"].as<std::string>());
-	if (!tile_set) { return {}; }
+	if (!is_json_type<TileSheet>(json)) { return {}; }
 
 	out_texture_uri = json["texture"].as<std::string>();
 	auto const bytes = load_bytes(*m_context, type_v, out_texture_uri);
@@ -112,7 +108,15 @@ auto TileSheetLoader::load(Uri const& uri, Uri& out_texture_uri) const -> std::u
 	auto tile_sheet = m_context->create_tilesheet();
 	if (!try_load(uri, type_v, tile_sheet, &TileSheet::load_and_write, bytes)) { return {}; }
 
-	tile_sheet.tile_set = std::move(tile_set->asset);
+	auto const& tile_set_json = json["tile_set"];
+	if (tile_set_json.is_string()) {
+		auto const tile_set_loader = TileSetLoader{m_context};
+		auto tile_set = tile_set_loader.load(json["tile_set"].as<std::string>());
+		if (tile_set) { tile_sheet.tile_set = std::move(tile_set->asset); }
+	} else {
+		from_json(tile_set_json, tile_sheet.tile_set);
+	}
+
 	return to_wrap(uri, type_v, std::move(tile_sheet));
 }
 
