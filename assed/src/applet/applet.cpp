@@ -21,4 +21,23 @@ auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> {
 auto Applet::load_string(Uri const& uri) const -> std::string { return load<std::string>(get_data_loader(), uri, &IDataLoader::load_string); }
 
 auto Applet::load_json(Uri const& uri) const -> dj::Json { return load<dj::Json>(get_data_loader(), uri, &IDataLoader::load_json); }
+
+void Applet::raise_error(std::string message, std::string title) {
+	m_error_modal = ErrorModal{.title = std::move(title), .message = std::move(message)};
+	ImGui::OpenPopup(m_error_modal.title.c_str());
+}
+
+void Applet::do_tick(kvf::Seconds const dt) {
+	tick(dt);
+	m_error_modal();
+}
+
+void Applet::ErrorModal::operator()() const {
+	if (ImGui::BeginPopupModal(title.c_str())) {
+		ImGui::TextUnformatted(message.c_str());
+		ImGui::Separator();
+		if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+		ImGui::EndPopup();
+	}
+}
 } // namespace le::assed

@@ -1,9 +1,10 @@
 #pragma once
 #include <imgui.h>
 #include <klib/base_types.hpp>
+#include <klib/c_string.hpp>
 #include <kvf/rect.hpp>
-#include <kvf/time.hpp>
 #include <array>
+#include <vector>
 
 namespace le::assed::imcpp {
 inline auto drag_tex_rect(kvf::UvRect& uv, glm::ivec2 const size) -> bool {
@@ -16,37 +17,21 @@ inline auto drag_tex_rect(kvf::UvRect& uv, glm::ivec2 const size) -> bool {
 	return modified;
 }
 
-class Modal : public klib::Polymorphic {
+class InputText : public klib::Polymorphic {
   public:
-	explicit Modal(std::string label, int const flags = 0) : m_label(std::move(label)), m_flags(flags) {}
+	static constexpr std::size_t init_size_v{64};
 
-	[[nodiscard]] auto is_open() const -> bool { return ImGui::IsPopupOpen(m_label.c_str()); }
-	void set_open() { m_open = true; }
-	void set_closed() { m_closed = true; }
-	static void close_current() { ImGui::CloseCurrentPopup(); }
+	auto update(klib::CString name, glm::vec2 multi_size = {}) -> bool;
+	void set_text(std::string_view text);
 
-	void tick(kvf::Seconds dt);
+	[[nodiscard]] auto as_view() const -> std::string_view { return m_buffer.data(); }
+	[[nodiscard]] auto as_span() const -> std::span<char const> { return m_buffer; }
 
   protected:
-	virtual void update() = 0;
+	auto on_callback(ImGuiInputTextCallbackData& data) -> int;
 
-	[[nodiscard]] auto get_dt() const -> kvf::Seconds { return m_dt; }
+	void resize_buffer(ImGuiInputTextCallbackData& data);
 
-	std::string m_label{};
-	int m_flags{};
-
-  private:
-	kvf::Seconds m_dt{};
-	bool m_open{};
-	bool m_closed{};
-};
-
-class ErrorModal : public Modal {
-  public:
-	explicit ErrorModal(std::string title = "Error!") : Modal(std::move(title)) {}
-
-	void update() override;
-
-	std::string message{};
+	std::vector<char> m_buffer{};
 };
 } // namespace le::assed::imcpp

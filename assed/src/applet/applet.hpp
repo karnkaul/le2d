@@ -1,6 +1,6 @@
 #pragma once
-#include <imgui.h>
 #include <djson/json.hpp>
+#include <imcpp.hpp>
 #include <kvf/time.hpp>
 #include <le2d/context.hpp>
 #include <le2d/file_data_loader.hpp>
@@ -27,8 +27,18 @@ class Applet : public input::Listener {
 
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 
+	void raise_error(std::string message, std::string title = "Error!");
+
   private:
+	struct ErrorModal {
+		std::string title{};
+		std::string message{};
+
+		void operator()() const;
+	};
+
 	virtual void setup() {}
+	virtual void do_tick(kvf::Seconds dt);
 	virtual void tick(kvf::Seconds /*dt*/) {}
 	virtual void render(Renderer& /*renderer*/) const {}
 
@@ -36,6 +46,7 @@ class Applet : public input::Listener {
 	virtual void populate_menu_bar() {}
 
 	gsl::not_null<ServiceLocator const*> m_services;
+	ErrorModal m_error_modal{};
 
 	friend class App;
 };

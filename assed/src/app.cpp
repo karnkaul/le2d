@@ -83,7 +83,7 @@ void App::handle_events() {
 
 void App::tick() {
 	auto const dt = m_delta_time.tick();
-	m_applet->tick(dt);
+	m_applet->do_tick(dt);
 
 	main_menu();
 }

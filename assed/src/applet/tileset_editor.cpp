@@ -56,7 +56,7 @@ auto TilesetEditor::consume_drop(event::Drop const& drop) -> bool {
 	return true;
 }
 
-void TilesetEditor::tick(kvf::Seconds const dt) {
+void TilesetEditor::tick(kvf::Seconds const /*dt*/) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
@@ -71,7 +71,6 @@ void TilesetEditor::tick(kvf::Seconds const dt) {
 	}
 
 	inspect();
-	m_error_modal.tick(dt);
 }
 
 void TilesetEditor::render(Renderer& renderer) const {
@@ -97,31 +96,19 @@ void TilesetEditor::inspect() {
 		ImGui::TextUnformatted(klib::FixedString<256>{"TileSheet: {}", m_uri.tile_sheet.get_string()}.c_str());
 		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
 		auto const size = m_texture.get_size();
-		ImGui::TextUnformatted(klib::FixedString{"{}x{}", size.x, size.y}.c_str());
-
-		ImGui::Separator();
-		auto color = m_frame_color.to_vec4();
-		if (ImGui::ColorEdit4("frame color", &color.x)) {
-			m_frame_color = color;
-			for (auto [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
-				if (m_selected_tile && *m_selected_tile == std::size_t(index)) { continue; }
-				tile_frame.tint = m_frame_color;
-			}
-		}
-		color = m_selected_color.to_vec4();
-		if (ImGui::ColorEdit4("selected color", &color.x)) {
-			m_selected_color = color;
-			if (m_selected_tile) { m_tile_frames.at(*m_selected_tile).tint = m_selected_color; }
-		}
-		ImGui::DragFloat("frame width", &m_frame_width, 0.5f, 1.0f, 100.0f);
+		ImGui::TextUnformatted(klib::FixedString{"dimensions: {}x{}", size.x, size.y}.c_str());
 
 		ImGui::Separator();
 		ImGui::DragInt2("cols x rows", &m_split_dims.x, 1.0f, 1, 100);
 		if (ImGui::Button("generate")) { generate_tiles(); }
 
-		ImGui::Separator();
-		if (m_selected_tile && ImGui::TreeNode("selected")) {
+		if (m_selected_tile && ImGui::TreeNodeEx("selected", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
 			inspect_selected();
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNodeEx("frame config", ImGuiTreeNodeFlags_Framed)) {
+			inspect_frame_config();
 			ImGui::TreePop();
 		}
 	}
@@ -136,6 +123,23 @@ void TilesetEditor::inspect_selected() {
 		auto const rect = uv_to_world(selected_tile.uv, texture_size);
 		m_tile_frames.at(*m_selected_tile) = create_tile_frame(rect);
 	}
+}
+
+void TilesetEditor::inspect_frame_config() {
+	auto color = m_frame_color.to_vec4();
+	if (ImGui::ColorEdit4("frame color", &color.x)) {
+		m_frame_color = color;
+		for (auto [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
+			if (m_selected_tile && *m_selected_tile == std::size_t(index)) { continue; }
+			tile_frame.tint = m_frame_color;
+		}
+	}
+	color = m_selected_color.to_vec4();
+	if (ImGui::ColorEdit4("selected color", &color.x)) {
+		m_selected_color = color;
+		if (m_selected_tile) { m_tile_frames.at(*m_selected_tile).tint = m_selected_color; }
+	}
+	ImGui::DragFloat("frame width", &m_frame_width, 0.5f, 1.0f, 100.0f);
 }
 
 void TilesetEditor::try_load_json(Uri uri) {
@@ -243,10 +247,5 @@ void TilesetEditor::on_click() {
 		}
 		break;
 	}
-}
-
-void TilesetEditor::raise_error(std::string message) {
-	m_error_modal.message = std::move(message);
-	m_error_modal.set_open();
 }
 } // namespace le::assed

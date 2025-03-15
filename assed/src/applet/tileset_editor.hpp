@@ -1,6 +1,5 @@
 #pragma once
 #include <applet/applet.hpp>
-#include <imcpp.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/texture.hpp>
 #include <optional>
@@ -21,6 +20,7 @@ class TilesetEditor : public Applet {
 
 	void inspect();
 	void inspect_selected();
+	void inspect_frame_config();
 
 	void try_load_json(Uri uri);
 	void try_load_tilesheet(Uri uri);
@@ -36,8 +36,6 @@ class TilesetEditor : public Applet {
 
 	void on_click();
 
-	void raise_error(std::string message);
-
 	Texture m_texture;
 	drawable::Quad m_quad{};
 	std::vector<Tile> m_tiles{};
@@ -50,8 +48,6 @@ class TilesetEditor : public Applet {
 		Uri tile_sheet{};
 	} m_uri{};
 	Transform m_render_view{};
-
-	imcpp::ErrorModal m_error_modal{};
 
 	float m_zoom_speed{0.1f};
 
