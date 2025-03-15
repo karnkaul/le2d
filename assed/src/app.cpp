@@ -46,7 +46,6 @@ void App::run() {
 
 void App::create_factories() {
 	m_factories = {
-		Factory{.name = "Applet", .create = &create_applet<Applet>},
 		Factory{.name = "Tileset Editor", .create = &create_applet<TileSheetEditor>},
 	};
 }
