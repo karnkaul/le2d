@@ -18,8 +18,8 @@ constexpr auto max_scale_v{10.0f};
 } // namespace
 
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
-	m_quad.create();
-	m_quad.texture = &m_texture;
+	m_drawer.quad.create();
+	m_drawer.quad.texture = &m_texture;
 	m_save_modal.title = "Save TileSheet";
 }
 
@@ -61,16 +61,6 @@ void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
-	if (m_selected_tile && *m_selected_tile >= m_tile_frames.size()) { m_selected_tile.reset(); }
-
-	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
-		if (m_selected_tile && *m_selected_tile == std::size_t(index)) {
-			tile_frame.tint = m_selected_color;
-			continue;
-		}
-		tile_frame.tint = m_frame_color;
-	}
-
 	inspect();
 
 	switch (m_save_modal.update()) {
@@ -81,19 +71,7 @@ void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
 
 void TileSheetEditor::render(Renderer& renderer) const {
 	renderer.view = m_render_view;
-	m_quad.draw(renderer);
-
-	renderer.set_line_width(m_frame_width);
-	drawable::LineRect const* selected_tile{};
-	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
-		if (m_selected_tile && *m_selected_tile == std::size_t(index)) {
-			selected_tile = &tile_frame;
-			continue;
-		}
-		tile_frame.draw(renderer);
-	}
-	if (selected_tile != nullptr) { selected_tile->draw(renderer); }
-
+	m_drawer.draw(renderer);
 	renderer.view = {};
 }
 
@@ -101,9 +79,9 @@ void TileSheetEditor::populate_file_menu() {
 	if (ImGui::MenuItem("New")) {
 		wait_idle();
 		m_texture.write(util::white_bitmap_v);
-		m_quad.create();
+		m_drawer.quad.create();
 		m_tiles.clear();
-		m_tile_frames.clear();
+		m_drawer.tile_frames.clear();
 		m_uri = {};
 		m_unsaved = false;
 		set_title();
@@ -123,13 +101,13 @@ void TileSheetEditor::inspect() {
 		ImGui::DragInt2("cols x rows", &m_split_dims.x, 1.0f, 1, 100);
 		if (ImGui::Button("generate")) { generate_tiles(); }
 
-		if (m_selected_tile && ImGui::TreeNodeEx("selected", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (m_drawer.selected_tile && ImGui::TreeNodeEx("selected", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
 			inspect_selected();
 			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNodeEx("frame config", ImGuiTreeNodeFlags_Framed)) {
-			inspect_frame_config();
+		if (ImGui::TreeNodeEx("frame style", ImGuiTreeNodeFlags_Framed)) {
+			m_drawer.inspect_style();
 			ImGui::TreePop();
 		}
 	}
@@ -138,30 +116,14 @@ void TileSheetEditor::inspect() {
 
 void TileSheetEditor::inspect_selected() {
 	auto const texture_size = m_texture.get_size();
-	auto& selected_tile = m_tiles.at(*m_selected_tile);
+	auto& selected_tile = m_tiles.at(*m_drawer.selected_tile);
 	ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
 	if (imcpp::drag_tex_rect(selected_tile.uv, m_texture.get_size())) {
 		auto const rect = uv_to_world(selected_tile.uv, texture_size);
-		m_tile_frames.at(*m_selected_tile) = create_tile_frame(rect);
+		m_drawer.tile_frames.at(*m_drawer.selected_tile) = m_drawer.create_tile_frame(rect);
+		m_drawer.update();
 		set_unsaved();
 	}
-}
-
-void TileSheetEditor::inspect_frame_config() {
-	auto color = m_frame_color.to_vec4();
-	if (ImGui::ColorEdit4("frame color", &color.x)) {
-		m_frame_color = color;
-		for (auto [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
-			if (m_selected_tile && *m_selected_tile == std::size_t(index)) { continue; }
-			tile_frame.tint = m_frame_color;
-		}
-	}
-	color = m_selected_color.to_vec4();
-	if (ImGui::ColorEdit4("selected color", &color.x)) {
-		m_selected_color = color;
-		if (m_selected_tile) { m_tile_frames.at(*m_selected_tile).tint = m_selected_color; }
-	}
-	ImGui::DragFloat("frame width", &m_frame_width, 0.5f, 1.0f, 100.0f);
 }
 
 void TileSheetEditor::try_load_json(Uri uri) {
@@ -186,7 +148,7 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 
 	set_tiles(tile_sheet->asset.tile_set.get_tiles());
 	set_texture(static_cast<Texture&&>(tile_sheet->asset));
-	setup_tile_frames();
+	m_drawer.setup(m_tiles, m_texture.get_size());
 	m_uri.texture = std::move(texture_uri);
 	m_uri.tile_sheet = std::move(uri);
 	m_unsaved = false;
@@ -204,7 +166,7 @@ void TileSheetEditor::try_load_tileset(Uri const& uri) {
 	}
 
 	set_tiles(tile_set->asset.get_tiles());
-	setup_tile_frames();
+	m_drawer.setup(m_tiles, m_texture.get_size());
 
 	log::info("loaded TileSet: '{}'", uri.get_string());
 }
@@ -218,7 +180,7 @@ void TileSheetEditor::try_load_texture(Uri uri) {
 	}
 
 	set_texture(std::move(texture->asset));
-	setup_tile_frames();
+	m_drawer.setup(m_tiles, m_texture.get_size());
 	m_uri.texture = std::move(uri);
 
 	log::info("loaded Texture: '{}'", m_uri.texture.get_string());
@@ -226,37 +188,18 @@ void TileSheetEditor::try_load_texture(Uri uri) {
 
 void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
 	m_tiles = {tiles.begin(), tiles.end()};
-	m_selected_tile.reset();
+	m_drawer.selected_tile.reset();
 }
 
 void TileSheetEditor::set_texture(Texture texture) {
 	wait_idle();
 	m_texture = std::move(texture);
-	m_quad.create(m_texture.get_size());
-}
-
-auto TileSheetEditor::create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect {
-	auto tile_frame = drawable::LineRect{};
-	tile_frame.create(rect.size());
-	tile_frame.transform.position = rect.center();
-	tile_frame.tint = m_frame_color;
-	return tile_frame;
-}
-
-void TileSheetEditor::setup_tile_frames() {
-	glm::vec2 const texture_size = m_texture.get_size();
-	m_tile_frames.clear();
-	m_tile_frames.reserve(m_tiles.size());
-	for (auto const& tile : m_tiles) {
-		auto const rect = uv_to_world(tile.uv, texture_size);
-		m_tile_frames.push_back(create_tile_frame(rect));
-	}
+	m_drawer.quad.create(m_texture.get_size());
 }
 
 void TileSheetEditor::generate_tiles() {
 	m_tiles = util::divide_into_tiles(m_split_dims.y, m_split_dims.x);
-	setup_tile_frames();
-	m_selected_tile.reset();
+	m_drawer.setup(m_tiles, m_texture.get_size());
 	set_unsaved();
 }
 
@@ -268,14 +211,15 @@ void TileSheetEditor::set_unsaved() {
 
 void TileSheetEditor::on_click() {
 	auto const cursor_pos = m_cursor_pos / m_render_view.scale;
-	for (auto const [index, tile_frame] : std::views::enumerate(m_tile_frames)) {
+	for (auto const [index, tile_frame] : std::views::enumerate(m_drawer.tile_frames)) {
 		if (!tile_frame.bounding_rect().contains(cursor_pos)) { continue; }
 
-		if (m_selected_tile && *m_selected_tile == std::size_t(index)) {
-			m_selected_tile.reset();
+		if (m_drawer.selected_tile && *m_drawer.selected_tile == std::size_t(index)) {
+			m_drawer.selected_tile.reset();
 		} else {
-			m_selected_tile = std::size_t(index);
+			m_drawer.selected_tile = std::size_t(index);
 		}
+		m_drawer.update();
 		break;
 	}
 }
