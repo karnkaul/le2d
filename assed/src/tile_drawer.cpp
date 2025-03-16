@@ -13,6 +13,7 @@ auto TileDrawer::create_tile_frame(kvf::Rect<> const& rect) const -> drawable::L
 }
 
 void TileDrawer::setup(std::span<Tile const> tiles, glm::vec2 const texture_size) {
+	quad.create(texture_size);
 	tile_frames.clear();
 	tile_frames.reserve(tiles.size());
 	for (auto const& tile : tiles) {

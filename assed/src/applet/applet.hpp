@@ -1,5 +1,6 @@
 #pragma once
 #include <djson/json.hpp>
+#include <file_drop.hpp>
 #include <imcpp.hpp>
 #include <kvf/time.hpp>
 #include <le2d/context.hpp>
@@ -23,8 +24,12 @@ class Applet : public input::Listener {
 	virtual void tick(kvf::Seconds dt) = 0;
 	virtual void render(Renderer& renderer) const = 0;
 
+	virtual void on_drop(FileDrop const& /*drop*/) {}
+
 	virtual void populate_file_menu() {}
 	virtual void populate_menu_bar() {}
+
+	auto consume_drop(event::Drop const& drop) -> bool override;
 
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
@@ -42,6 +47,9 @@ class Applet : public input::Listener {
 
 	void set_title() const { set_title({}); }
 	void set_title(std::string_view asset_uri) const;
+
+	FileDrop::Type m_drop_types{};
+	std::vector<std::string_view> m_json_types{};
 
 	SaveModal m_save_modal{};
 	bool m_unsaved{};

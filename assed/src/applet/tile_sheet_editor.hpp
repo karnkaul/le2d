@@ -15,17 +15,18 @@ class TileSheetEditor : public Applet {
 	auto consume_cursor_move(glm::vec2 cursor) -> bool final;
 	auto consume_mouse_button(event::MouseButton const& button) -> bool final;
 	auto consume_scroll(event::Scroll const& scroll) -> bool final;
-	auto consume_drop(event::Drop const& drop) -> bool final;
 
 	void tick(kvf::Seconds dt) final;
 	void render(Renderer& renderer) const final;
+
+	void on_drop(FileDrop const& drop) final;
 
 	void populate_file_menu() final;
 
 	void inspect();
 	void inspect_selected();
 
-	void try_load_json(Uri uri);
+	void try_load_json(FileDrop const& drop);
 	void try_load_tilesheet(Uri uri);
 	void try_load_tileset(Uri const& uri);
 	void try_load_texture(Uri uri);
