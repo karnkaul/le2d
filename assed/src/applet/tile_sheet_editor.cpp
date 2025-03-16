@@ -105,6 +105,8 @@ void TileSheetEditor::populate_file_menu() {
 		m_tiles.clear();
 		m_tile_frames.clear();
 		m_uri = {};
+		m_unsaved = false;
+		set_title();
 	}
 
 	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) { m_save_modal.set_open(m_uri.tile_sheet.get_string()); }
@@ -141,6 +143,7 @@ void TileSheetEditor::inspect_selected() {
 	if (imcpp::drag_tex_rect(selected_tile.uv, m_texture.get_size())) {
 		auto const rect = uv_to_world(selected_tile.uv, texture_size);
 		m_tile_frames.at(*m_selected_tile) = create_tile_frame(rect);
+		set_unsaved();
 	}
 }
 
@@ -184,8 +187,10 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 	set_tiles(tile_sheet->asset.tile_set.get_tiles());
 	set_texture(static_cast<Texture&&>(tile_sheet->asset));
 	setup_tile_frames();
-	m_uri.tile_sheet = std::move(uri);
 	m_uri.texture = std::move(texture_uri);
+	m_uri.tile_sheet = std::move(uri);
+	m_unsaved = false;
+	set_title(m_uri.tile_sheet.get_string());
 
 	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
@@ -252,6 +257,13 @@ void TileSheetEditor::generate_tiles() {
 	m_tiles = util::divide_into_tiles(m_split_dims.y, m_split_dims.x);
 	setup_tile_frames();
 	m_selected_tile.reset();
+	set_unsaved();
+}
+
+void TileSheetEditor::set_unsaved() {
+	if (m_unsaved) { return; }
+	m_unsaved = true;
+	set_title(m_uri.tile_sheet.get_string());
 }
 
 void TileSheetEditor::on_click() {
@@ -280,7 +292,9 @@ void TileSheetEditor::on_save() {
 		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri_input.as_view()));
 		return;
 	}
-	log::info("saved TileSheet: '{}'", m_save_modal.uri_input.as_view());
-	raise_dialog(std::format("Saved {}", m_save_modal.uri_input.as_view()), "Success");
+	m_uri.tile_sheet = std::string{m_save_modal.uri_input.as_view()};
+	log::info("saved TileSheet: '{}'", m_uri.tile_sheet.get_string());
+	raise_dialog(std::format("Saved {}", m_uri.tile_sheet.get_string()), "Success");
+	set_title(m_uri.tile_sheet.get_string());
 }
 } // namespace le::assed

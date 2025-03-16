@@ -119,8 +119,7 @@ void App::applet_menu() {
 void App::set_applet(Factory const& factory) {
 	m_blocker.get().waitIdle();
 	m_applet = factory.create(&m_service_locator);
-	m_applet->setup();
-	m_context.get_render_window().set_title(factory.name);
+	m_applet->do_setup();
 	log::info("loaded '{}'", factory.name.as_view());
 }
 } // namespace le::assed

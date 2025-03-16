@@ -30,9 +30,25 @@ void Applet::raise_dialog(std::string message, std::string title) {
 	ImGui::OpenPopup(m_dialog.title.c_str());
 }
 
+void Applet::do_setup() {
+	set_title();
+	setup();
+}
+
 void Applet::do_tick(kvf::Seconds const dt) {
 	tick(dt);
 	m_dialog();
+}
+
+void Applet::set_title(std::string_view uri, bool const unsaved) const {
+	auto const name = get_name();
+	if (uri.empty()) {
+		get_context().get_render_window().set_title(name);
+		return;
+	}
+	auto const suffix = unsaved ? std::string_view{"*"} : std::string_view{};
+	auto const title = std::format("{} - {}{}", name.as_view(), uri, suffix);
+	get_context().get_render_window().set_title(title.c_str());
 }
 
 void Applet::Dialog::operator()() const {

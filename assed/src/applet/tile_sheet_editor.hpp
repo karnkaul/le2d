@@ -9,6 +9,8 @@ class TileSheetEditor : public Applet {
   public:
 	static constexpr klib::CString name_v{"TileSheet Editor"};
 
+	[[nodiscard]] auto get_name() const -> klib::CString final { return name_v; }
+
 	explicit TileSheetEditor(gsl::not_null<ServiceLocator const*> services);
 
   private:
@@ -37,6 +39,7 @@ class TileSheetEditor : public Applet {
 	[[nodiscard]] auto create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect;
 	void setup_tile_frames();
 	void generate_tiles();
+	void set_unsaved();
 
 	void on_click();
 	void on_save();
