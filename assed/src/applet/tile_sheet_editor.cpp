@@ -21,6 +21,8 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) 
 	m_drawer.quad.create();
 	m_drawer.quad.texture = &m_texture;
 	m_save_modal.title = "Save TileSheet";
+	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
+	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<TileSheet>};
 }
 
 auto TileSheetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
@@ -36,24 +38,6 @@ auto TileSheetEditor::consume_mouse_button(event::MouseButton const& button) -> 
 
 auto TileSheetEditor::consume_scroll(event::Scroll const& scroll) -> bool {
 	m_render_view.scale.x += scroll.y * m_zoom_speed; // y is adjusted in tick().
-	return true;
-}
-
-auto TileSheetEditor::consume_drop(event::Drop const& drop) -> bool {
-	KLIB_ASSERT(!drop.paths.empty());
-	auto const& first_path = drop.paths.front();
-	auto uri = get_data_loader().get_uri(first_path);
-	if (uri.get_string().empty()) {
-		raise_error(std::format("Path is not in asset directory\n{}", first_path));
-		return true;
-	}
-
-	auto const extension = fs::path{uri.get_string()}.extension().string();
-	if (extension == ".json") {
-		try_load_json(std::move(uri));
-	} else {
-		try_load_texture(std::move(uri));
-	}
 	return true;
 }
 
@@ -73,6 +57,14 @@ void TileSheetEditor::render(Renderer& renderer) const {
 	renderer.view = m_render_view;
 	m_drawer.draw(renderer);
 	renderer.view = {};
+}
+
+void TileSheetEditor::on_drop(FileDrop const& drop) {
+	switch (drop.type) {
+	case FileDrop::Type::Image: try_load_texture(drop.uri); break;
+	case FileDrop::Type::Json: try_load_json(drop); break;
+	default: break;
+	}
 }
 
 void TileSheetEditor::populate_file_menu() {
@@ -126,14 +118,11 @@ void TileSheetEditor::inspect_selected() {
 	}
 }
 
-void TileSheetEditor::try_load_json(Uri uri) {
-	auto const json_type_name = get_data_loader().get_json_type_name(uri);
-	if (json_type_name == json_type_name_v<TileSet>) {
-		try_load_tileset(uri);
-	} else if (json_type_name == json_type_name_v<TileSheet>) {
-		try_load_tilesheet(std::move(uri));
-	} else {
-		raise_error(std::format("Unsupported asset: {}\n{}", json_type_name, uri.get_string()));
+void TileSheetEditor::try_load_json(FileDrop const& drop) {
+	if (drop.json_type == json_type_name_v<TileSet>) {
+		try_load_tileset(drop.uri);
+	} else if (drop.json_type == json_type_name_v<TileSheet>) {
+		try_load_tilesheet(drop.uri);
 	}
 }
 

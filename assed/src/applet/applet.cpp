@@ -17,6 +17,31 @@ Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_services(servi
 	m_save_modal.root_dir = services->get<FileDataLoader>().get_root_dir();
 }
 
+auto Applet::consume_drop(event::Drop const& drop) -> bool {
+	KLIB_ASSERT(!drop.paths.empty());
+	auto const& first_path = drop.paths.front();
+	auto const file_drop = FileDrop::create(get_data_loader(), first_path);
+	if (!file_drop) {
+		raise_error(std::format("Path is not in asset directory\n{}", first_path));
+		return true;
+	}
+
+	if ((file_drop.type & m_drop_types) != file_drop.type) {
+		raise_error(std::format("Unsupported file type: {}", file_drop.uri.get_string()));
+		return true;
+	}
+
+	if (file_drop.type == FileDrop::Type::Json) {
+		if (std::ranges::find(m_json_types, file_drop.json_type) == m_json_types.end()) {
+			raise_error(std::format("Unsupported asset type: {}", file_drop.json_type));
+			return true;
+		}
+	}
+
+	on_drop(file_drop);
+	return true;
+}
+
 auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> {
 	return load<std::vector<std::byte>>(get_data_loader(), uri, &IDataLoader::load_bytes);
 }
