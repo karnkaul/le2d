@@ -30,6 +30,17 @@ void Applet::raise_dialog(std::string message, std::string title) {
 	ImGui::OpenPopup(m_dialog.title.c_str());
 }
 
+void Applet::set_title(std::string_view const uri) const {
+	auto const name = get_name();
+	if (uri.empty()) {
+		get_context().get_render_window().set_title(name);
+		return;
+	}
+	auto const suffix = m_unsaved ? std::string_view{"*"} : std::string_view{};
+	auto const title = std::format("{} - {}{}", name.as_view(), uri, suffix);
+	get_context().get_render_window().set_title(title.c_str());
+}
+
 void Applet::do_setup() {
 	set_title();
 	setup();
@@ -38,17 +49,18 @@ void Applet::do_setup() {
 void Applet::do_tick(kvf::Seconds const dt) {
 	tick(dt);
 	m_dialog();
+	if (m_open_confirm_exit) {
+		m_open_confirm_exit = false;
+		ImGui::OpenPopup(ConfirmExitDialog::label_v.c_str());
+	}
+	auto const result = m_confirm_exit();
+	if (result == ConfirmExitDialog::Result::Quit) { get_context().shutdown(); }
 }
 
-void Applet::set_title(std::string_view uri, bool const unsaved) const {
-	auto const name = get_name();
-	if (uri.empty()) {
-		get_context().get_render_window().set_title(name);
-		return;
-	}
-	auto const suffix = unsaved ? std::string_view{"*"} : std::string_view{};
-	auto const title = std::format("{} - {}{}", name.as_view(), uri, suffix);
-	get_context().get_render_window().set_title(title.c_str());
+auto Applet::try_exit() -> bool {
+	if (!m_unsaved) { return true; }
+	m_open_confirm_exit = true;
+	return false;
 }
 
 void Applet::Dialog::operator()() const {
@@ -58,5 +70,24 @@ void Applet::Dialog::operator()() const {
 		if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
 		ImGui::EndPopup();
 	}
+}
+
+auto Applet::ConfirmExitDialog::operator()() const -> Result {
+	auto ret = Result::None;
+	if (imcpp::begin_modal(label_v.c_str())) {
+		ImGui::TextUnformatted("There are unsaved changes. Exit?");
+		ImGui::Separator();
+		if (ImGui::Button("Exit")) {
+			ret = Result::Quit;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel")) {
+			ret = Result::Cancel;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+	return ret;
 }
 } // namespace le::assed

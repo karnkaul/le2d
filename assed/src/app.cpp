@@ -68,6 +68,7 @@ void App::handle_events() {
 	auto& dispatch = m_input_dispatch;
 	auto const fb_size = m_context.framebuffer_size();
 	auto const visitor = klib::SubVisitor{
+		[this](event::WindowClose) { try_exit(); },
 		[&dispatch, fb_size](event::CursorPos const& cursor) { dispatch.on_cursor_move(cursor.normalized.to_target(fb_size)); },
 		[&dispatch](event::Codepoint const codepoint) { dispatch.on_codepoint(codepoint); },
 		[&dispatch](event::Key const& key) { dispatch.on_key(key); },
@@ -102,7 +103,7 @@ void App::file_menu() {
 	if (ImGui::BeginMenu("File")) {
 		m_applet->populate_file_menu();
 		ImGui::Separator();
-		if (ImGui::MenuItem("Exit")) { m_context.shutdown(); }
+		if (ImGui::MenuItem("Exit")) { try_exit(); }
 		ImGui::EndMenu();
 	}
 }
@@ -121,5 +122,13 @@ void App::set_applet(Factory const& factory) {
 	m_applet = factory.create(&m_service_locator);
 	m_applet->do_setup();
 	log::info("loaded '{}'", factory.name.as_view());
+}
+
+void App::try_exit() {
+	if (!m_applet->try_exit()) {
+		m_context.cancel_window_close();
+	} else {
+		m_context.shutdown();
+	}
 }
 } // namespace le::assed

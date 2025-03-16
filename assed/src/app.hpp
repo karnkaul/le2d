@@ -40,6 +40,8 @@ class App : public klib::Pinned {
 
 	void set_applet(Factory const& factory);
 
+	void try_exit();
+
 	FileDataLoader m_data_loader;
 
 	Context m_context;

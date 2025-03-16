@@ -177,6 +177,8 @@ auto Context::set_vsync(Vsync const vsync) -> bool {
 	return m_window.get_render_device().set_present_mode(to_mode(vsync));
 }
 
+void Context::cancel_window_close() { m_window.cancel_close(); }
+
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window.next_frame();
 	static_cast<ResourcePool*>(m_resource_pool.get())->next_frame(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
