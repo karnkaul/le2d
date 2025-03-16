@@ -6,12 +6,9 @@
 #include <le2d/json_io.hpp>
 #include <le2d/util.hpp>
 #include <algorithm>
-#include <filesystem>
 #include <ranges>
 
 namespace le::assed {
-namespace fs = std::filesystem;
-
 namespace {
 constexpr auto min_scale_v{0.1f};
 constexpr auto max_scale_v{10.0f};
