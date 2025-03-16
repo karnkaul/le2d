@@ -17,6 +17,8 @@ class Applet : public input::Listener {
 	explicit Applet(gsl::not_null<ServiceLocator const*> services);
 
   protected:
+	[[nodiscard]] virtual auto get_name() const -> klib::CString = 0;
+
 	virtual void setup() {}
 	virtual void tick(kvf::Seconds dt) = 0;
 	virtual void render(Renderer& renderer) const = 0;
@@ -38,7 +40,11 @@ class Applet : public input::Listener {
 	void raise_dialog(std::string message, std::string title);
 	void raise_error(std::string message) { raise_dialog(std::move(message), "Error!"); }
 
+	void set_title() const { set_title({}); }
+	void set_title(std::string_view asset_uri) const;
+
 	SaveModal m_save_modal{};
+	bool m_unsaved{};
 
   private:
 	struct Dialog {
@@ -48,10 +54,22 @@ class Applet : public input::Listener {
 		void operator()() const;
 	};
 
-	virtual void do_tick(kvf::Seconds dt);
+	struct ConfirmExitDialog {
+		static constexpr klib::CString label_v{"Confirm Exit"};
+
+		enum class Result : std::int8_t { None, Quit, Cancel };
+
+		auto operator()() const -> Result;
+	};
+
+	void do_setup();
+	void do_tick(kvf::Seconds dt);
+	[[nodiscard]] auto try_exit() -> bool;
 
 	gsl::not_null<ServiceLocator const*> m_services;
 	Dialog m_dialog{};
+	ConfirmExitDialog m_confirm_exit{};
+	bool m_open_confirm_exit{};
 
 	friend class App;
 };

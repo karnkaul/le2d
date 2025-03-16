@@ -77,6 +77,8 @@ auto RenderWindow::is_open() const -> bool { return glfwWindowShouldClose(m_wind
 
 void RenderWindow::set_closing() { glfwSetWindowShouldClose(m_window.get(), GLFW_TRUE); }
 
+void RenderWindow::cancel_close() { glfwSetWindowShouldClose(m_window.get(), GLFW_FALSE); }
+
 auto RenderWindow::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 
 auto RenderWindow::next_frame() -> vk::CommandBuffer {

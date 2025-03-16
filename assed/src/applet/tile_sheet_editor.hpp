@@ -1,13 +1,13 @@
 #pragma once
 #include <applet/applet.hpp>
-#include <le2d/drawable/shape.hpp>
-#include <le2d/texture.hpp>
-#include <optional>
+#include <tile_drawer.hpp>
 
 namespace le::assed {
 class TileSheetEditor : public Applet {
   public:
 	static constexpr klib::CString name_v{"TileSheet Editor"};
+
+	[[nodiscard]] auto get_name() const -> klib::CString final { return name_v; }
 
 	explicit TileSheetEditor(gsl::not_null<ServiceLocator const*> services);
 
@@ -24,7 +24,6 @@ class TileSheetEditor : public Applet {
 
 	void inspect();
 	void inspect_selected();
-	void inspect_frame_config();
 
 	void try_load_json(Uri uri);
 	void try_load_tilesheet(Uri uri);
@@ -34,18 +33,15 @@ class TileSheetEditor : public Applet {
 	void set_tiles(std::span<Tile const> tiles);
 	void set_texture(Texture texture);
 
-	[[nodiscard]] auto create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect;
-	void setup_tile_frames();
 	void generate_tiles();
+	void set_unsaved();
 
 	void on_click();
 	void on_save();
 
 	Texture m_texture;
-	drawable::Quad m_quad{};
+	TileDrawer m_drawer{};
 	std::vector<Tile> m_tiles{};
-	std::vector<drawable::LineRect> m_tile_frames{};
-	std::optional<std::size_t> m_selected_tile{};
 	glm::vec2 m_cursor_pos{};
 
 	struct {
@@ -57,8 +53,5 @@ class TileSheetEditor : public Applet {
 	float m_zoom_speed{0.1f};
 
 	glm::ivec2 m_split_dims{1, 1};
-	kvf::Color m_frame_color{kvf::white_v};
-	kvf::Color m_selected_color{kvf::green_v};
-	float m_frame_width{2.0f};
 };
 } // namespace le::assed
