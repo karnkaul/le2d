@@ -81,7 +81,7 @@ void FlipbookEditor::inspect() {
 			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNodeEx("playback", ImGuiTreeNodeFlags_Framed)) {
+		if (ImGui::TreeNodeEx("Timeline", ImGuiTreeNodeFlags_Framed)) {
 			inspect_timeline();
 			ImGui::TreePop();
 		}
@@ -157,7 +157,7 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	m_generate.select_tiles.entries.clear();
 	m_generate.select_tiles.entries.reserve(tiles.size());
 	for (auto const& tile : tiles) {
-		auto tile_entry = TileEntry{
+		auto tile_entry = imcpp::MultiSelect::Entry{
 			.label = std::format("{}", std::to_underlying(tile.id)),
 			.is_selected = true,
 		};
@@ -166,9 +166,9 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	m_generate.select_tiles.sync_to_selection();
 
 	m_tile_drawer.setup(m_tile_sheet.tile_set.get_tiles(), m_tile_sheet.get_size());
-	m_uri.tile_sheet = std::move(uri);
 	m_sprite.set_tile(&m_tile_sheet, TileId{1});
 
+	m_uri.tile_sheet = std::move(uri);
 	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
@@ -181,13 +181,13 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 	}
 
 	m_animation = std::move(animation->asset);
-	m_uri.animation = std::move(uri);
 	m_animator.set_animation(&m_animation);
 	m_generate.duration = m_animation.get_timeline().duration.count();
 	m_unsaved = false;
 	m_paused = false;
-	set_title(m_uri.animation.get_string());
 
+	m_uri.animation = std::move(uri);
+	set_title(m_uri.animation.get_string());
 	log::info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
 }
 
@@ -212,6 +212,7 @@ void FlipbookEditor::generate_timeline() {
 	}
 	m_animation.set_timeline(std::move(timeline));
 	m_animator.set_animation(&m_animation);
+
 	m_unsaved = true;
 	m_paused = false;
 	if (m_uri.animation.get_string().empty()) { m_uri.animation = "untitled_flipbook.json"; }

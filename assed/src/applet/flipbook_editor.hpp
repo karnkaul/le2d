@@ -15,8 +15,6 @@ class FlipbookEditor : public Applet {
 	explicit FlipbookEditor(gsl::not_null<ServiceLocator const*> services);
 
   private:
-	using TileEntry = imcpp::MultiSelect::Entry;
-
 	enum class Display : std::int8_t { TileSheet, Sprite, COUNT_ };
 	static constexpr auto display_str_v = klib::EnumArray<Display, std::string_view>{"TileSheet", "Sprite"};
 
