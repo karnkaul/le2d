@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include <app.hpp>
+#include <applet/flipbook_editor.hpp>
 #include <applet/tile_sheet_editor.hpp>
 #include <klib/visitor.hpp>
 #include <log.hpp>
@@ -47,6 +48,7 @@ void App::run() {
 void App::create_factories() {
 	m_factories = {
 		Factory{.name = TileSheetEditor::name_v, .create = &create_applet<TileSheetEditor>},
+		Factory{.name = FlipbookEditor::name_v, .create = &create_applet<FlipbookEditor>},
 	};
 }
 
