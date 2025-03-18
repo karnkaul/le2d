@@ -3,19 +3,10 @@
 #include <klib/base_types.hpp>
 #include <klib/c_string.hpp>
 #include <kvf/rect.hpp>
-#include <array>
 #include <vector>
 
 namespace le::assed::imcpp {
-inline auto drag_tex_rect(kvf::UvRect& uv, glm::ivec2 const size) -> bool {
-	auto const tex_rect = static_cast<kvf::Rect<int>>(uv * size);
-	auto left_right = std::array{tex_rect.lt.x, tex_rect.rb.x};
-	auto top_bottom = std::array{tex_rect.lt.y, tex_rect.rb.y};
-	auto modified = ImGui::DragInt2("left-right", left_right.data(), 1.0f, 0, size.x);
-	modified |= ImGui::DragInt2("top-bottom", top_bottom.data(), 1.0f, 0, size.y);
-	if (modified) { uv = kvf::UvRect{.lt = {left_right[0], top_bottom[0]}, .rb = {left_right[1], top_bottom[1]}} / size; }
-	return modified;
-}
+auto drag_tex_rect(kvf::UvRect& uv, glm::ivec2 size) -> bool;
 
 class InputText : public klib::Polymorphic {
   public:
@@ -33,6 +24,20 @@ class InputText : public klib::Polymorphic {
 	void resize_buffer(ImGuiInputTextCallbackData& data);
 
 	std::vector<char> m_buffer{};
+};
+
+class MultiSelect {
+  public:
+	struct Entry {
+		std::string label{};
+		bool is_selected{};
+	};
+
+	void sync_to_selection();
+	void update(klib::CString label);
+
+	std::vector<Entry> entries{};
+	ImGuiSelectionBasicStorage selection{};
 };
 
 [[nodiscard]] auto begin_modal(klib::CString label) -> bool;
