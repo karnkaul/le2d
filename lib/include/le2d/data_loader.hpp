@@ -18,5 +18,6 @@ class IDataLoader : public klib::Polymorphic {
 	virtual auto load_string(std::string& out, Uri const& uri) const -> bool = 0;
 
 	auto load_json(dj::Json& out, Uri const& uri) const -> bool;
+	[[nodiscard]] auto get_json_type_name(Uri const& uri) const -> std::string;
 };
 } // namespace le

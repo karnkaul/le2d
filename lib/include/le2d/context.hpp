@@ -62,6 +62,8 @@ class Context {
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window.set_fullscreen(target); }
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window.set_windowed(size); }
 
+	void cancel_window_close();
+
 	auto next_frame() -> vk::CommandBuffer;
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
 	void present();

@@ -50,6 +50,7 @@ class TileSheetLoader : public Loader<TileSheet> {
   public:
 	using Loader::Loader;
 
+	[[nodiscard]] auto load(Uri const& uri, Uri& out_texture_uri) const -> std::unique_ptr<Wrap<TileSheet>>;
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSheet>> final;
 };
 
