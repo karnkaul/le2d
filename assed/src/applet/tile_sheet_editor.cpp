@@ -67,7 +67,7 @@ void TileSheetEditor::on_drop(FileDrop const& drop) {
 void TileSheetEditor::populate_file_menu() {
 	if (ImGui::MenuItem("New")) {
 		wait_idle();
-		m_texture.write(util::white_bitmap_v);
+		m_texture.overwrite(util::white_bitmap_v);
 		m_drawer.quad.create();
 		m_tiles.clear();
 		m_drawer.tile_frames.clear();

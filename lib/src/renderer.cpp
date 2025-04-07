@@ -39,7 +39,7 @@ auto write_view_proj(kvf::vma::Buffer& out, Transform const& view, glm::vec2 con
 	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
 	auto const mat_v = view.to_view();
 	auto const mat_vp = mat_p * mat_v;
-	return kvf::util::overwrite(out, mat_vp);
+	return out.resize_and_overwrite(mat_vp);
 }
 
 auto get_image_sampler(IResourcePool& resource_pool, ITexture const* texture) -> ImageSampler {
@@ -138,8 +138,8 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
 	auto& vbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
-	if (!kvf::util::overwrite(vbo, primitive.vertices)) { return false; }
-	if (!primitive.indices.empty() && !kvf::util::overwrite(vbo, primitive.indices, primitive.vertices.size_bytes())) { return false; }
+	if (!vbo.write_in_place(primitive.vertices)) { return false; }
+	if (!primitive.indices.empty() && !vbo.write_in_place(primitive.indices, primitive.vertices.size_bytes())) { return false; }
 
 	auto& view_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
 	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
@@ -147,10 +147,10 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	write_instances(m_resource_pool->scratch_buffer, instances);
 	auto& instances_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer.size());
-	if (!kvf::util::overwrite(instances_buffer, m_resource_pool->scratch_buffer)) { return false; }
+	if (!instances_buffer.resize_and_overwrite(m_resource_pool->scratch_buffer)) { return false; }
 
 	auto& user_ssbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
-	kvf::util::overwrite(user_ssbo, m_user_data.ssbo);
+	if (!user_ssbo.resize_and_overwrite(m_user_data.ssbo)) { return false; }
 
 	auto const texture = get_image_sampler(*m_resource_pool, primitive.texture);
 	auto const user_texture = get_image_sampler(*m_resource_pool, m_user_data.texture);
