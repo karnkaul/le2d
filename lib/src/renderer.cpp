@@ -14,37 +14,33 @@ struct Std430Instance {
 	glm::vec4 tint;
 };
 
-struct ImageSampler {
-	vk::ImageView image{};
-	vk::Sampler sampler{};
-};
-
-void write_instances(std::vector<std::byte>& out, std::span<RenderInstance const> instances) {
-	out.clear();
-	out.resize(instances.size() * sizeof(Std430Instance));
-	auto write_span = std::span{out};
-	for (auto const& in : instances) {
-		auto const instance = Std430Instance{
-			.transform = in.transform.to_model(),
-			.tint = in.tint.to_linear(),
+struct Vbo {
+	explicit Vbo(kvf::RenderDevice& render_device, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices)
+		: m_buffer(render_device.allocate_scratch_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer,
+														 vertices.size_bytes() + indices.size_bytes())),
+		  m_vertices(std::uint32_t(vertices.size())), m_indices(std::uint32_t(indices.size())) {
+		auto const writes = std::array{
+			kvf::BufferWrite{vertices},
+			kvf::BufferWrite{indices},
 		};
-		KLIB_ASSERT(write_span.size() >= sizeof(instance));
-		std::memcpy(write_span.data(), &instance, sizeof(instance));
-		write_span = write_span.subspan(sizeof(instance));
+		m_buffer.overwrite_contiguous(writes);
 	}
-}
 
-auto buffer_wds(vk::DescriptorBufferInfo const& dbi, vk::DescriptorType type, vk::DescriptorSet set, std::uint32_t binding) {
-	auto ret = vk::WriteDescriptorSet{};
-	ret.setBufferInfo(dbi).setDescriptorType(type).setDescriptorCount(1).setDstSet(set).setDstBinding(binding);
-	return ret;
-}
+	void draw(vk::CommandBuffer const m_cmd, std::uint32_t const instances) const {
+		m_cmd.bindVertexBuffers(0, m_buffer.get_buffer(), vk::DeviceSize{});
+		if (m_indices == 0) {
+			m_cmd.draw(m_vertices, instances, 0, 0);
+		} else {
+			m_cmd.bindIndexBuffer(m_buffer.get_buffer(), m_vertices * sizeof(Vertex), vk::IndexType::eUint32);
+			m_cmd.drawIndexed(m_indices, instances, 0, 0, 0);
+		}
+	}
 
-auto image_wds(vk::DescriptorImageInfo const& dii, vk::DescriptorSet set, std::uint32_t binding) {
-	auto ret = vk::WriteDescriptorSet{};
-	ret.setImageInfo(dii).setDescriptorType(vk::DescriptorType::eCombinedImageSampler).setDescriptorCount(1).setDstSet(set).setDstBinding(binding);
-	return ret;
-}
+  private:
+	kvf::vma::Buffer& m_buffer;
+	std::uint32_t m_vertices{};
+	std::uint32_t m_indices{};
+};
 
 constexpr auto triangle_count(std::size_t const vertices, std::size_t const indices, vk::PrimitiveTopology const topology) -> std::int64_t {
 	if (vertices == 0) { return 0; }
@@ -115,42 +111,23 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	if (!bind_shader(primitive.topology)) { return false; }
 
+	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
+	if (!allocate_sets(descriptor_sets)) { return false; }
+
 	auto& render_device = m_pass->get_render_device();
 
-	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
-	auto const set_layouts = m_resource_pool->get_set_layouts();
-	KLIB_ASSERT(set_layouts.size() == descriptor_sets.size());
-	if (!render_device.allocate_sets(descriptor_sets, set_layouts)) { return false; }
-
-	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
-	auto const vbo_writes = std::array{
-		kvf::BufferWrite{primitive.vertices},
-		kvf::BufferWrite{primitive.indices},
-	};
-	auto& vbo = render_device.allocate_scratch_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
-	vbo.overwrite_contiguous(vbo_writes);
-
-	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
-	auto const half_extent = 0.5f * render_area;
-	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
-	auto const mat_v = view.to_view();
-	auto const mat_vp = mat_p * mat_v;
-	auto const view_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eUniformBuffer, mat_vp);
-
-	write_instances(m_resource_pool->scratch_buffer, instances);
-	auto const instance_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer);
+	auto const vbo = Vbo{render_device, primitive.vertices, primitive.indices};
+	auto const view_info = write_view();
+	auto const instance_info = write_instances(instances);
+	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
 
 	auto const user_ssbo_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo);
-
-	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
 	auto const user_texture_info = m_resource_pool->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
-		buffer_wds(view_info, vk::DescriptorType::eUniformBuffer, descriptor_sets[0], 0),
-		buffer_wds(instance_info, vk::DescriptorType::eStorageBuffer, descriptor_sets[1], 0),
-		image_wds(texture_info, descriptor_sets[1], 1),
-		buffer_wds(user_ssbo_info, vk::DescriptorType::eStorageBuffer, descriptor_sets[2], 0),
-		image_wds(user_texture_info, descriptor_sets[2], 1),
+		kvf::util::ubo_write(&view_info, descriptor_sets[0], 0),		   kvf::util::ssbo_write(&instance_info, descriptor_sets[1], 0),
+		kvf::util::image_write(&texture_info, descriptor_sets[1], 1),	   kvf::util::ssbo_write(&user_ssbo_info, descriptor_sets[2], 0),
+		kvf::util::image_write(&user_texture_info, descriptor_sets[2], 1),
 	};
 	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
@@ -159,15 +136,7 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	m_cmd.setLineWidth(m_line_width);
 
 	m_cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->get_pipeline_layout(), 0, descriptor_sets, {});
-	m_cmd.bindVertexBuffers(0, vbo.get_buffer(), vk::DeviceSize{});
-	if (primitive.indices.empty()) {
-		auto const vertices = std::uint32_t(primitive.vertices.size());
-		m_cmd.draw(vertices, std::uint32_t(instances.size()), 0, 0);
-	} else {
-		auto const indices = std::uint32_t(primitive.indices.size());
-		m_cmd.bindIndexBuffer(vbo.get_buffer(), primitive.vertices.size_bytes(), vk::IndexType::eUint32);
-		m_cmd.drawIndexed(indices, std::uint32_t(instances.size()), 0, 0, 0);
-	}
+	vbo.draw(m_cmd, std::uint32_t(instances.size()));
 	++m_stats.draw_calls;
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
 
@@ -202,5 +171,36 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 	m_pipeline = pipeline;
 
 	return true;
+}
+
+auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool {
+	auto const set_layouts = m_resource_pool->get_set_layouts();
+	KLIB_ASSERT(set_layouts.size() == out_sets.size());
+	return m_pass->get_render_device().allocate_sets(out_sets, set_layouts);
+}
+
+auto Renderer::write_view() const -> vk::DescriptorBufferInfo {
+	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
+	auto const half_extent = 0.5f * render_area;
+	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
+	auto const mat_v = view.to_view();
+	auto const mat_vp = mat_p * mat_v;
+	return m_pass->get_render_device().scratch_descriptor_buffer(vk::BufferUsageFlagBits::eUniformBuffer, mat_vp);
+}
+
+auto Renderer::write_instances(std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo {
+	m_resource_pool->scratch_buffer.clear();
+	m_resource_pool->scratch_buffer.resize(instances.size() * sizeof(Std430Instance));
+	auto write_span = std::span{m_resource_pool->scratch_buffer};
+	for (auto const& in : instances) {
+		auto const instance = Std430Instance{
+			.transform = in.transform.to_model(),
+			.tint = in.tint.to_linear(),
+		};
+		KLIB_ASSERT(write_span.size() >= sizeof(instance));
+		std::memcpy(write_span.data(), &instance, sizeof(instance));
+		write_span = write_span.subspan(sizeof(instance));
+	}
+	return m_pass->get_render_device().scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer);
 }
 } // namespace le

@@ -49,6 +49,10 @@ class Renderer {
   private:
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
+	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
+	[[nodiscard]] auto write_view() const -> vk::DescriptorBufferInfo;
+	[[nodiscard]] auto write_instances(std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo;
+
 	kvf::RenderPass* m_pass{};
 	IResourcePool* m_resource_pool{};
 	vk::CommandBuffer m_cmd{};
