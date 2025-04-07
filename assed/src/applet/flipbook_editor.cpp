@@ -28,11 +28,11 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 	m_render_view.scale.y = m_render_view.scale.x;
 
-	if (m_animator.has_animation()) {
+	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	if (m_animator.has_animation() && !tiles.empty()) {
 		auto const anim_dt = m_paused ? 0s : dt;
 		m_animator.tick(anim_dt);
 		auto const tile_id = m_animator.get_payload();
-		auto const tiles = m_tile_sheet.tile_set.get_tiles();
 		auto const it = std::ranges::lower_bound(tiles, tile_id, {}, [](Tile const& t) { return t.id; });
 		KLIB_ASSERT(it != tiles.end());
 		auto const index = std::size_t(std::distance(tiles.begin(), it));
