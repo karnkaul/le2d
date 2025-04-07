@@ -6,7 +6,8 @@
 #include <le2d/texture.hpp>
 
 namespace le {
-Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap) : m_render_device(render_device), m_texture(render_device, bitmap) {}
+Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap, vk::SamplerCreateInfo const& sampler)
+	: m_render_device(render_device), m_texture(render_device, bitmap, kvf::vma::TextureCreateInfo{.sampler = sampler}) {}
 
 auto Texture::get_size() const -> glm::ivec2 { return kvf::util::to_glm_vec<int>(m_texture.get_extent()); }
 

@@ -3,27 +3,26 @@
 #include <kvf/bitmap.hpp>
 #include <kvf/render_device_fwd.hpp>
 #include <kvf/vma.hpp>
-#include <le2d/texture_sampler.hpp>
 #include <le2d/tile/tile_set.hpp>
 #include <gsl/pointers>
 
 namespace le {
 class ITexture : public klib::Polymorphic {
   public:
-	using Sampler = TextureSampler;
-
 	[[nodiscard]] virtual auto get_image() const -> vk::ImageView = 0;
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
 
-	Sampler sampler{};
+	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
 };
 
 class Texture : public ITexture {
   public:
-	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {});
+	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}, vk::SamplerCreateInfo const& sampler = kvf::vma::sampler_ci_v);
 
 	[[nodiscard]] auto get_image() const -> vk::ImageView final { return m_texture.get_image().get_view(); }
 	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
+
+	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final { return m_texture.descriptor_info(); }
 
 	void overwrite(kvf::Bitmap const& bitmap);
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool;

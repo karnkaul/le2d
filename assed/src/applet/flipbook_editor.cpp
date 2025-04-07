@@ -47,7 +47,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 	inspect();
 
 	switch (m_save_modal.update()) {
-	case SaveModal::Result::Save: raise_error("not implemented"); break;
+	case SaveModal::Result::Save: on_save(); break;
 	default: break;
 	}
 }
@@ -65,6 +65,22 @@ void FlipbookEditor::render(Renderer& renderer) const {
 void FlipbookEditor::on_drop(FileDrop const& drop) {
 	KLIB_ASSERT(drop.type == FileDrop::Type::Json);
 	try_load_json(drop);
+}
+
+void FlipbookEditor::populate_file_menu() {
+	if (ImGui::MenuItem("New")) {
+		wait_idle();
+		m_tile_sheet = TileSheet{get_services().get<Context>().create_tilesheet()};
+		m_tile_drawer.quad.create();
+		m_tile_drawer.tile_frames.clear();
+		m_tile_drawer.selected_tile.reset();
+		m_animator.set_animation(nullptr);
+		m_uri = {};
+		m_unsaved = false;
+		set_title();
+	}
+
+	if (ImGui::MenuItem("Save...", nullptr, false, !m_animation.get_timeline().keyframes.empty())) { m_save_modal.set_open(m_uri.tile_sheet.get_string()); }
 }
 
 void FlipbookEditor::inspect() {
@@ -189,6 +205,21 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 	m_uri.animation = std::move(uri);
 	set_title(m_uri.animation.get_string());
 	log::info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
+}
+
+void FlipbookEditor::on_save() {
+	log::warn("not implemented");
+	auto json = dj::Json{};
+	to_json(json, m_animation);
+	auto const uri = std::string{m_save_modal.uri_input.as_view()};
+	if (!get_data_loader().save_string(to_string(json), uri)) {
+		raise_error(std::format("Failed to save Flipbook to: '{}'", m_save_modal.uri_input.as_view()));
+		return;
+	}
+	m_uri.animation = std::string{m_save_modal.uri_input.as_view()};
+	log::info("saved Flipbook: '{}'", m_uri.animation.get_string());
+	raise_dialog(std::format("Saved {}", m_uri.animation.get_string()), "Success");
+	set_title(m_uri.animation.get_string());
 }
 
 void FlipbookEditor::generate_timeline() {

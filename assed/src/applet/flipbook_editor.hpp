@@ -25,6 +25,8 @@ class FlipbookEditor : public Applet {
 
 	void on_drop(FileDrop const& drop) final;
 
+	void populate_file_menu() final;
+
 	void inspect();
 	void inspect_display();
 	void inspect_generate();
@@ -34,6 +36,7 @@ class FlipbookEditor : public Applet {
 	void try_load_json(FileDrop const& drop);
 	void try_load_tilesheet(Uri uri);
 	void try_load_animation(Uri uri);
+	void on_save();
 
 	void generate_timeline();
 

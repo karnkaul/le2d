@@ -34,22 +34,6 @@ void write_instances(std::vector<std::byte>& out, std::span<RenderInstance const
 	}
 }
 
-auto write_view_proj(kvf::vma::Buffer& out, Transform const& view, glm::vec2 const render_area) {
-	auto const half_extent = 0.5f * render_area;
-	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
-	auto const mat_v = view.to_view();
-	auto const mat_vp = mat_p * mat_v;
-	return out.resize_and_overwrite(mat_vp);
-}
-
-auto get_image_sampler(IResourcePool& resource_pool, ITexture const* texture) -> ImageSampler {
-	if (texture == nullptr) { texture = &resource_pool.get_white_texture(); }
-	return ImageSampler{
-		.image = texture->get_image(),
-		.sampler = resource_pool.allocate_sampler(texture->sampler),
-	};
-}
-
 auto buffer_wds(vk::DescriptorBufferInfo const& dbi, vk::DescriptorType type, vk::DescriptorSet set, std::uint32_t binding) {
 	auto ret = vk::WriteDescriptorSet{};
 	ret.setBufferInfo(dbi).setDescriptorType(type).setDescriptorCount(1).setDstSet(set).setDstBinding(binding);
@@ -131,46 +115,44 @@ auto Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	if (!bind_shader(primitive.topology)) { return false; }
 
+	auto& render_device = m_pass->get_render_device();
+
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
 	auto const set_layouts = m_resource_pool->get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == descriptor_sets.size());
-	if (!m_pass->get_render_device().allocate_sets(descriptor_sets, set_layouts)) { return false; }
+	if (!render_device.allocate_sets(descriptor_sets, set_layouts)) { return false; }
 
 	auto const vbo_size = primitive.vertices.size_bytes() + primitive.indices.size_bytes();
-	auto& vbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
-	if (!vbo.write_in_place(primitive.vertices)) { return false; }
-	if (!primitive.indices.empty() && !vbo.write_in_place(primitive.indices, primitive.vertices.size_bytes())) { return false; }
+	auto const vbo_writes = std::array{
+		kvf::BufferWrite{primitive.vertices},
+		kvf::BufferWrite{primitive.indices},
+	};
+	auto& vbo = render_device.allocate_scratch_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer, vbo_size);
+	vbo.overwrite_contiguous(vbo_writes);
 
-	auto& view_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eUniformBuffer, sizeof(glm::mat4));
 	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
-	if (!write_view_proj(view_buffer, view, render_area)) { return false; }
+	auto const half_extent = 0.5f * render_area;
+	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
+	auto const mat_v = view.to_view();
+	auto const mat_vp = mat_p * mat_v;
+	auto const view_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eUniformBuffer, mat_vp);
 
 	write_instances(m_resource_pool->scratch_buffer, instances);
-	auto& instances_buffer = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer.size());
-	if (!instances_buffer.resize_and_overwrite(m_resource_pool->scratch_buffer)) { return false; }
+	auto const instance_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer);
 
-	auto& user_ssbo = m_resource_pool->allocate_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo.size());
-	if (!user_ssbo.resize_and_overwrite(m_user_data.ssbo)) { return false; }
+	auto const user_ssbo_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo);
 
-	auto const texture = get_image_sampler(*m_resource_pool, primitive.texture);
-	auto const user_texture = get_image_sampler(*m_resource_pool, m_user_data.texture);
-
-	auto dbis = std::array<vk::DescriptorBufferInfo, 3>{};
-	auto diis = std::array<vk::DescriptorImageInfo, 2>{};
-	dbis[0].setBuffer(view_buffer.get_buffer()).setRange(view_buffer.get_size());
-	dbis[1].setBuffer(instances_buffer.get_buffer()).setRange(instances_buffer.get_size());
-	dbis[2].setBuffer(user_ssbo.get_buffer()).setRange(user_ssbo.get_size());
-	diis[0].setImageView(texture.image).setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal).setSampler(texture.sampler);
-	diis[1].setImageView(user_texture.image).setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal).setSampler(user_texture.sampler);
+	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
+	auto const user_texture_info = m_resource_pool->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
-		buffer_wds(dbis[0], vk::DescriptorType::eUniformBuffer, descriptor_sets[0], 0),
-		buffer_wds(dbis[1], vk::DescriptorType::eStorageBuffer, descriptor_sets[1], 0),
-		image_wds(diis[0], descriptor_sets[1], 1),
-		buffer_wds(dbis[2], vk::DescriptorType::eStorageBuffer, descriptor_sets[2], 0),
-		image_wds(diis[1], descriptor_sets[2], 1),
+		buffer_wds(view_info, vk::DescriptorType::eUniformBuffer, descriptor_sets[0], 0),
+		buffer_wds(instance_info, vk::DescriptorType::eStorageBuffer, descriptor_sets[1], 0),
+		image_wds(texture_info, descriptor_sets[1], 1),
+		buffer_wds(user_ssbo_info, vk::DescriptorType::eStorageBuffer, descriptor_sets[2], 0),
+		image_wds(user_texture_info, descriptor_sets[2], 1),
 	};
-	m_pass->get_render_device().get_device().updateDescriptorSets(descriptor_writes, {});
+	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
 	m_cmd.setViewport(0, m_viewport);
 	m_cmd.setScissor(0, m_scissor);

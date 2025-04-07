@@ -2,6 +2,7 @@
 #include <le2d/pipeline_fixed_state.hpp>
 #include <le2d/shader.hpp>
 #include <le2d/texture.hpp>
+#include <le2d/texture_sampler.hpp>
 #include <cstddef>
 #include <vector>
 
@@ -17,6 +18,11 @@ class IResourcePool : public klib::Polymorphic {
 
 	[[nodiscard]] virtual auto get_white_texture() const -> Texture const& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> Shader const& = 0;
+
+	[[nodiscard]] auto descriptor_image(ITexture const* texture) const -> vk::DescriptorImageInfo {
+		if (texture == nullptr) { texture = &get_white_texture(); }
+		return texture->descriptor_info();
+	}
 
 	std::vector<std::byte> scratch_buffer{};
 };
