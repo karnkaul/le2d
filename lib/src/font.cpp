@@ -14,7 +14,7 @@ auto FontAtlas::build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height
 
 	height = clamp(height);
 	auto ttf_atlas = face->build_atlas(std::uint32_t(height));
-	if (!m_texture.write(ttf_atlas.bitmap.bitmap())) { return false; }
+	m_texture.overwrite(ttf_atlas.bitmap.bitmap());
 
 	m_face = face;
 	m_height = height;

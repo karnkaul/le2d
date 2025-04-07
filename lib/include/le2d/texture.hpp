@@ -22,16 +22,16 @@ class Texture : public ITexture {
   public:
 	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {});
 
-	[[nodiscard]] auto get_image() const -> vk::ImageView final { return m_image.get_view(); }
+	[[nodiscard]] auto get_image() const -> vk::ImageView final { return m_texture.get_image().get_view(); }
 	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
 
-	auto write(kvf::Bitmap const& bitmap) -> bool;
+	void overwrite(kvf::Bitmap const& bitmap);
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool;
 
   protected:
 	gsl::not_null<kvf::RenderDevice*> m_render_device;
 
-	kvf::vma::Image m_image{};
+	kvf::vma::Texture m_texture;
 };
 
 class TileSheet : public Texture {
