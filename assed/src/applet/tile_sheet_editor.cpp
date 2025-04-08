@@ -5,15 +5,9 @@
 #include <le2d/file_data_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <le2d/util.hpp>
-#include <algorithm>
 #include <ranges>
 
 namespace le::assed {
-namespace {
-constexpr auto min_scale_v{0.1f};
-constexpr auto max_scale_v{10.0f};
-} // namespace
-
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
@@ -31,15 +25,7 @@ auto TileSheetEditor::consume_mouse_button(event::MouseButton const& button) -> 
 	return true;
 }
 
-auto TileSheetEditor::consume_scroll(event::Scroll const& scroll) -> bool {
-	m_render_view.scale.x += scroll.y * m_zoom_speed; // y is adjusted in tick().
-	return true;
-}
-
 void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
-	m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
-	m_render_view.scale.y = m_render_view.scale.x;
-
 	inspect();
 
 	switch (m_save_modal.update()) {
@@ -77,6 +63,8 @@ void TileSheetEditor::populate_file_menu() {
 
 void TileSheetEditor::inspect() {
 	if (ImGui::Begin("Info")) {
+		imcpp::color_edit("background", clear_color);
+
 		ImGui::TextUnformatted(klib::FixedString<256>{"TileSheet: {}", m_uri.tile_sheet.get_string()}.c_str());
 		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
 		auto const size = m_texture.get_size();

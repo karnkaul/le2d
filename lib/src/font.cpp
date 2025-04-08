@@ -47,6 +47,7 @@ auto Font::load_face(std::vector<std::byte> font_bytes) -> bool {
 }
 
 auto Font::get_atlas(TextHeight height) -> FontAtlas& {
+	KLIB_ASSERT(is_loaded());
 	height = FontAtlas::clamp(height);
 	auto it = m_atlases.find(height);
 	if (it == m_atlases.end()) {

@@ -1,6 +1,7 @@
 #include <imgui.h>
 #include <app.hpp>
 #include <applet/flipbook_editor.hpp>
+#include <applet/font_viewer.hpp>
 #include <applet/tile_sheet_editor.hpp>
 #include <klib/visitor.hpp>
 #include <log.hpp>
@@ -49,6 +50,7 @@ void App::create_factories() {
 	m_factories = {
 		Factory{.name = TileSheetEditor::name_v, .create = &create_applet<TileSheetEditor>},
 		Factory{.name = FlipbookEditor::name_v, .create = &create_applet<FlipbookEditor>},
+		Factory{.name = FontViewer::name_v, .create = &create_applet<FontViewer>},
 	};
 }
 
@@ -89,7 +91,7 @@ void App::tick() {
 }
 
 void App::render() {
-	if (auto renderer = m_context.begin_render()) { m_applet->render(renderer); }
+	if (auto renderer = m_context.begin_render(m_applet->clear_color)) { m_applet->render(renderer); }
 }
 
 void App::main_menu() {

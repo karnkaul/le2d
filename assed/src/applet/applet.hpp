@@ -17,6 +17,8 @@ class Applet : public input::Listener {
   public:
 	explicit Applet(gsl::not_null<ServiceLocator const*> services);
 
+	kvf::Color clear_color{kvf::black_v};
+
   protected:
 	[[nodiscard]] virtual auto get_name() const -> klib::CString = 0;
 
@@ -30,6 +32,7 @@ class Applet : public input::Listener {
 	virtual void populate_menu_bar() {}
 
 	auto consume_drop(event::Drop const& drop) -> bool override;
+	auto consume_scroll(event::Scroll const& scroll) -> bool override;
 
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
@@ -45,14 +48,16 @@ class Applet : public input::Listener {
 	void raise_dialog(std::string message, std::string title);
 	void raise_error(std::string message) { raise_dialog(std::move(message), "Error!"); }
 
-	void set_title() const { set_title({}); }
-	void set_title(std::string_view asset_uri) const;
+	void set_title(std::string_view asset_uri = {}) const;
 
 	FileDrop::Type m_drop_types{};
 	std::vector<std::string_view> m_json_types{};
 
 	SaveModal m_save_modal{};
 	bool m_unsaved{};
+
+	Transform m_render_view{};
+	float m_zoom_speed{0.1f};
 
   private:
 	struct Dialog {

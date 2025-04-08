@@ -10,11 +10,25 @@ auto load(IDataLoader const& data_loader, Uri const& uri, F func) -> T {
 	if (!std::invoke(func, &data_loader, ret, uri)) { return {}; }
 	return ret;
 }
+
+constexpr auto min_scale_v{0.1f};
+constexpr auto max_scale_v{10.0f};
 } // namespace
 
 Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_services(services) {
 	services->get<input::Dispatch>().attach(this);
 	m_save_modal.root_dir = services->get<FileDataLoader>().get_root_dir();
+}
+
+auto Applet::consume_scroll(event::Scroll const& scroll) -> bool {
+	if (m_zoom_speed > 0.0f) {
+		m_render_view.scale.x += scroll.y * m_zoom_speed;
+
+		m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
+		m_render_view.scale.y = m_render_view.scale.x;
+	}
+
+	return true;
 }
 
 auto Applet::consume_drop(event::Drop const& drop) -> bool {
@@ -73,6 +87,7 @@ void Applet::do_setup() {
 
 void Applet::do_tick(kvf::Seconds const dt) {
 	tick(dt);
+
 	m_dialog();
 	if (m_open_confirm_exit) {
 		m_open_confirm_exit = false;

@@ -32,6 +32,12 @@ auto FileDrop::create(FileDataLoader const& loader, std::string_view const path)
 		return ret;
 	}
 
+	static constexpr auto font_extensions_v = std::array{".ttf", ".otf"};
+	if (std::ranges::find(font_extensions_v, ret.extension) != font_extensions_v.end()) {
+		ret.type = Type::Font;
+		return ret;
+	}
+
 	return ret;
 }
 } // namespace le::assed

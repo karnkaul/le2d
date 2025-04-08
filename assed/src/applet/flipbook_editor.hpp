@@ -18,8 +18,6 @@ class FlipbookEditor : public Applet {
 	enum class Display : std::int8_t { TileSheet, Sprite, COUNT_ };
 	static constexpr auto display_str_v = klib::EnumArray<Display, std::string_view>{"TileSheet", "Sprite"};
 
-	auto consume_scroll(event::Scroll const& scroll) -> bool final;
-
 	void tick(kvf::Seconds dt) final;
 	void render(Renderer& renderer) const final;
 
@@ -52,9 +50,6 @@ class FlipbookEditor : public Applet {
 		Uri tile_sheet{};
 		Uri animation{};
 	} m_uri{};
-	Transform m_render_view{};
-
-	float m_zoom_speed{0.1f};
 
 	bool m_paused{};
 	Display m_display{Display::TileSheet};

@@ -14,7 +14,6 @@ class TileSheetEditor : public Applet {
   private:
 	auto consume_cursor_move(glm::vec2 cursor) -> bool final;
 	auto consume_mouse_button(event::MouseButton const& button) -> bool final;
-	auto consume_scroll(event::Scroll const& scroll) -> bool final;
 
 	void tick(kvf::Seconds dt) final;
 	void render(Renderer& renderer) const final;
@@ -49,9 +48,6 @@ class TileSheetEditor : public Applet {
 		Uri texture{};
 		Uri tile_sheet{};
 	} m_uri{};
-	Transform m_render_view{};
-
-	float m_zoom_speed{0.1f};
 
 	glm::ivec2 m_split_dims{1, 1};
 };
