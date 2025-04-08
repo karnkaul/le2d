@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <imcpp.hpp>
 #include <le2d/vector_space.hpp>
 #include <tile_drawer.hpp>
 #include <ranges>
@@ -58,17 +59,13 @@ void TileDrawer::draw(Renderer& renderer) const {
 }
 
 void TileDrawer::inspect_style() {
-	auto color = style.frame_color.to_vec4();
-	if (ImGui::ColorEdit4("frame color", &color.x)) {
-		style.frame_color = color;
+	if (imcpp::color_edit("frame color", style.frame_color)) {
 		for (auto [index, tile_frame] : std::views::enumerate(tile_frames)) {
 			if (selected_tile && *selected_tile == std::size_t(index)) { continue; }
 			tile_frame.tint = style.frame_color;
 		}
 	}
-	color = style.selected_color.to_vec4();
-	if (ImGui::ColorEdit4("selected color", &color.x)) {
-		style.selected_color = color;
+	if (imcpp::color_edit("selected color", style.selected_color)) {
 		if (selected_tile) { tile_frames.at(*selected_tile).tint = style.selected_color; }
 	}
 	ImGui::DragFloat("frame width", &style.frame_width, 0.5f, 1.0f, 100.0f);

@@ -71,6 +71,15 @@ auto imcpp::drag_tex_rect(kvf::UvRect& uv, glm::ivec2 const size) -> bool {
 	return modified;
 }
 
+auto imcpp::color_edit(klib::CString const label, kvf::Color& color) -> bool {
+	auto vec = color.to_linear();
+	if (ImGui::ColorEdit4(label.c_str(), &vec.x)) {
+		color = kvf::Color::linear_to_srgb(vec);
+		return true;
+	}
+	return false;
+}
+
 auto imcpp::begin_modal(klib::CString const label) -> bool {
 	auto const center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2{0.5f, 0.5f});

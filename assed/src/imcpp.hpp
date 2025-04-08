@@ -2,11 +2,14 @@
 #include <imgui.h>
 #include <klib/base_types.hpp>
 #include <klib/c_string.hpp>
+#include <kvf/color.hpp>
 #include <kvf/rect.hpp>
 #include <vector>
 
 namespace le::assed::imcpp {
 auto drag_tex_rect(kvf::UvRect& uv, glm::ivec2 size) -> bool;
+
+auto color_edit(klib::CString label, kvf::Color& color) -> bool;
 
 class InputText : public klib::Polymorphic {
   public:

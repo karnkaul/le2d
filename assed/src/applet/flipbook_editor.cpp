@@ -207,7 +207,6 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 }
 
 void FlipbookEditor::on_save() {
-	log::warn("not implemented");
 	auto json = dj::Json{};
 	to_json(json, m_animation);
 	auto const uri = std::string{m_save_modal.uri_input.as_view()};
