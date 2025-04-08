@@ -5,16 +5,16 @@
 
 namespace le::asset {
 struct LoadTask::Task : klib::task::Task {
-	explicit Task(ILoader const& loader, AtomicProgress& progress, Uri uri) : uri(std::move(uri)), m_loader(loader), m_progress(progress) {}
+	explicit Task(ILoader const& loader, AtomicProgress& progress, Uri uri, std::type_index const type)
+		: result{.uri = std::move(uri), .type = type}, m_loader(loader), m_progress(progress) {}
 
 	void execute() final {
-		asset = m_loader.load_base(uri);
+		result.asset = m_loader.load_base(result.uri);
 		++m_progress.completed;
-		if (!asset) { ++m_progress.failed; }
+		if (!result.asset) { ++m_progress.failed; }
 	}
 
-	Uri uri;
-	std::unique_ptr<Base> asset{};
+	LoadedAsset result;
 
   private:
 	ILoader const& m_loader;
@@ -23,14 +23,13 @@ struct LoadTask::Task : klib::task::Task {
 
 void LoadTask::Deleter::operator()(Task* ptr) const noexcept { std::default_delete<Task>{}(ptr); }
 
-auto LoadTask::transfer_loaded(Store& store) -> std::uint64_t {
+auto LoadTask::transfer_loaded() -> std::vector<LoadedAsset> {
 	if (is_busy()) { wait(); }
-	auto ret = std::uint64_t{};
+	auto ret = std::vector<LoadedAsset>{};
 	for (auto& stage : m_stages) {
 		for (auto& task : stage) {
-			if (!task->asset) { continue; }
-			store.insert_base(task->uri, std::move(task->asset));
-			++ret;
+			if (!task->result.asset) { continue; }
+			ret.push_back(std::move(task->result));
 		}
 	}
 	m_stages.clear();
@@ -50,7 +49,7 @@ auto LoadTask::enqueue(std::type_index const type, Uri uri) -> bool {
 		log::warn("No Loader registered for type: {} ({})", type.name(), type.hash_code());
 		return false;
 	}
-	push_task(*it->second, std::move(uri));
+	push_task(type, *it->second, std::move(uri));
 	return true;
 }
 
@@ -67,11 +66,11 @@ void LoadTask::execute() {
 	}
 }
 
-void LoadTask::push_task(ILoader const& loader, Uri uri) {
+void LoadTask::push_task(std::type_index const type, ILoader const& loader, Uri uri) {
 	if (m_stages.empty()) { m_stages.emplace_back(); }
 	auto& current_stage = m_stages.back();
 	auto& task = current_stage.emplace_back();
-	task.reset(new Task{loader, m_progress, std::move(uri)}); // NOLINT(cppcoreguidelines-owning-memory)
+	task.reset(new Task{loader, m_progress, std::move(uri), type}); // NOLINT(cppcoreguidelines-owning-memory)
 	++m_progress.total;
 }
 

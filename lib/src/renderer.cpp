@@ -77,7 +77,7 @@ auto Renderer::set_line_width(float const width) -> bool {
 	return true;
 }
 
-auto Renderer::set_shader(Shader const& shader) -> bool {
+auto Renderer::set_shader(ShaderProgram const& shader) -> bool {
 	if (!is_rendering() || !shader) { return false; }
 	if (m_shader == &shader) { return true; }
 

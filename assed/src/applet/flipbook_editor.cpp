@@ -11,8 +11,8 @@ constexpr auto max_scale_v{10.0f};
 } // namespace
 
 FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_tile_sheet(services->get<Context>().create_tilesheet()) {
-	m_tile_drawer.quad.create();
-	m_tile_drawer.quad.texture = &m_tile_sheet;
+	m_drawer.quad.create();
+	m_drawer.quad.texture = &m_tile_sheet;
 	m_sprite.set_base_size(glm::vec2{200.0f});
 	m_save_modal.title = "Save Flipbook";
 	m_drop_types = FileDrop::Type::Json;
@@ -29,17 +29,17 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 	m_render_view.scale.y = m_render_view.scale.x;
 
 	auto const tiles = m_tile_sheet.tile_set.get_tiles();
-	if (m_animator.has_animation() && !tiles.empty()) {
+	if (m_animator.has_animation() && !tiles.empty() && !m_drawer.tile_frames.empty()) {
 		auto const anim_dt = m_paused ? 0s : dt;
 		m_animator.tick(anim_dt);
 		auto const tile_id = m_animator.get_payload();
 		auto const it = std::ranges::lower_bound(tiles, tile_id, {}, [](Tile const& t) { return t.id; });
 		KLIB_ASSERT(it != tiles.end());
 		auto const index = std::size_t(std::distance(tiles.begin(), it));
-		KLIB_ASSERT(index < m_tile_drawer.tile_frames.size());
-		if (!m_tile_drawer.selected_tile || *m_tile_drawer.selected_tile != index) {
-			m_tile_drawer.selected_tile = index;
-			m_tile_drawer.update();
+		KLIB_ASSERT(index < m_drawer.tile_frames.size());
+		if (!m_drawer.selected_tile || *m_drawer.selected_tile != index) {
+			m_drawer.selected_tile = index;
+			m_drawer.update();
 		}
 		m_sprite.set_tile(&m_tile_sheet, tile_id);
 	}
@@ -55,7 +55,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 void FlipbookEditor::render(Renderer& renderer) const {
 	renderer.view = m_render_view;
 	switch (m_display) {
-	case Display::TileSheet: m_tile_drawer.draw(renderer); break;
+	case Display::TileSheet: m_drawer.draw(renderer); break;
 	case Display::Sprite: m_sprite.draw(renderer); break;
 	default: break;
 	}
@@ -70,10 +70,8 @@ void FlipbookEditor::on_drop(FileDrop const& drop) {
 void FlipbookEditor::populate_file_menu() {
 	if (ImGui::MenuItem("New")) {
 		wait_idle();
-		m_tile_sheet = TileSheet{get_services().get<Context>().create_tilesheet()};
-		m_tile_drawer.quad.create();
-		m_tile_drawer.tile_frames.clear();
-		m_tile_drawer.selected_tile.reset();
+		m_drawer.clear();
+		m_sprite.set_texture(nullptr);
 		m_animator.set_animation(nullptr);
 		m_uri = {};
 		m_unsaved = false;
@@ -103,7 +101,7 @@ void FlipbookEditor::inspect() {
 		}
 
 		if (ImGui::TreeNodeEx("frame style", ImGuiTreeNodeFlags_Framed)) {
-			m_tile_drawer.inspect_style();
+			m_drawer.inspect_style();
 			ImGui::TreePop();
 		}
 	}
@@ -181,7 +179,8 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	}
 	m_generate.select_tiles.sync_to_selection();
 
-	m_tile_drawer.setup(m_tile_sheet.tile_set.get_tiles(), m_tile_sheet.get_size());
+	m_drawer.setup(m_tile_sheet.tile_set.get_tiles(), m_tile_sheet.get_size());
+	m_drawer.quad.texture = &m_tile_sheet;
 	m_sprite.set_tile(&m_tile_sheet, TileId{1});
 
 	m_uri.tile_sheet = std::move(uri);

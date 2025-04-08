@@ -5,8 +5,12 @@
 namespace le::assed {
 class TileDrawer {
   public:
+	explicit TileDrawer() { clear(); }
+
 	[[nodiscard]] auto create_tile_frame(kvf::Rect<> const& rect) const -> drawable::LineRect;
 	void setup(std::span<Tile const> tiles, glm::vec2 texture_size);
+
+	void clear();
 
 	void update();
 	void draw(Renderer& renderer) const;

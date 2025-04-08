@@ -1,5 +1,5 @@
 #include <klib/hash_combine.hpp>
-#include <le2d/shader.hpp>
+#include <le2d/shader_program.hpp>
 #include <log.hpp>
 
 namespace le {
@@ -15,9 +15,9 @@ namespace {
 }
 } // namespace
 
-Shader::Shader(vk::Device device, SpirV const& vertex, SpirV const& fragment) { load(device, vertex, fragment); }
+ShaderProgram::ShaderProgram(vk::Device device, SpirV const& vertex, SpirV const& fragment) { load(device, vertex, fragment); }
 
-auto Shader::load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool {
+auto ShaderProgram::load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool {
 	auto smci = std::array<vk::ShaderModuleCreateInfo, 2>{};
 	smci[0].setCode(vertex.code);
 	smci[1].setCode(fragment.code);

@@ -42,7 +42,7 @@ class FlipbookEditor : public Applet {
 
 	TileSheet m_tile_sheet;
 
-	TileDrawer m_tile_drawer{};
+	TileDrawer m_drawer{};
 
 	drawable::Sprite m_sprite{};
 	anim::FlipbookAnimation m_animation{};

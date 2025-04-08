@@ -3,16 +3,16 @@
 #include <vulkan/vulkan.hpp>
 
 namespace le {
-class Shader {
+class ShaderProgram {
   public:
 	struct Modules {
 		vk::ShaderModule vertex{};
 		vk::ShaderModule fragment{};
 	};
 
-	Shader() = default;
+	ShaderProgram() = default;
 
-	explicit Shader(vk::Device device, SpirV const& vertex, SpirV const& fragment);
+	explicit ShaderProgram(vk::Device device, SpirV const& vertex, SpirV const& fragment);
 
 	auto load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool;
 

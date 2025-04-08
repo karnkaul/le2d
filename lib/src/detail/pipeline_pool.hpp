@@ -3,7 +3,7 @@
 #include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <le2d/pipeline_fixed_state.hpp>
-#include <le2d/shader.hpp>
+#include <le2d/shader_program.hpp>
 #include <le2d/vertex.hpp>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_hash.hpp>
@@ -27,7 +27,7 @@ class PipelinePool {
 	[[nodiscard]] auto get_layout() const -> vk::PipelineLayout { return *m_layout; }
 	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const, set_count_v> { return m_set_layouts; }
 
-	[[nodiscard]] auto allocate(FixedState const& state, Shader const& shader) -> vk::Pipeline {
+	[[nodiscard]] auto allocate(FixedState const& state, ShaderProgram const& shader) -> vk::Pipeline {
 		auto const entry = Entry{
 			.shader_hash = shader.get_hash(),
 			.samples = state.samples,
@@ -88,7 +88,7 @@ class PipelinePool {
 		m_layout = m_render_device->get_device().createPipelineLayoutUnique(plci);
 	}
 
-	[[nodiscard]] auto create(FixedState const& state, Shader const& shader) const -> vk::UniquePipeline {
+	[[nodiscard]] auto create(FixedState const& state, ShaderProgram const& shader) const -> vk::UniquePipeline {
 		static constexpr auto bindings_v = std::array{
 			vk::VertexInputBindingDescription{0, sizeof(Vertex)},
 		};

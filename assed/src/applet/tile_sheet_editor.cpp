@@ -15,8 +15,6 @@ constexpr auto max_scale_v{10.0f};
 } // namespace
 
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
-	m_drawer.quad.create();
-	m_drawer.quad.texture = &m_texture;
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<TileSheet>};
@@ -67,10 +65,8 @@ void TileSheetEditor::on_drop(FileDrop const& drop) {
 void TileSheetEditor::populate_file_menu() {
 	if (ImGui::MenuItem("New")) {
 		wait_idle();
-		m_texture.overwrite(util::white_bitmap_v);
-		m_drawer.quad.create();
+		m_drawer.clear();
 		m_tiles.clear();
-		m_drawer.tile_frames.clear();
 		m_uri = {};
 		m_unsaved = false;
 		set_title();
@@ -181,6 +177,7 @@ void TileSheetEditor::set_texture(Texture texture) {
 	wait_idle();
 	m_texture = std::move(texture);
 	m_drawer.quad.create(m_texture.get_size());
+	m_drawer.quad.texture = &m_texture;
 }
 
 void TileSheetEditor::generate_tiles() {

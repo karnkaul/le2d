@@ -23,6 +23,13 @@ void TileDrawer::setup(std::span<Tile const> tiles, glm::vec2 const texture_size
 	update();
 }
 
+void TileDrawer::clear() {
+	quad.create();
+	quad.texture = nullptr;
+	tile_frames.clear();
+	selected_tile.reset();
+}
+
 void TileDrawer::update() {
 	if (selected_tile && *selected_tile >= tile_frames.size()) { selected_tile.reset(); }
 
