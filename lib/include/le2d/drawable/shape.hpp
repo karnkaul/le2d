@@ -1,19 +1,19 @@
 #pragma once
-#include <le2d/drawable/geometry.hpp>
+#include <le2d/drawable/figure.hpp>
 #include <le2d/shape/quad.hpp>
 #include <le2d/shape/super_ellipse.hpp>
 #include <le2d/shape/triangle.hpp>
 
 namespace le::drawable {
-using Triangle = Geometry<shape::Triangle>;
-using InstancedTriangle = InstancedGeometry<shape::Triangle>;
+using Triangle = Figure<shape::Triangle>;
+using InstancedTriangle = InstancedFigure<shape::Triangle>;
 
-using Quad = Geometry<shape::Quad>;
-using InstancedQuad = InstancedGeometry<shape::Quad>;
+using Quad = Figure<shape::Quad>;
+using InstancedQuad = InstancedFigure<shape::Quad>;
 
-using LineRect = Geometry<shape::LineRect>;
-using InstancedLineRect = InstancedGeometry<shape::LineRect>;
+using LineRect = Figure<shape::LineRect>;
+using InstancedLineRect = InstancedFigure<shape::LineRect>;
 
-using SuperEllipse = Geometry<shape::SuperEllipse>;
-using InstancedSuperEllipse = InstancedGeometry<shape::SuperEllipse>;
+using SuperEllipse = Figure<shape::SuperEllipse>;
+using InstancedSuperEllipse = InstancedFigure<shape::SuperEllipse>;
 } // namespace le::drawable
