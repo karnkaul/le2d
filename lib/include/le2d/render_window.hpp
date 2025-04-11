@@ -34,6 +34,7 @@ class RenderWindow {
 
 	[[nodiscard]] auto is_open() const -> bool;
 	void set_closing();
+	void cancel_close();
 
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_event_queue; }
 

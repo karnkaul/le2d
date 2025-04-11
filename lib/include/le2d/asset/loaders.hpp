@@ -32,6 +32,13 @@ class FontLoader : public Loader<Font> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Font>> final;
 };
 
+class TileSetLoader : public Loader<TileSet> {
+  public:
+	using Loader::Loader;
+
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> final;
+};
+
 class TextureLoader : public Loader<Texture> {
   public:
 	using Loader::Loader;
@@ -39,11 +46,12 @@ class TextureLoader : public Loader<Texture> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<Texture>> final;
 };
 
-class TileSetLoader : public Loader<TileSet> {
+class TileSheetLoader : public Loader<TileSheet> {
   public:
 	using Loader::Loader;
 
-	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSet>> final;
+	[[nodiscard]] auto load(Uri const& uri, Uri& out_texture_uri) const -> std::unique_ptr<Wrap<TileSheet>>;
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<TileSheet>> final;
 };
 
 class TransformAnimationLoader : public Loader<anim::Animation<Transform>> {

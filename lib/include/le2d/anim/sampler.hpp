@@ -1,8 +1,7 @@
 #pragma once
-#include <klib/base_types.hpp>
 #include <le2d/anim/interpolator.hpp>
 #include <le2d/anim/keyframe.hpp>
-#include <le2d/tile.hpp>
+#include <le2d/tile/tile_id.hpp>
 #include <algorithm>
 #include <concepts>
 #include <span>

@@ -1,7 +1,4 @@
-#include <common.hpp>
-#include <detail/buffer_pool.hpp>
 #include <detail/pipeline_pool.hpp>
-#include <detail/sampler_pool.hpp>
 #include <klib/assert.hpp>
 #include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
@@ -30,35 +27,24 @@ constexpr auto to_mode(Vsync const vsync) {
 }
 
 struct ResourcePool : IResourcePool {
-	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device)
-		: buffers(render_device), pipelines(render_device), samplers(render_device), white_texture(render_device, white_bitmap_v),
-		  m_blocker(render_device->get_device()) {}
+	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, ShaderProgram default_shader)
+		: m_pipelines(render_device), m_default_shader(std::move(default_shader)), m_white_texture(render_device), m_blocker(render_device->get_device()) {}
 
-	[[nodiscard]] auto allocate_buffer(vk::BufferUsageFlags const usage, vk::DeviceSize const size) -> kvf::vma::Buffer& final {
-		return buffers.allocate(usage, size);
+	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, ShaderProgram const& shader) -> vk::Pipeline final {
+		return m_pipelines.allocate(state, shader);
 	}
 
-	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, Shader const& shader) -> vk::Pipeline final {
-		return pipelines.allocate(state, shader);
-	}
-
-	[[nodiscard]] auto allocate_sampler(TextureSampler const& sampler) -> vk::Sampler final { return samplers.allocate(sampler); }
-
-	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return pipelines.get_layout(); }
-	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return pipelines.get_set_layouts(); }
-	[[nodiscard]] auto get_white_texture() const -> Texture const& final { return white_texture; }
-	[[nodiscard]] auto get_default_shader() const -> Shader const& final { return default_shader; }
-
-	void next_frame() { buffers.next_frame(); }
-
-	detail::BufferPool buffers;
-	detail::PipelinePool pipelines;
-	detail::SamplerPool samplers;
-
-	Texture white_texture;
-	Shader default_shader{};
+	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return m_pipelines.get_layout(); }
+	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return m_pipelines.get_set_layouts(); }
+	[[nodiscard]] auto get_white_texture() const -> Texture const& final { return m_white_texture; }
+	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& final { return m_default_shader; }
 
   private:
+	detail::PipelinePool m_pipelines;
+	ShaderProgram m_default_shader{};
+
+	Texture m_white_texture;
+
 	kvf::DeviceBlock m_blocker;
 };
 
@@ -143,15 +129,13 @@ struct Audio : IAudio {
 };
 } // namespace
 
+void Context::OnDestroy::operator()(int /*i*/) const noexcept { log::info("Context shutting down"); }
+
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
 	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
-	auto resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device());
-	auto const& shader = create_info.default_shader_uri;
-	resource_pool->default_shader = create_shader(std::string{shader.vertex}, std::string{shader.fragment});
-	if (!resource_pool->default_shader) { log::warn("Context: failed to create Default Shader: '{}' / '{}'", shader.vertex, shader.fragment); }
-	m_resource_pool = std::move(resource_pool);
-
+	auto default_shader = create_shader(std::string{create_info.default_shader_uri.vertex}, std::string{create_info.default_shader_uri.fragment});
+	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
 
 	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();
@@ -159,9 +143,8 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
 	log::info("Context initialized");
+	m_on_destroy = 42;
 }
-
-Context::~Context() { log::info("Context shutting down"); }
 
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
 
@@ -178,9 +161,10 @@ auto Context::set_vsync(Vsync const vsync) -> bool {
 	return m_window.get_render_device().set_present_mode(to_mode(vsync));
 }
 
+void Context::cancel_window_close() { m_window.cancel_close(); }
+
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window.next_frame();
-	static_cast<ResourcePool*>(m_resource_pool.get())->next_frame(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 	++m_fps.counter;
 	m_frame_start = kvf::Clock::now();
 	return m_cmd;
@@ -199,25 +183,21 @@ void Context::present() {
 	update_stats(present_start);
 }
 
-auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Shader {
-	auto const loader = asset::SpirVLoader{this};
-	auto const vert = loader.load(vertex);
-	auto const frag = loader.load(fragment);
-	if (!vert || !frag) { return {}; }
-	return Shader{m_pass.get_render_device().get_device(), vert->asset, frag->asset};
+auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> ShaderProgram {
+	auto vert = SpirV{};
+	auto frag = SpirV{};
+	if (!m_data_loader->load_spirv(vert.code, vertex) || !m_data_loader->load_spirv(frag.code, fragment)) {
+		log::warn("Context: failed to load SPIR-V: {} / {}", vertex.get_string(), fragment.get_string());
+		return {};
+	}
+	return ShaderProgram{m_pass.get_render_device().get_device(), vert, frag};
 }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
-auto Context::create_texture(kvf::Bitmap bitmap) const -> Texture {
-	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
-	return Texture{&m_pass.get_render_device(), bitmap};
-}
+auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { return Texture{&m_pass.get_render_device(), bitmap}; }
 
-auto Context::create_tileset(kvf::Bitmap bitmap) const -> TileSet {
-	if (bitmap.bytes.empty()) { bitmap = white_bitmap_v; }
-	return TileSet{&m_pass.get_render_device(), bitmap};
-}
+auto Context::create_tilesheet(kvf::Bitmap const& bitmap) const -> TileSheet { return TileSheet{&m_pass.get_render_device(), bitmap}; }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
 
@@ -226,8 +206,9 @@ auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queu
 	ret->add_loader(std::make_unique<asset::JsonLoader>(this));
 	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
 	ret->add_loader(std::make_unique<asset::FontLoader>(this));
-	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
 	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
+	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
+	ret->add_loader(std::make_unique<asset::TileSheetLoader>(this));
 	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
 	ret->add_loader(std::make_unique<asset::PcmLoader>(this));

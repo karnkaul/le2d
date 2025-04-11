@@ -2,7 +2,6 @@
 #include <klib/task/queue_fwd.hpp>
 #include <klib/task/task.hpp>
 #include <le2d/asset/loader.hpp>
-#include <le2d/asset/store.hpp>
 #include <atomic>
 #include <gsl/pointers>
 #include <vector>
@@ -14,6 +13,12 @@ struct LoadProgress {
 	std::uint64_t failed{};
 
 	[[nodiscard]] constexpr auto succeeded() const -> std::uint64_t { return completed - failed; }
+};
+
+struct LoadedAsset {
+	Uri uri{};
+	std::unique_ptr<Base> asset{};
+	std::type_index type;
 };
 
 class LoadTask : public klib::task::Task {
@@ -35,7 +40,7 @@ class LoadTask : public klib::task::Task {
 
 	[[nodiscard]] auto get_progress() const -> LoadProgress { return m_progress.to_progress(); }
 
-	auto transfer_loaded(Store& store) -> std::uint64_t;
+	auto transfer_loaded() -> std::vector<LoadedAsset>;
 
   private:
 	struct AtomicProgress {
@@ -59,7 +64,7 @@ class LoadTask : public klib::task::Task {
 
 	void add_loader(std::type_index type, std::unique_ptr<ILoader> loader);
 	auto enqueue(std::type_index type, Uri uri) -> bool;
-	void push_task(ILoader const& loader, Uri uri);
+	void push_task(std::type_index type, ILoader const& loader, Uri uri);
 
 	Queue* m_queue;
 

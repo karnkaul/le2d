@@ -1,4 +1,3 @@
-#include <common.hpp>
 #include <klib/assert.hpp>
 #include <klib/visitor.hpp>
 #include <kvf/is_positive.hpp>
@@ -77,6 +76,8 @@ auto RenderWindow::is_open() const -> bool { return glfwWindowShouldClose(m_wind
 
 void RenderWindow::set_closing() { glfwSetWindowShouldClose(m_window.get(), GLFW_TRUE); }
 
+void RenderWindow::cancel_close() { glfwSetWindowShouldClose(m_window.get(), GLFW_FALSE); }
+
 auto RenderWindow::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 
 auto RenderWindow::next_frame() -> vk::CommandBuffer {
@@ -146,6 +147,7 @@ void RenderWindow::set_glfw_callbacks(GLFWwindow* window) {
 		push_event(window, event::MouseButton{.button = button, .action = action, .mods = mods});
 	});
 	glfwSetScrollCallback(window, [](GLFWwindow* window, double x, double y) { push_event(window, event::Scroll{x, y}); });
+	glfwSetDropCallback(window, [](GLFWwindow* window, int const count, char const** paths) { self(window).on_drop(count, paths); });
 }
 
 void RenderWindow::on_cursor_pos(window::vec2 const pos) {

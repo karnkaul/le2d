@@ -5,8 +5,10 @@
 #include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
+class IFigure : public IDrawPrimitive {};
+
 template <std::derived_from<IGeometry> Type>
-class GeometryBase : public Type, public IDrawPrimitive {
+class FigureBase : public Type, public IFigure {
   public:
 	using Type::Type;
 
@@ -23,11 +25,11 @@ class GeometryBase : public Type, public IDrawPrimitive {
 };
 
 template <std::derived_from<IGeometry> Type>
-class Geometry : public SingleDrawPrimitive<GeometryBase<Type>> {
+class Figure : public SingleDrawPrimitive<FigureBase<Type>> {
   public:
 	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->to_primitive().vertices, this->transform.to_model()); }
 };
 
 template <std::derived_from<IGeometry> Type>
-class InstancedGeometry : public InstancedDrawPrimitive<GeometryBase<Type>> {};
+class InstancedFigure : public InstancedDrawPrimitive<FigureBase<Type>> {};
 } // namespace le::drawable

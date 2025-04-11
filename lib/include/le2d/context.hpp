@@ -8,42 +8,37 @@
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
-#include <le2d/shader.hpp>
+#include <le2d/shader_program.hpp>
 #include <le2d/vsync.hpp>
 
 namespace le {
 struct ContextCreateInfo {
-	WindowCreateInfo window;
-	struct {
+	struct ShaderUri {
 		std::string_view vertex;
 		std::string_view fragment;
-	} default_shader_uri;
+	};
 
+	WindowCreateInfo window;
+	ShaderUri default_shader_uri;
 	kvf::RenderDeviceCreateInfo render_device{};
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
 	int sfx_buffers{16};
 };
 
-class Context {
+class Context : public klib::Pinned {
   public:
 	using CreateInfo = ContextCreateInfo;
 
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
 
-	Context(Context const&) = delete;
-	Context(Context&&) = delete;
-	auto operator=(Context const&) = delete;
-	auto operator=(Context&&) = delete;
-
 	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info = {});
-	~Context();
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
-	[[nodiscard]] auto get_default_shader() const -> Shader const& { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
@@ -62,6 +57,8 @@ class Context {
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window.set_fullscreen(target); }
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window.set_windowed(size); }
 
+	void cancel_window_close();
+
 	auto next_frame() -> vk::CommandBuffer;
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
 	void present();
@@ -69,21 +66,25 @@ class Context {
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
-	[[nodiscard]] auto create_shader(Uri const& vertex, Uri const& fragment) const -> Shader;
+	[[nodiscard]] auto create_shader(Uri const& vertex, Uri const& fragment) const -> ShaderProgram;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
-	[[nodiscard]] auto create_texture(kvf::Bitmap bitmap = {}) const -> Texture;
-	[[nodiscard]] auto create_tileset(kvf::Bitmap bitmap = {}) const -> TileSet;
+	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
+	[[nodiscard]] auto create_tilesheet(kvf::Bitmap const& bitmap = {}) const -> TileSheet;
 	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
 	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
-	void update_stats(kvf::Clock::time_point present_start);
+	struct OnDestroy {
+		void operator()(int i) const noexcept;
+	};
 
 	struct Fps {
 		std::int32_t counter{};
 		std::int32_t value{};
 		kvf::Seconds elapsed{};
 	};
+
+	void update_stats(kvf::Clock::time_point present_start);
 
 	IDataLoader const* m_data_loader;
 
@@ -102,5 +103,7 @@ class Context {
 	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
+
+	klib::Unique<int, OnDestroy> m_on_destroy{};
 };
 } // namespace le

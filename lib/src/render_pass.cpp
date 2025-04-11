@@ -1,10 +1,11 @@
-#include <common.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/util.hpp>
 #include <le2d/render_pass.hpp>
 
 namespace le {
 namespace {
+constexpr auto color_format_v{vk::Format::eR8G8B8A8Srgb};
+
 constexpr auto clamp_size(glm::ivec2 in) {
 	in.x = std::clamp(in.x, RenderPass::min_size_v, RenderPass::max_size_v);
 	in.y = std::clamp(in.y, RenderPass::min_size_v, RenderPass::max_size_v);
