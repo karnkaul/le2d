@@ -1,4 +1,3 @@
-#include <common.hpp>
 #include <kvf/color.hpp>
 #include <kvf/image_bitmap.hpp>
 #include <kvf/render_device.hpp>

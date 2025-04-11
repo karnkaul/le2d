@@ -1,4 +1,3 @@
-#include <common.hpp>
 #include <klib/assert.hpp>
 #include <klib/visitor.hpp>
 #include <kvf/is_positive.hpp>

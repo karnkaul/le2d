@@ -1,4 +1,3 @@
-#include <common.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <klib/assert.hpp>
 #include <le2d/asset/loaders.hpp>

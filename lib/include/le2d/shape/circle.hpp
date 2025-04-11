@@ -24,6 +24,7 @@ class Circle : public IGeometry {
 
 	[[nodiscard]] auto get_params() const -> Params const& { return m_params; }
 	[[nodiscard]] auto get_diameter() const -> float { return get_params().diameter; }
+	[[nodiscard]] auto get_size() const -> glm::vec2 { return glm::vec2{get_diameter()}; }
 
 	[[nodiscard]] auto get_vertex_array() const -> VertexArray const& { return m_verts; }
 
