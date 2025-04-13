@@ -173,7 +173,7 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	m_sprite.set_tile(&m_tile_sheet, TileId{1});
 
 	m_uri.tile_sheet = std::move(uri);
-	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
+	log.info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
 void FlipbookEditor::try_load_animation(Uri uri) {
@@ -192,7 +192,7 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 
 	m_uri.animation = std::move(uri);
 	set_title(m_uri.animation.get_string());
-	log::info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
+	log.info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
 }
 
 void FlipbookEditor::on_save() {
@@ -204,7 +204,7 @@ void FlipbookEditor::on_save() {
 		return;
 	}
 	m_uri.animation = std::string{m_save_modal.uri_input.as_view()};
-	log::info("saved Flipbook: '{}'", m_uri.animation.get_string());
+	log.info("saved Flipbook: '{}'", m_uri.animation.get_string());
 	raise_dialog(std::format("Saved {}", m_uri.animation.get_string()), "Success");
 	set_title(m_uri.animation.get_string());
 }

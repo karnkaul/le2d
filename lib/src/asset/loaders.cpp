@@ -11,7 +11,7 @@ namespace {
 auto load_bytes(Context const& context, std::string_view const type, Uri const& uri) -> std::vector<std::byte> {
 	auto ret = std::vector<std::byte>{};
 	if (!context.get_data_loader().load_bytes(ret, uri)) {
-		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type);
+		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type);
 		return {};
 	}
 	return ret;
@@ -20,7 +20,7 @@ auto load_bytes(Context const& context, std::string_view const type, Uri const& 
 auto load_json(Context const& context, std::string_view const type, Uri const& uri) -> dj::Json {
 	auto text = std::string{};
 	if (!context.get_data_loader().load_string(text, uri)) {
-		log::warn("'{}' Failed to load {} JSON", uri.get_string(), type);
+		log.warn("'{}' Failed to load {} JSON", uri.get_string(), type);
 		return {};
 	}
 	return dj::Json::parse(text);
@@ -29,7 +29,7 @@ auto load_json(Context const& context, std::string_view const type, Uri const& u
 template <typename T, typename F, typename... Args>
 auto try_load(Uri const& uri, std::string_view const type, T& t, F func, Args&&... args) {
 	if (!std::invoke(func, &t, std::forward<Args>(args)...)) {
-		log::warn("'{}' Failed to load {}", uri.get_string(), type);
+		log.warn("'{}' Failed to load {}", uri.get_string(), type);
 		return false;
 	}
 	return true;
@@ -37,7 +37,7 @@ auto try_load(Uri const& uri, std::string_view const type, T& t, F func, Args&&.
 
 template <typename T>
 auto to_wrap(Uri const& uri, std::string_view const type, T t) {
-	log::info("=='{}'== {} loaded", uri.get_string(), type);
+	log.info("=='{}'== {} loaded", uri.get_string(), type);
 	return std::make_unique<Wrap<T>>(std::move(t));
 }
 
@@ -53,7 +53,7 @@ auto JsonLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<dj::Json>> {
 	static constexpr std::string_view type_v{"JSON"};
 	auto json = dj::Json{};
 	if (!m_context->get_data_loader().load_json(json, uri)) {
-		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
+		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
 		return {};
 	}
 	return to_wrap(uri, type_v, std::move(json));
@@ -63,7 +63,7 @@ auto SpirVLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<SpirV>> {
 	static constexpr std::string_view type_v{"SpirV"};
 	auto ret = std::vector<std::uint32_t>{};
 	if (!m_context->get_data_loader().load_spirv(ret, uri)) {
-		log::warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
+		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
 		return {};
 	}
 	return to_wrap(uri, type_v, SpirV{.code = std::move(ret)});
@@ -151,7 +151,7 @@ auto PcmLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Pcm>> {
 	auto const compression = to_compression(extension);
 	auto result = capo::Pcm::make(bytes, compression);
 	if (!result) {
-		log::warn("'{}' Failed to load {}", uri.get_string(), type_v);
+		log.warn("'{}' Failed to load {}", uri.get_string(), type_v);
 		return {};
 	}
 	return to_wrap(uri, type_v, std::move(result.pcm));

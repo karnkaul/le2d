@@ -32,10 +32,10 @@ auto main(int argc, char** argv) -> int {
 		if (force_x11) { glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); }
 		le::assed::run(assets_dir, shader_uris);
 	} catch (std::exception const& e) {
-		le::assed::log::error("PANIC: {}", e.what());
+		le::assed::log.error("PANIC: {}", e.what());
 		return EXIT_FAILURE;
 	} catch (...) {
-		le::assed::log::error("PANIC!");
+		le::assed::log.error("PANIC!");
 		return EXIT_FAILURE;
 	}
 }

@@ -129,7 +129,7 @@ struct Audio : IAudio {
 };
 } // namespace
 
-void Context::OnDestroy::operator()(int /*i*/) const noexcept { log::info("Context shutting down"); }
+void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Context shutting down"); }
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
@@ -142,7 +142,7 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
-	log::info("Context initialized");
+	log.info("Context initialized");
 	m_on_destroy = 42;
 }
 
@@ -187,7 +187,7 @@ auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> Sha
 	auto vert = SpirV{};
 	auto frag = SpirV{};
 	if (!m_data_loader->load_spirv(vert.code, vertex) || !m_data_loader->load_spirv(frag.code, fragment)) {
-		log::warn("Context: failed to load SPIR-V: {} / {}", vertex.get_string(), fragment.get_string());
+		log.warn("Context: failed to load SPIR-V: {} / {}", vertex.get_string(), fragment.get_string());
 		return {};
 	}
 	return ShaderProgram{m_pass.get_render_device().get_device(), vert, frag};
