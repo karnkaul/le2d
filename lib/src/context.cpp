@@ -133,7 +133,7 @@ void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Contex
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
-	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
+	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples), m_blocker(m_window.get_render_device().get_device()) {
 	auto default_shader = create_shader(std::string{create_info.default_shader_uri.vertex}, std::string{create_info.default_shader_uri.fragment});
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);

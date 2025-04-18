@@ -105,5 +105,7 @@ class Context : public klib::Pinned {
 	FrameStats m_frame_stats{};
 
 	klib::Unique<int, OnDestroy> m_on_destroy{};
+
+	kvf::DeviceBlock m_blocker;
 };
 } // namespace le
