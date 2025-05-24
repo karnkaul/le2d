@@ -41,11 +41,11 @@ auto to_wrap(Uri const& uri, std::string_view const type, T t) {
 	return std::make_unique<Wrap<T>>(std::move(t));
 }
 
-constexpr auto to_compression(std::string_view const extension) {
-	if (extension == ".wav") { return capo::Compression::eWav; }
-	if (extension == ".mp3") { return capo::Compression::eMp3; }
-	if (extension == ".flac") { return capo::Compression::eFlac; }
-	return capo::Compression::eUnknown;
+constexpr auto to_encoding(std::string_view const extension) -> std::optional<capo::Encoding> {
+	if (extension == ".wav") { return capo::Encoding::Wav; }
+	if (extension == ".mp3") { return capo::Encoding::Mp3; }
+	if (extension == ".flac") { return capo::Encoding::Flac; }
+	return {};
 }
 } // namespace
 
@@ -143,17 +143,17 @@ auto TileAnimationLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<ani
 	return to_wrap(uri, type_v, std::move(animation));
 }
 
-auto PcmLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Pcm>> {
-	static constexpr std::string_view type_v{"Pcm"};
+auto AudioBufferLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Buffer>> {
+	static constexpr std::string_view type_v{"AudioBuffer"};
 	auto const bytes = load_bytes(*m_context, type_v, uri);
 	if (bytes.empty()) { return {}; }
 	auto const extension = fs::path{uri.get_string()}.extension().string();
-	auto const compression = to_compression(extension);
-	auto result = capo::Pcm::make(bytes, compression);
-	if (!result) {
+	auto const encoding = to_encoding(extension);
+	auto buffer = capo::Buffer{};
+	if (!buffer.decode_bytes(bytes, encoding)) {
 		log.warn("'{}' Failed to load {}", uri.get_string(), type_v);
 		return {};
 	}
-	return to_wrap(uri, type_v, std::move(result.pcm));
+	return to_wrap(uri, type_v, std::move(buffer));
 }
 } // namespace le::asset
