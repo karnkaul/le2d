@@ -9,11 +9,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   capo::lite
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-  klib::klib-warnings
-  klib::klib-ndwerror
-)
-
 target_include_directories(${PROJECT_NAME} PRIVATE
   src
 )
