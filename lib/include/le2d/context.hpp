@@ -1,5 +1,4 @@
 #pragma once
-// #include <capo/capo.hpp>
 #include <le2d/asset/load_task.hpp>
 #include <le2d/audio.hpp>
 #include <le2d/data_loader.hpp>
