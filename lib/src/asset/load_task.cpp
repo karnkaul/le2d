@@ -46,7 +46,7 @@ auto LoadTask::enqueue(std::type_index const type, Uri uri) -> bool {
 	if (uri.get_string().empty()) { return false; }
 	auto const it = m_loaders.find(type);
 	if (it == m_loaders.end()) {
-		log::warn("No Loader registered for type: {} ({})", type.name(), type.hash_code());
+		log.warn("No Loader registered for type: {} ({})", type.name(), type.hash_code());
 		return false;
 	}
 	push_task(type, *it->second, std::move(uri));

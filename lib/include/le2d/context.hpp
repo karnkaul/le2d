@@ -1,5 +1,4 @@
 #pragma once
-#include <capo/capo.hpp>
 #include <le2d/asset/load_task.hpp>
 #include <le2d/audio.hpp>
 #include <le2d/data_loader.hpp>
@@ -105,5 +104,7 @@ class Context : public klib::Pinned {
 	FrameStats m_frame_stats{};
 
 	klib::Unique<int, OnDestroy> m_on_destroy{};
+
+	kvf::DeviceBlock m_blocker;
 };
 } // namespace le

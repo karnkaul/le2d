@@ -6,12 +6,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 target_link_libraries(${PROJECT_NAME} PUBLIC
   kvf::kvf
   djson::djson
-  capo::lite
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-  klib::klib-warnings
-  klib::klib-ndwerror
+  capo::capo
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

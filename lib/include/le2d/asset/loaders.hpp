@@ -1,5 +1,5 @@
 #pragma once
-#include <capo/pcm.hpp>
+#include <capo/buffer.hpp>
 #include <djson/json.hpp>
 #include <le2d/anim/animation.hpp>
 #include <le2d/asset/loader.hpp>
@@ -68,11 +68,11 @@ class TileAnimationLoader : public Loader<anim::Animation<TileId>> {
 	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<anim::Animation<TileId>>> final;
 };
 
-class PcmLoader : public Loader<capo::Pcm> {
+class AudioBufferLoader : public Loader<capo::Buffer> {
   public:
 	using Loader::Loader;
 
-	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Pcm>> final;
+	[[nodiscard]] auto load(Uri const& uri) const -> std::unique_ptr<Wrap<capo::Buffer>> final;
 };
 } // namespace asset
 } // namespace le

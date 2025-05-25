@@ -12,7 +12,7 @@ auto FileDataLoader::upfind(std::string_view const suffix, std::string_view leaf
 		auto const ret = dir / suffix;
 		if (fs::exists(ret)) { return ret.generic_string(); }
 	}
-	log::warn("FileDataLoader: failed to upfind path with suffix: '{}' starting at leaf dir: '{}'", suffix, leaf_dir);
+	log.warn("FileDataLoader: failed to upfind path with suffix: '{}' starting at leaf dir: '{}'", suffix, leaf_dir);
 	return {};
 }
 
@@ -41,10 +41,10 @@ auto FileDataLoader::save_string(std::string_view text, Uri const& uri) const ->
 auto FileDataLoader::set_root_dir(std::string_view root_dir) -> bool {
 	if (root_dir.empty()) { root_dir = "."; }
 	if (!fs::is_directory(root_dir)) {
-		log::warn("FileDataLoader: failed to set root directory: '{}'", root_dir);
+		log.warn("FileDataLoader: failed to set root directory: '{}'", root_dir);
 		return false;
 	}
-	log::info("FileDataLoader: root directory set to: '{}'", root_dir);
+	log.info("FileDataLoader: root directory set to: '{}'", root_dir);
 	m_root_dir = fs::absolute(root_dir).generic_string();
 	return true;
 }
@@ -62,7 +62,7 @@ template <typename T, typename F>
 auto FileDataLoader::from_file(T& out, Uri const& uri, F func) const -> bool {
 	if (!func(out, get_path(uri).c_str())) {
 		return false;
-		log::warn("FileDataLoader: failed to load: '{}'", uri.get_string());
+		log.warn("FileDataLoader: failed to load: '{}'", uri.get_string());
 	}
 	return true;
 }

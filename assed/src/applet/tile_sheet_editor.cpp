@@ -124,7 +124,7 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 	m_unsaved = false;
 	set_title(m_uri.tile_sheet.get_string());
 
-	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
+	log.info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
 void TileSheetEditor::try_load_tileset(Uri const& uri) {
@@ -138,7 +138,7 @@ void TileSheetEditor::try_load_tileset(Uri const& uri) {
 	set_tiles(tile_set->asset.get_tiles());
 	m_drawer.setup(m_tiles, m_texture.get_size());
 
-	log::info("loaded TileSet: '{}'", uri.get_string());
+	log.info("loaded TileSet: '{}'", uri.get_string());
 }
 
 void TileSheetEditor::try_load_texture(Uri uri) {
@@ -153,7 +153,7 @@ void TileSheetEditor::try_load_texture(Uri uri) {
 	m_drawer.setup(m_tiles, m_texture.get_size());
 	m_uri.texture = std::move(uri);
 
-	log::info("loaded Texture: '{}'", m_uri.texture.get_string());
+	log.info("loaded Texture: '{}'", m_uri.texture.get_string());
 }
 
 void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
@@ -208,7 +208,7 @@ void TileSheetEditor::on_save() {
 		return;
 	}
 	m_uri.tile_sheet = std::string{m_save_modal.uri_input.as_view()};
-	log::info("saved TileSheet: '{}'", m_uri.tile_sheet.get_string());
+	log.info("saved TileSheet: '{}'", m_uri.tile_sheet.get_string());
 	raise_dialog(std::format("Saved {}", m_uri.tile_sheet.get_string()), "Success");
 	set_title(m_uri.tile_sheet.get_string());
 }
