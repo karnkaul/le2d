@@ -7,7 +7,7 @@ namespace le::asset {
 namespace {
 auto load_bytes(Context const& context, std::string_view const type, Uri const& uri) -> std::vector<std::byte> {
 	auto ret = std::vector<std::byte>{};
-	if (!context.get_data_loader().load_bytes(ret, uri)) {
+	if (!context.get_data_loader().load_bytes(ret, uri.get_string())) {
 		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type);
 		return {};
 	}
@@ -16,7 +16,7 @@ auto load_bytes(Context const& context, std::string_view const type, Uri const& 
 
 auto load_json(Context const& context, std::string_view const type, Uri const& uri) -> dj::Json {
 	auto text = std::string{};
-	if (!context.get_data_loader().load_string(text, uri)) {
+	if (!context.get_data_loader().load_string(text, uri.get_string())) {
 		log.warn("'{}' Failed to load {} JSON", uri.get_string(), type);
 		return {};
 	}
@@ -42,7 +42,7 @@ auto to_wrap(Uri const& uri, std::string_view const type, T t) {
 auto JsonLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<dj::Json>> {
 	static constexpr std::string_view type_v{"JSON"};
 	auto json = dj::Json{};
-	if (!m_context->get_data_loader().load_json(json, uri)) {
+	if (!m_context->get_data_loader().load_json(json, uri.get_string())) {
 		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
 		return {};
 	}
@@ -52,7 +52,7 @@ auto JsonLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<dj::Json>> {
 auto SpirVLoader::load(Uri const& uri) const -> std::unique_ptr<Wrap<SpirV>> {
 	static constexpr std::string_view type_v{"SpirV"};
 	auto ret = std::vector<std::uint32_t>{};
-	if (!m_context->get_data_loader().load_spirv(ret, uri)) {
+	if (!m_context->get_data_loader().load_spirv(ret, uri.get_string())) {
 		log.warn("'{}' Failed to load {} bytes", uri.get_string(), type_v);
 		return {};
 	}

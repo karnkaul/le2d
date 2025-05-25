@@ -156,7 +156,7 @@ void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Contex
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
 	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples), m_blocker(m_window.get_render_device().get_device()) {
-	auto default_shader = create_shader(std::string{create_info.default_shader_uri.vertex}, std::string{create_info.default_shader_uri.fragment});
+	auto default_shader = create_shader(create_info.default_shader_uri.vertex, create_info.default_shader_uri.fragment);
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
 
@@ -205,11 +205,11 @@ void Context::present() {
 	update_stats(present_start);
 }
 
-auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> ShaderProgram {
+auto Context::create_shader(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
 	auto vert = SpirV{};
 	auto frag = SpirV{};
-	if (!m_data_loader->load_spirv(vert.code, vertex) || !m_data_loader->load_spirv(frag.code, fragment)) {
-		log.warn("Context: failed to load SPIR-V: {} / {}", vertex.get_string(), fragment.get_string());
+	if (!m_data_loader->load_spirv(vert.code, vertex_uri) || !m_data_loader->load_spirv(frag.code, fragment_uri)) {
+		log.warn("Context: failed to load SPIR-V: {} / {}", vertex_uri, fragment_uri);
 		return {};
 	}
 	return ShaderProgram{m_pass.get_render_device().get_device(), vert, frag};

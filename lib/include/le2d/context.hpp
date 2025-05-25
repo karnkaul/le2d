@@ -65,7 +65,7 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
-	[[nodiscard]] auto create_shader(Uri const& vertex, Uri const& fragment) const -> ShaderProgram;
+	[[nodiscard]] auto create_shader(std::string_view vertex_uri, std::string_view fragment_uri) const -> ShaderProgram;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
 	[[nodiscard]] auto create_tilesheet(kvf::Bitmap const& bitmap = {}) const -> TileSheet;
