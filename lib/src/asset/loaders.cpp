@@ -15,12 +15,12 @@ auto load_bytes(Context const& context, std::string_view const type, Uri const& 
 }
 
 auto load_json(Context const& context, std::string_view const type, Uri const& uri) -> dj::Json {
-	auto text = std::string{};
-	if (!context.get_data_loader().load_string(text, uri.get_string())) {
+	auto ret = dj::Json{};
+	if (!context.get_data_loader().load_json(ret, uri.get_string())) {
 		log.warn("'{}' Failed to load {} JSON", uri.get_string(), type);
 		return {};
 	}
-	return dj::Json::parse(text);
+	return ret;
 }
 
 template <typename T, typename F, typename... Args>

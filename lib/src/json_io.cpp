@@ -5,7 +5,7 @@ template <typename PayloadT>
 void timeline_from_json(dj::Json const& json, le::anim::Timeline<PayloadT>& timeline) {
 	if (!le::is_json_type(json, timeline)) { return; }
 	le::from_json(json["duration"], timeline.duration);
-	auto const& in_keyframes = json["keyframes"].array_view();
+	auto const in_keyframes = json["keyframes"].as_array();
 	timeline.keyframes.reserve(in_keyframes.size());
 	for (auto const& in_keyframe : in_keyframes) { from_json(in_keyframe, timeline.keyframes.emplace_back()); }
 }
@@ -39,7 +39,7 @@ void animation_to_json(dj::Json& json, le::anim::Animation<PayloadT> const& anim
 }
 } // namespace
 
-auto le::get_json_type_name(dj::Json const& json) -> std::string_view { return json["type_name"].as_string(); }
+auto le::get_json_type_name(dj::Json const& json) -> std::string_view { return json["type_name"].as_string_view(); }
 
 void le::set_json_type_name(dj::Json& json, std::string_view const type_name) {
 	if (type_name.empty()) { return; }
@@ -99,7 +99,7 @@ void le::to_json(dj::Json& json, Transform const& transform) {
 void le::from_json(dj::Json const& json, TileSet& tile_set) {
 	if (!is_json_type(json, tile_set)) { return; }
 	auto tiles = std::vector<Tile>{};
-	auto const& in_tiles = json["tiles"].array_view();
+	auto const in_tiles = json["tiles"].as_array();
 	tiles.reserve(in_tiles.size());
 	for (auto const& in_tile : in_tiles) { from_json(in_tile, tiles.emplace_back()); }
 	tile_set.set_tiles(std::move(tiles));
