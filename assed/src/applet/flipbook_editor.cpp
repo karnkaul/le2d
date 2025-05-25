@@ -150,7 +150,7 @@ void FlipbookEditor::try_load_json(FileDrop const& drop) {
 void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	auto loader = AssetLoader{&get_context()};
 	auto tile_sheet = loader.load_tile_sheet(uri.get_string());
-	if (tile_sheet.tile_set.get_tiles().empty()) {
+	if (!tile_sheet.is_loaded()) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
 	}
@@ -179,7 +179,7 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 void FlipbookEditor::try_load_animation(Uri uri) {
 	auto loader = AssetLoader{&get_context()};
 	auto animation = loader.load_flipbook_animation(uri.get_string());
-	if (animation.get_timeline().keyframes.empty()) {
+	if (!animation.is_loaded()) {
 		raise_error(std::format("Failed to load FlipbookAnimation: '{}'", uri.get_string()));
 		return;
 	}
