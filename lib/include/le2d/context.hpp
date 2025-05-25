@@ -1,5 +1,4 @@
 #pragma once
-#include <le2d/asset/load_task.hpp>
 #include <le2d/audio.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
@@ -70,7 +69,6 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
 	[[nodiscard]] auto create_tilesheet(kvf::Bitmap const& bitmap = {}) const -> TileSheet;
 	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
-	[[nodiscard]] auto create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask>;
 
   private:
 	struct OnDestroy {

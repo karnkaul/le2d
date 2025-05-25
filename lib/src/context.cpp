@@ -1,7 +1,6 @@
 #include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <klib/assert.hpp>
-#include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
 
@@ -206,9 +205,9 @@ void Context::present() {
 }
 
 auto Context::create_shader(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
-	auto vert = SpirV{};
-	auto frag = SpirV{};
-	if (!m_data_loader->load_spirv(vert.code, vertex_uri) || !m_data_loader->load_spirv(frag.code, fragment_uri)) {
+	auto vert = std::vector<std::uint32_t>{};
+	auto frag = std::vector<std::uint32_t>{};
+	if (!m_data_loader->load_spirv(vert, vertex_uri) || !m_data_loader->load_spirv(frag, fragment_uri)) {
 		log.warn("Context: failed to load SPIR-V: {} / {}", vertex_uri, fragment_uri);
 		return {};
 	}
@@ -222,20 +221,6 @@ auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { retur
 auto Context::create_tilesheet(kvf::Bitmap const& bitmap) const -> TileSheet { return TileSheet{&m_pass.get_render_device(), bitmap}; }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
-
-auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
-	auto ret = std::make_unique<asset::LoadTask>(task_queue);
-	ret->add_loader(std::make_unique<asset::JsonLoader>(this));
-	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
-	ret->add_loader(std::make_unique<asset::FontLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
-	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileSheetLoader>(this));
-	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::AudioBufferLoader>(this));
-	return ret;
-}
 
 void Context::update_stats(kvf::Clock::time_point const present_start) {
 	auto const now = kvf::Clock::now();

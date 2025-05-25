@@ -1,7 +1,7 @@
 #include <applet/tile_sheet_editor.hpp>
 #include <klib/assert.hpp>
 #include <klib/fixed_string.hpp>
-#include <le2d/asset/loaders.hpp>
+#include <le2d/asset_loader.hpp>
 #include <le2d/file_data_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <le2d/util.hpp>
@@ -108,16 +108,16 @@ void TileSheetEditor::try_load_json(FileDrop const& drop) {
 }
 
 void TileSheetEditor::try_load_tilesheet(Uri uri) {
-	auto loader = asset::TileSheetLoader{&get_context()};
-	auto texture_uri = Uri{};
-	auto tile_sheet = loader.load(uri, texture_uri);
-	if (!tile_sheet) {
+	auto loader = AssetLoader{&get_context()};
+	auto texture_uri = std::string{};
+	auto tile_sheet = loader.load_tile_sheet(uri.get_string(), &texture_uri);
+	if (tile_sheet.tile_set.get_tiles().empty()) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
 	}
 
-	set_tiles(tile_sheet->asset.tile_set.get_tiles());
-	set_texture(static_cast<Texture&&>(tile_sheet->asset));
+	set_tiles(tile_sheet.tile_set.get_tiles());
+	set_texture(static_cast<Texture&&>(tile_sheet));
 	m_drawer.setup(m_tiles, m_texture.get_size());
 	m_uri.texture = std::move(texture_uri);
 	m_uri.tile_sheet = std::move(uri);
@@ -128,28 +128,29 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 }
 
 void TileSheetEditor::try_load_tileset(Uri const& uri) {
-	auto loader = asset::TileSetLoader{&get_context()};
-	auto tile_set = loader.load(uri);
-	if (!tile_set) {
+	auto loader = AssetLoader{&get_context()};
+	auto const tile_set = loader.load_tile_set(uri.get_string());
+	if (tile_set.get_tiles().empty()) {
 		raise_error(std::format("Failed to load TileSet: '{}'", uri.get_string()));
 		return;
 	}
 
-	set_tiles(tile_set->asset.get_tiles());
+	set_tiles(tile_set.get_tiles());
 	m_drawer.setup(m_tiles, m_texture.get_size());
 
 	log.info("loaded TileSet: '{}'", uri.get_string());
 }
 
 void TileSheetEditor::try_load_texture(Uri uri) {
-	auto loader = asset::TextureLoader{&get_context()};
-	auto texture = loader.load(uri);
-	if (!texture) {
+	auto loader = AssetLoader{&get_context()};
+	auto texture = loader.load_texture(uri.get_string());
+	auto const size = texture.get_size();
+	if (size.x == 1 && size.y == 1) {
 		raise_error(std::format("Failed to load Texture: '{}'", uri.get_string()));
 		return;
 	}
 
-	set_texture(std::move(texture->asset));
+	set_texture(std::move(texture));
 	m_drawer.setup(m_tiles, m_texture.get_size());
 	m_uri.texture = std::move(uri);
 
