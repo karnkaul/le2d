@@ -7,13 +7,6 @@
 #include <gsl/pointers>
 
 namespace le {
-enum class AssetLoadFlag : std::uint8_t;
-}
-
-template <>
-inline constexpr auto klib::enable_enum_ops_v<le::AssetLoadFlag> = true;
-
-namespace le {
 class Context;
 
 enum class AssetLoadFlag : std::uint8_t {
@@ -49,3 +42,6 @@ class AssetLoader {
 	Flag m_flags{};
 };
 } // namespace le
+
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::AssetLoadFlag> = true;
