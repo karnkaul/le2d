@@ -1,6 +1,6 @@
+#include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <klib/assert.hpp>
-#include <le2d/asset/loaders.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
 
@@ -48,44 +48,64 @@ struct ResourcePool : IResourcePool {
 	kvf::DeviceBlock m_blocker;
 };
 
+// TODO: DRY
 struct Audio : IAudio {
-	explicit Audio(int sfx_sources) {
-		if (!m_device) {
-			// TODO: log error
+	explicit Audio(int sfx_sources) : m_engine(capo::create_engine()) {
+		if (!m_engine) {
+			log.error("Failed to create Audio Engine");
+			return;
 		}
+
 		static constexpr auto max_sfx_sources_v{256};
 		sfx_sources = std::clamp(sfx_sources, 1, max_sfx_sources_v);
 		m_sfx_sources.reserve(std::size_t(sfx_sources));
 		for (int i = 0; i < sfx_sources; ++i) {
 			auto& sfx_source = m_sfx_sources.emplace_back();
-			sfx_source.source = m_device.make_sound_source();
+			sfx_source.source = m_engine->create_source();
 		}
 	}
 
 	[[nodiscard]] auto get_sfx_gain() const -> float final { return m_sfx_gain; }
 
 	void set_sfx_gain(float const gain) final {
-		if (std::abs(gain - m_sfx_gain) < 0.01f) { return; }
+		if (!m_engine || std::abs(gain - m_sfx_gain) < 0.01f) { return; }
 		m_sfx_gain = gain;
 		for (auto& source : m_sfx_sources) {
-			if (source.source.state() != capo::State::ePlaying) { continue; }
-			source.source.set_gain(m_sfx_gain);
+			if (!source.source->is_playing()) { continue; }
+			source.source->set_gain(m_sfx_gain);
 		}
 	}
 
-	void play_sfx(capo::Clip const& clip) final {
-		if (clip.samples.empty()) { return; }
+	void play_sfx(gsl::not_null<capo::Buffer const*> buffer) final {
+		if (!m_engine || buffer->get_samples().empty()) { return; }
 		auto* source = get_idle_source();
 		if (source == nullptr) { source = &get_oldest_source(); }
-		play_sfx(*source, clip);
+		play_sfx(*source, [buffer](capo::ISource& source) { source.bind_to(buffer); });
 	}
 
-	[[nodiscard]] auto create_stream_source() const -> capo::StreamSource final { return m_device.make_stream_source(); }
+	void play_sfx(std::shared_ptr<capo::Buffer const> buffer) final {
+		if (!m_engine || !buffer || buffer->get_samples().empty()) { return; }
+		auto* source = get_idle_source();
+		if (source == nullptr) { source = &get_oldest_source(); }
+		play_sfx(*source, [&buffer](capo::ISource& source) { source.bind_to(std::move(buffer)); });
+	}
 
-	void start_music(capo::StreamSource& source, capo::Clip const& clip) const final {
+	[[nodiscard]] auto create_source() const -> std::unique_ptr<capo::ISource> final {
+		if (!m_engine) { return {}; }
+		return m_engine->create_source();
+	}
+
+	void start_music(capo::ISource& source, gsl::not_null<capo::Buffer const*> buffer) const final {
 		source.stop();
-		if (clip.samples.empty()) { return; }
-		source.set_stream(clip);
+		if (buffer->get_samples().empty()) { return; }
+		source.bind_to(buffer);
+		source.play();
+	}
+
+	void start_music(capo::ISource& source, std::shared_ptr<capo::Buffer const> buffer) const final {
+		source.stop();
+		if (!buffer || buffer->get_samples().empty()) { return; }
+		source.bind_to(std::move(buffer));
 		source.play();
 	}
 
@@ -93,13 +113,13 @@ struct Audio : IAudio {
 	using Clock = std::chrono::steady_clock;
 
 	struct SfxSource {
-		capo::SoundSource source{};
+		std::unique_ptr<capo::ISource> source{};
 		Clock::time_point timestamp{};
 	};
 
 	[[nodiscard]] auto get_idle_source() -> SfxSource* {
 		for (auto& source : m_sfx_sources) {
-			if (source.source.state() != capo::State::ePlaying) { return &source; }
+			if (!source.source->is_playing()) { return &source; }
 		}
 		return nullptr;
 	}
@@ -113,28 +133,29 @@ struct Audio : IAudio {
 		return *ret;
 	}
 
-	void play_sfx(SfxSource& source, capo::Clip const& clip) const {
-		source.source.stop();
-		source.source.set_gain(m_sfx_gain);
-		source.source.set_clip(clip);
-		source.source.set_looping(false);
-		source.source.play();
+	template <typename F>
+	void play_sfx(SfxSource& source, F func) const {
+		source.source->stop();
+		source.source->set_gain(m_sfx_gain);
+		func(*source.source);
+		source.source->set_looping(false);
+		source.source->play();
 		source.timestamp = Clock::now();
 	}
 
-	capo::Device m_device{};
+	std::unique_ptr<capo::IEngine> m_engine{};
 
 	std::vector<SfxSource> m_sfx_sources{};
 	float m_sfx_gain{1.0f};
 };
 } // namespace
 
-void Context::OnDestroy::operator()(int /*i*/) const noexcept { log::info("Context shutting down"); }
+void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Context shutting down"); }
 
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
-	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples) {
-	auto default_shader = create_shader(std::string{create_info.default_shader_uri.vertex}, std::string{create_info.default_shader_uri.fragment});
+	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples), m_blocker(m_window.get_render_device().get_device()) {
+	auto default_shader = create_shader(create_info.default_shader_uri.vertex, create_info.default_shader_uri.fragment);
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
 
@@ -142,7 +163,7 @@ Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
-	log::info("Context initialized");
+	log.info("Context initialized");
 	m_on_destroy = 42;
 }
 
@@ -183,11 +204,11 @@ void Context::present() {
 	update_stats(present_start);
 }
 
-auto Context::create_shader(Uri const& vertex, Uri const& fragment) const -> ShaderProgram {
-	auto vert = SpirV{};
-	auto frag = SpirV{};
-	if (!m_data_loader->load_spirv(vert.code, vertex) || !m_data_loader->load_spirv(frag.code, fragment)) {
-		log::warn("Context: failed to load SPIR-V: {} / {}", vertex.get_string(), fragment.get_string());
+auto Context::create_shader(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
+	auto vert = std::vector<std::uint32_t>{};
+	auto frag = std::vector<std::uint32_t>{};
+	if (!m_data_loader->load_spirv(vert, vertex_uri) || !m_data_loader->load_spirv(frag, fragment_uri)) {
+		log.warn("Context: failed to load SPIR-V: {} / {}", vertex_uri, fragment_uri);
 		return {};
 	}
 	return ShaderProgram{m_pass.get_render_device().get_device(), vert, frag};
@@ -200,20 +221,6 @@ auto Context::create_texture(kvf::Bitmap const& bitmap) const -> Texture { retur
 auto Context::create_tilesheet(kvf::Bitmap const& bitmap) const -> TileSheet { return TileSheet{&m_pass.get_render_device(), bitmap}; }
 
 auto Context::create_font(std::vector<std::byte> font_bytes) const -> Font { return Font{&m_pass.get_render_device(), std::move(font_bytes)}; }
-
-auto Context::create_asset_load_task(gsl::not_null<klib::task::Queue*> task_queue) const -> std::unique_ptr<asset::LoadTask> {
-	auto ret = std::make_unique<asset::LoadTask>(task_queue);
-	ret->add_loader(std::make_unique<asset::JsonLoader>(this));
-	ret->add_loader(std::make_unique<asset::SpirVLoader>(this));
-	ret->add_loader(std::make_unique<asset::FontLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileSetLoader>(this));
-	ret->add_loader(std::make_unique<asset::TextureLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileSheetLoader>(this));
-	ret->add_loader(std::make_unique<asset::TransformAnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::TileAnimationLoader>(this));
-	ret->add_loader(std::make_unique<asset::PcmLoader>(this));
-	return ret;
-}
 
 void Context::update_stats(kvf::Clock::time_point const present_start) {
 	auto const now = kvf::Clock::now();

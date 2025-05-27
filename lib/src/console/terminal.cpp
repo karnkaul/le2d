@@ -108,7 +108,7 @@ struct Terminal::Impl : IPrinter {
 		};
 	}
 
-	static constexpr std::string_view log_tag_v{"le::console"};
+	inline static auto const log = klib::TaggedLogger{"le::console"};
 
 	explicit Impl(Font& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
 		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)),
@@ -143,12 +143,12 @@ struct Terminal::Impl : IPrinter {
 
 	void println(std::string_view const text) final {
 		Buffer::Printer{m_buffer}.print(text, m_info.colors.output);
-		klib::log::info(log_tag_v, "{}", text);
+		log.info("{}", text);
 	}
 
 	void printerr(std::string_view const text) final {
 		Buffer::Printer{m_buffer}.print(text, m_info.colors.error);
-		klib::log::error(log_tag_v, "{}", text);
+		log.error("{}", text);
 	}
 
 	void handle_events(std::span<Event const> events, bool* activated) {
@@ -274,7 +274,7 @@ struct Terminal::Impl : IPrinter {
 	}
 
 	void print_input(std::string line) {
-		klib::log::info(log_tag_v, "{}", line);
+		log.info("{}", line);
 		m_buffer.push({&line, 1}, m_info.colors.input);
 	}
 

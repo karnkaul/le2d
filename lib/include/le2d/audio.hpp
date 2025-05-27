@@ -1,15 +1,18 @@
 #pragma once
-#include <capo/capo.hpp>
+#include <capo/source.hpp>
 #include <klib/base_types.hpp>
+#include <gsl/pointers>
 
 namespace le {
 class IAudio : public klib::Polymorphic {
   public:
 	[[nodiscard]] virtual auto get_sfx_gain() const -> float = 0;
 	virtual void set_sfx_gain(float gain) = 0;
-	virtual void play_sfx(capo::Clip const& clip) = 0;
+	virtual void play_sfx(gsl::not_null<capo::Buffer const*> buffer) = 0;
+	virtual void play_sfx(std::shared_ptr<capo::Buffer const> buffer) = 0;
 
-	[[nodiscard]] virtual auto create_stream_source() const -> capo::StreamSource = 0;
-	virtual void start_music(capo::StreamSource& source, capo::Clip const& clip) const = 0;
+	[[nodiscard]] virtual auto create_source() const -> std::unique_ptr<capo::ISource> = 0;
+	virtual void start_music(capo::ISource& source, gsl::not_null<capo::Buffer const*> buffer) const = 0;
+	virtual void start_music(capo::ISource& source, std::shared_ptr<capo::Buffer const> buffer) const = 0;
 };
 } // namespace le

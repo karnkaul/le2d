@@ -7,7 +7,7 @@ namespace {
 template <typename T, typename F>
 auto load(IDataLoader const& data_loader, Uri const& uri, F func) -> T {
 	auto ret = T{};
-	if (!std::invoke(func, &data_loader, ret, uri)) { return {}; }
+	if (!std::invoke(func, &data_loader, ret, uri.get_string())) { return {}; }
 	return ret;
 }
 

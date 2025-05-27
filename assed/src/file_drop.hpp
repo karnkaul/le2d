@@ -1,11 +1,12 @@
 #pragma once
 #include <klib/enum_ops.hpp>
 #include <le2d/file_data_loader.hpp>
+#include <le2d/uri.hpp>
 #include <cstdint>
 
 namespace le::assed {
 struct FileDrop {
-	enum class Type : std::int8_t {
+	enum class Type : std::uint8_t {
 		None = 0,
 		Unknown = 1 << 0,
 		Json = 1 << 1,
@@ -25,7 +26,5 @@ struct FileDrop {
 };
 } // namespace le::assed
 
-namespace klib {
 template <>
-inline constexpr auto enable_enum_ops_v<le::assed::FileDrop::Type> = true;
-} // namespace klib
+inline constexpr auto klib::enable_enum_ops_v<le::assed::FileDrop::Type> = true;

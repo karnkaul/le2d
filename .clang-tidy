@@ -13,6 +13,7 @@ Checks: 'clang-analyzer-*,
 	portability-*,
 	readability-*,
 	-readability-identifier-length,
+  -readability-implicit-bool-conversion,
 	-readability-magic-numbers,
 	-readability-redundant-member-init,
 	-readability-uppercase-literal-suffix'

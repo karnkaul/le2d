@@ -22,7 +22,7 @@ auto FileDrop::create(FileDataLoader const& loader, std::string_view const path)
 	ret.extension = fs::path{ret.uri.get_string()}.extension().string();
 	if (ret.extension == ".json") {
 		ret.type = Type::Json;
-		ret.json_type = loader.get_json_type_name(ret.uri);
+		ret.json_type = loader.get_json_type_name(ret.uri.get_string());
 		return ret;
 	}
 

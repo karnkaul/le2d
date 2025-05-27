@@ -10,6 +10,8 @@ class TileSet {
 
 	[[nodiscard]] auto get_uv(TileId id) const -> kvf::UvRect;
 
+	[[nodiscard]] auto is_loaded() const -> bool { return !m_sorted_tiles.empty(); }
+
   private:
 	std::vector<Tile> m_sorted_tiles{};
 };

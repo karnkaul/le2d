@@ -1,10 +1,13 @@
 #pragma once
-#include <le2d/asset/spir_v.hpp>
 #include <vulkan/vulkan.hpp>
+#include <cstdint>
+#include <span>
 
 namespace le {
 class ShaderProgram {
   public:
+	using SpirV = std::span<std::uint32_t const>;
+
 	struct Modules {
 		vk::ShaderModule vertex{};
 		vk::ShaderModule fragment{};
@@ -12,9 +15,9 @@ class ShaderProgram {
 
 	ShaderProgram() = default;
 
-	explicit ShaderProgram(vk::Device device, SpirV const& vertex, SpirV const& fragment);
+	explicit ShaderProgram(vk::Device device, SpirV vertex, SpirV fragment);
 
-	auto load(vk::Device device, SpirV const& vertex, SpirV const& fragment) -> bool;
+	auto load(vk::Device device, SpirV vertex, SpirV fragment) -> bool;
 
 	[[nodiscard]] auto is_loaded() const -> bool { return m_vertex && m_fragment; }
 	[[nodiscard]] auto get_modules() const -> Modules { return Modules{.vertex = *m_vertex, .fragment = *m_fragment}; }

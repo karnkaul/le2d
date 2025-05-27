@@ -61,7 +61,7 @@ void App::swap_applet() {
 
 	auto const it = std::ranges::find_if(m_factories, [name](Factory const& f) { return f.name.as_view() == name; });
 	if (it == m_factories.end()) {
-		log::error("unrecognized applet: {}", name);
+		log.error("unrecognized applet: {}", name);
 		return;
 	}
 
@@ -125,7 +125,7 @@ void App::set_applet(Factory const& factory) {
 	m_blocker.get().waitIdle();
 	m_applet = factory.create(&m_service_locator);
 	m_applet->do_setup();
-	log::info("loaded '{}'", factory.name.as_view());
+	log.info("loaded '{}'", factory.name.as_view());
 }
 
 void App::try_exit() {

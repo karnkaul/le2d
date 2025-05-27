@@ -1,6 +1,6 @@
 #include <applet/flipbook_editor.hpp>
 #include <klib/fixed_string.hpp>
-#include <le2d/asset/loaders.hpp>
+#include <le2d/asset_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <ranges>
 
@@ -148,14 +148,14 @@ void FlipbookEditor::try_load_json(FileDrop const& drop) {
 }
 
 void FlipbookEditor::try_load_tilesheet(Uri uri) {
-	auto loader = asset::TileSheetLoader{&get_context()};
-	auto tile_sheet = loader.load(uri);
-	if (!tile_sheet) {
+	auto loader = AssetLoader{&get_context()};
+	auto tile_sheet = loader.load_tile_sheet(uri.get_string());
+	if (!tile_sheet.is_loaded()) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
 	}
 
-	m_tile_sheet = std::move(tile_sheet->asset);
+	m_tile_sheet = std::move(tile_sheet);
 	auto const tiles = m_tile_sheet.tile_set.get_tiles();
 	m_generate.select_tiles.entries.clear();
 	m_generate.select_tiles.entries.reserve(tiles.size());
@@ -173,18 +173,18 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	m_sprite.set_tile(&m_tile_sheet, TileId{1});
 
 	m_uri.tile_sheet = std::move(uri);
-	log::info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
+	log.info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
 }
 
 void FlipbookEditor::try_load_animation(Uri uri) {
-	auto loader = asset::TileAnimationLoader{&get_context()};
-	auto animation = loader.load(uri);
-	if (!animation) {
+	auto loader = AssetLoader{&get_context()};
+	auto animation = loader.load_flipbook_animation(uri.get_string());
+	if (!animation.is_loaded()) {
 		raise_error(std::format("Failed to load FlipbookAnimation: '{}'", uri.get_string()));
 		return;
 	}
 
-	m_animation = std::move(animation->asset);
+	m_animation = std::move(animation);
 	m_animator.set_animation(&m_animation);
 	m_generate.duration = m_animation.get_timeline().duration.count();
 	m_unsaved = false;
@@ -192,7 +192,7 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 
 	m_uri.animation = std::move(uri);
 	set_title(m_uri.animation.get_string());
-	log::info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
+	log.info("loaded FlipbookAnimation: '{}'", m_uri.animation.get_string());
 }
 
 void FlipbookEditor::on_save() {
@@ -204,7 +204,7 @@ void FlipbookEditor::on_save() {
 		return;
 	}
 	m_uri.animation = std::string{m_save_modal.uri_input.as_view()};
-	log::info("saved Flipbook: '{}'", m_uri.animation.get_string());
+	log.info("saved Flipbook: '{}'", m_uri.animation.get_string());
 	raise_dialog(std::format("Saved {}", m_uri.animation.get_string()), "Success");
 	set_title(m_uri.animation.get_string());
 }

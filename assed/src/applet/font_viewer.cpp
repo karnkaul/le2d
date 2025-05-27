@@ -99,7 +99,7 @@ void FontViewer::try_load_font(Uri const& uri) {
 	set_text_height(TextHeight::Default);
 
 	set_title(uri.get_string());
-	log::info("loaded Font: '{}'", uri.get_string());
+	log.info("loaded Font: '{}'", uri.get_string());
 }
 
 void FontViewer::set_text_height(TextHeight const height) {

@@ -17,7 +17,8 @@ class ITexture : public klib::Polymorphic {
 
 class Texture : public ITexture {
   public:
-	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}, vk::SamplerCreateInfo const& sampler = kvf::vma::sampler_ci_v);
+	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap const& bitmap = {},
+					 vk::SamplerCreateInfo const& sampler = kvf::vma::sampler_ci_v);
 
 	[[nodiscard]] auto get_image() const -> vk::ImageView final { return m_texture.get_image().get_view(); }
 	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
@@ -26,6 +27,8 @@ class Texture : public ITexture {
 
 	void overwrite(kvf::Bitmap const& bitmap);
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool;
+
+	[[nodiscard]] auto is_loaded() const -> bool { return m_texture.is_loaded(); }
 
   protected:
 	gsl::not_null<kvf::RenderDevice*> m_render_device;
