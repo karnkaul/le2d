@@ -24,3 +24,6 @@ endif()
 if(LE2D_BUILD_SPIRV_EMBEDDER)
   add_subdirectory(embed_spirv)
 endif()
+
+# TEMP
+add_subdirectory(cards)
