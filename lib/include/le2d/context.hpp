@@ -3,6 +3,7 @@
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
 #include <le2d/frame_stats.hpp>
+#include <le2d/gamepad.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource_pool.hpp>
@@ -37,6 +38,8 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
+
+	[[nodiscard]] auto get_latest_gamepad() -> Gamepad const&;
 
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
@@ -91,6 +94,8 @@ class Context : public klib::Pinned {
 
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudio> m_audio{};
+
+	Gamepad m_latest_gamepad{};
 
 	float m_render_scale{1.0f};
 
