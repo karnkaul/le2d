@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24)
+
+include(version.cmake)
 
 set(project_name le2d)
-project(${project_name} VERSION "0.1.0")
+project(${project_name} VERSION ${le2d_version})
 
 option(LE2D_BUILD_ASSED "Build le2d Asset Editor" ${PROJECT_IS_TOP_LEVEL})
 

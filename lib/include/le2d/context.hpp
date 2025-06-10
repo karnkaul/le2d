@@ -11,19 +11,29 @@
 #include <le2d/vsync.hpp>
 
 namespace le {
+/// \brief Context creation parameters.
 struct ContextCreateInfo {
+	/// \brief Vertex and fragment shader URIs.
 	struct ShaderUri {
 		std::string_view vertex;
 		std::string_view fragment;
 	};
 
+	/// \brief Window creation parameters.
 	WindowCreateInfo window;
+	/// \brief URI for default shaders.
 	ShaderUri default_shader_uri;
+
+	/// \brief Render Device creation parameters.
 	kvf::RenderDeviceCreateInfo render_device{};
+	/// \brief Multi sampled anti-aliasing.
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
+	/// \brief Number of SFX buffers (concurrently playable).
 	int sfx_buffers{16};
 };
 
+/// \brief Central API for most of the engine / framework.
+/// Encapsulates RenderWindow, primary RenderPass, Audio Engine.
 class Context : public klib::Pinned {
   public:
 	using CreateInfo = ContextCreateInfo;
@@ -31,7 +41,9 @@ class Context : public klib::Pinned {
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
 
-	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info = {});
+	/// \param data_loader Pointer to persistent concrete IDataLoader. Used to load assets, including shaders.
+	/// \param create_info Creation parameters.
+	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info);
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
@@ -39,29 +51,52 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
 
+	/// \brief Get the updated state of the last used Gamepad (if any).
+	/// \returns If unset or disconnected, le::Gamepad::get_active(), else updated Gamepad state.
 	[[nodiscard]] auto get_latest_gamepad() -> Gamepad const&;
 
+	/// \returns Current size of swapchain images.
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
+	/// \returns Scaled render framebuffer size.
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
+	/// \returns Events that occurred since the last frame.
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window.event_queue(); }
 
+	/// \brief Check if Window is (and should remain) open.
+	/// \returns true unless the close flag has been set.
 	[[nodiscard]] auto is_running() const -> bool { return m_window.is_open(); }
+	/// \brief Set the Window close flag.
+	/// Note: the window will remain visible until this object is destroyed by owning code.
 	void shutdown() { m_window.set_closing(); }
+	/// \brief Reset the Window close flag.
+	void cancel_window_close() { m_window.cancel_close(); }
 
+	/// \returns Current render scale.
 	[[nodiscard]] auto get_render_scale() const -> float { return m_render_scale; }
+	/// \param scale Desired render scale.
+	/// \returns true if desired scale is within limits.
 	auto set_render_scale(float scale) -> bool;
 
+	/// \returns List of supported Vsync modes.
 	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> { return m_supported_vsync; }
+	/// \returns Current Vsync mode.
 	[[nodiscard]] auto get_vsync() const -> Vsync;
+	/// \param vsync Desired Vsync mode.
+	/// \returns true if desired mode is supported.
 	auto set_vsync(Vsync vsync) -> bool;
 
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window.set_fullscreen(target); }
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window.set_windowed(size); }
 
-	void cancel_window_close();
-
+	/// \brief Begin the next frame.
+	/// Resets render resources and polls events.
+	/// \returns Current virtual frame's Command Buffer.
 	auto next_frame() -> vk::CommandBuffer;
+	/// \brief Begin rendering the primary RenderPass.
+	/// \param clear Clear color.
+	/// \returns Renderer instance.
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
+	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
 	void present();
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }

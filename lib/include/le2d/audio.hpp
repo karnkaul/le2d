@@ -4,6 +4,8 @@
 #include <gsl/pointers>
 
 namespace le {
+/// \brief Opaque Audio Engine interface.
+/// The concrete type is not publicly accesssible.
 class IAudio : public klib::Polymorphic {
   public:
 	[[nodiscard]] virtual auto get_sfx_gain() const -> float = 0;

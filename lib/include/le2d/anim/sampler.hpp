@@ -7,13 +7,15 @@
 #include <span>
 
 namespace le::anim {
+/// \brief Concept for Animation Sampler.
 template <typename Type, typename PayloadT>
 concept SamplerT = requires(Type const& t, std::span<Keyframe<PayloadT> const> keyframes, kvf::Seconds time) {
 	{ t.sample(keyframes, time) } -> std::same_as<PayloadT>;
 };
 
+/// \brief Quantized Animation Sampler.
 template <typename PayloadT>
-struct SamplerNearest {
+struct SamplerFloor {
 	[[nodiscard]] constexpr auto sample(std::span<Keyframe<PayloadT> const> keyframes, kvf::Seconds const time) const -> PayloadT {
 		if (keyframes.empty()) { return {}; }
 		auto const it = std::ranges::upper_bound(keyframes, time, {}, [](Keyframe<PayloadT> const& kf) { return kf.timestamp; });
@@ -23,6 +25,7 @@ struct SamplerNearest {
 	}
 };
 
+/// \brief Interpolation Animation Sampler.
 template <typename PayloadT, typename InterpolatorT = Interpolator<PayloadT>>
 struct SamplerLerp {
 	[[nodiscard]] constexpr auto sample(std::span<Keyframe<PayloadT> const> keyframes, kvf::Seconds const time) const -> PayloadT {
@@ -38,8 +41,10 @@ struct SamplerLerp {
 	}
 };
 
+/// \brief Interpolated Transform Animation Sampler.
 using TransformSampler = SamplerLerp<Transform, Interpolator<Transform>>;
-using FlipbookSampler = SamplerNearest<TileId>;
+/// \brief Quantized Flipbook Animation Sampler.
+using FlipbookSampler = SamplerFloor<TileId>;
 
 static_assert(SamplerT<TransformSampler, Transform>);
 static_assert(SamplerT<FlipbookSampler, TileId>);

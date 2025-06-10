@@ -3,7 +3,8 @@
 #include <le2d/anim/sampler.hpp>
 
 namespace le::anim {
-template <typename PayloadT, typename SamplerT = SamplerNearest<PayloadT>>
+/// \brief Class template for Animator types.
+template <typename PayloadT, typename SamplerT = SamplerFloor<PayloadT>>
 class Animator {
   public:
 	using Payload = PayloadT;

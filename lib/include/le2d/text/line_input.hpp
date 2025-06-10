@@ -5,6 +5,7 @@
 #include <gsl/pointers>
 
 namespace le {
+/// \brief Interactive text input for a single line.
 class LineInput {
   public:
 	explicit LineInput(gsl::not_null<Font*> font, TextHeight height = TextHeight::Default);

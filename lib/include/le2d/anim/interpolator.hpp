@@ -7,21 +7,25 @@ namespace le::anim {
 template <typename Type>
 struct Interpolator;
 
+/// \brief Wrapper for Interpolator<Type>{}(a, b, t).
 template <typename Type>
 constexpr auto interpolate(Type const& a, Type const& b, float const t) {
 	return Interpolator<Type>{}(a, b, t);
 }
 
+/// \brief Base class template for linear interpolation.
 template <typename Type>
 struct Interpolator {
 	constexpr auto operator()(Type const& a, Type const& b, float const t) const { return std::lerp(a, b, t); }
 };
 
+/// \brief Interpolator specialization for glm::vec types.
 template <typename Type, glm::length_t Length>
 struct Interpolator<glm::vec<Length, Type>> {
 	constexpr auto operator()(glm::vec<Length, Type> const a, glm::vec<Length, Type> const b, float const t) const { return glm::mix(a, b, t); }
 };
 
+/// \brief Interpolator specialization for Transform.
 template <>
 struct Interpolator<Transform> {
 	constexpr auto operator()(Transform const& a, Transform const& b, float const t) const {

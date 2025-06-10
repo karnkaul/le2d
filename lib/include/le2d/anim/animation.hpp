@@ -4,6 +4,7 @@
 #include <le2d/transform.hpp>
 
 namespace le::anim {
+/// \brief Class template for Animation types.
 template <typename PayloadT>
 class Animation {
   public:

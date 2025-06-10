@@ -3,6 +3,7 @@
 #include <glm/vec4.hpp>
 
 namespace le {
+/// \brief Drawable vertex.
 struct Vertex {
 	glm::vec2 position{};
 	glm::vec4 color{1.0f};

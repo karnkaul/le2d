@@ -6,6 +6,7 @@
 #include <le2d/text/text_geometry.hpp>
 
 namespace le {
+/// \brief Input Text creation parameters.
 struct InputTextParams {
 	TextHeight height{TextHeight::Default};
 	char cursor_symbol{'|'};
@@ -14,6 +15,7 @@ struct InputTextParams {
 };
 
 namespace drawable {
+/// \brief Interactive input text with cursor.
 class InputText : public RenderInstance, public IDrawable {
   public:
 	using Params = InputTextParams;

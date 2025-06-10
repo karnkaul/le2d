@@ -10,7 +10,7 @@
 
 namespace kvf {
 class RenderPass;
-}
+} // namespace kvf
 
 namespace le {
 class Renderer {
@@ -24,6 +24,8 @@ class Renderer {
 
 	Renderer() = default;
 
+	/// \param render_pass RenderPass instance. Rendering must have already begun.
+	/// \param resource_pool ResourcePool instance.
 	explicit Renderer(kvf::RenderPass& render_pass, IResourcePool& resource_pool);
 	~Renderer() { end_render(); }
 
@@ -33,9 +35,14 @@ class Renderer {
 	auto set_scissor_rect(kvf::UvRect const& n_rect) -> bool;
 	auto set_user_data(UserDrawData const& user_data) -> bool;
 
+	/// \brief Draw given instances of a Primitive.
+	/// \param primitive Primitive to draw.
+	/// \param instances Render Instances to draw.
 	auto draw(Primitive const& primitive, std::span<RenderInstance const> instances) -> bool;
 
+	/// \returns true if rendering is taking place.
 	[[nodiscard]] auto is_rendering() const -> bool { return m_pass != nullptr; }
+	/// \returns RenderTarget ready to be sampled or presented.
 	auto end_render() -> kvf::RenderTarget;
 
 	[[nodiscard]] auto command_buffer() const -> vk::CommandBuffer { return m_cmd; }
@@ -43,7 +50,9 @@ class Renderer {
 
 	explicit operator bool() const { return is_rendering(); }
 
+	/// \brief Render view (generates view matrix).
 	Transform view{};
+	/// \brief Fill mode.
 	vk::PolygonMode polygon_mode{vk::PolygonMode::eFill};
 
   private:
