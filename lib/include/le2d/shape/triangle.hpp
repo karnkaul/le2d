@@ -5,6 +5,7 @@
 #include <array>
 
 namespace le::shape {
+/// \brief Triangle Geometry.
 class Triangle : public IGeometry {
   public:
 	static constexpr std::size_t vertex_count_v{4};

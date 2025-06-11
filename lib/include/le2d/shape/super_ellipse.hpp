@@ -5,6 +5,7 @@
 #include <le2d/vertex_array.hpp>
 
 namespace le::shape {
+/// \brief Super Ellipse creation parameters.
 struct SuperEllipseParams {
 	glm::vec2 size{200.0f};
 	kvf::Color color{kvf::white_v};
@@ -12,6 +13,7 @@ struct SuperEllipseParams {
 	std::int32_t resolution{128};
 };
 
+/// \brief Super ellipse Geometry.
 class SuperEllipse : public IGeometry {
   public:
 	using Params = SuperEllipseParams;

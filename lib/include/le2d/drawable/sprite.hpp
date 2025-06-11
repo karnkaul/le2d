@@ -5,6 +5,9 @@
 #include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
+/// \brief Base class for Sprite types.
+/// Sprites have a "base size" property via which the actual size is determined,
+/// based on the set ResizeAspect logic and aspect ratio of UV coordinates.
 class SpriteBase : public IDrawPrimitive {
   public:
 	static constexpr auto size_v{shape::Quad::size_v};
@@ -38,10 +41,12 @@ class SpriteBase : public IDrawPrimitive {
 	kvf::ResizeAspect m_aspect{kvf::ResizeAspect::None};
 };
 
+/// \brief Sprite Draw Primitive.
 class Sprite : public SingleDrawPrimitive<SpriteBase> {
   public:
 	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(to_primitive().vertices, transform.to_model()); }
 };
 
+/// \brief Instanced Sprite Draw Primitive.
 class InstancedSprite : public InstancedDrawPrimitive<SpriteBase> {};
 } // namespace le::drawable

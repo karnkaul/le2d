@@ -3,6 +3,7 @@
 #include <vector>
 
 namespace le::anim {
+/// \brief Class template for a list of animation keyframes.
 template <typename PayloadT>
 struct Timeline {
 	std::vector<Keyframe<PayloadT>> keyframes{};

@@ -7,6 +7,7 @@
 #include <gsl/pointers>
 
 namespace le {
+/// \brief Interface for drawable texture.
 class ITexture : public klib::Polymorphic {
   public:
 	[[nodiscard]] virtual auto get_image() const -> vk::ImageView = 0;
@@ -15,6 +16,7 @@ class ITexture : public klib::Polymorphic {
 	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
 };
 
+/// \brief Concrete drawable Texture.
 class Texture : public ITexture {
   public:
 	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap const& bitmap = {},
@@ -25,7 +27,12 @@ class Texture : public ITexture {
 
 	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final { return m_texture.descriptor_info(); }
 
+	/// \brief Write bitmap to image.
+	/// \param bitmap Bitmap to write.
 	void overwrite(kvf::Bitmap const& bitmap);
+	/// \brief Load a compressed bitmap and write to image.
+	/// \param compressed_image Bytes of compressed image.
+	/// \returns true if successfully decompressed.
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool;
 
 	[[nodiscard]] auto is_loaded() const -> bool { return m_texture.is_loaded(); }
@@ -36,10 +43,14 @@ class Texture : public ITexture {
 	kvf::vma::Texture m_texture;
 };
 
+/// \brief Texture with a TileSet.
 class TileSheet : public Texture {
   public:
 	explicit TileSheet(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap bitmap = {}) : Texture(render_device, bitmap) {}
 
+	/// \brief Get the UV coordinates for a given Tile ID.
+	/// \param id Tile ID to query.
+	/// \returns UV rect for tile if found, else uv_rect_v.
 	[[nodiscard]] auto get_uv(TileId const id) const -> kvf::UvRect { return tile_set.get_uv(id); }
 
 	TileSet tile_set{};

@@ -5,6 +5,7 @@
 #include <le2d/vertex_array.hpp>
 
 namespace le::shape {
+/// \brief Circle Geometry.
 class Circle : public IGeometry {
   public:
 	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_verts.vertices; }

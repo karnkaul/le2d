@@ -4,6 +4,7 @@
 #include <le2d/geometry.hpp>
 
 namespace le::shape {
+/// \brief Interface for Quad Geometry.
 class IQuad : public IGeometry {
   public:
 	static constexpr std::size_t vertex_count_v{4};
@@ -24,6 +25,7 @@ class IQuad : public IGeometry {
 	std::array<Vertex, vertex_count_v> m_vertices{};
 };
 
+/// \brief Quad Geometry.
 class Quad : public IQuad {
   public:
 	static constexpr auto indices_v = std::array{0u, 1u, 2u, 2u, 3u, 0u};
@@ -32,6 +34,7 @@ class Quad : public IQuad {
 	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleList; }
 };
 
+/// \brief Line rectangle Geometry. (Quad outline.)
 class LineRect : public IQuad {
   public:
 	static constexpr auto indices_v = std::array{0u, 1u, 2u, 3u, 0u};

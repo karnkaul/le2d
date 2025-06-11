@@ -9,5 +9,8 @@ CMakeSettings.json
 compile_commands.json
 /CMakeUserPresets.json
 
+Doxyfile
+/docs
+
 imgui.ini
 *debug.log

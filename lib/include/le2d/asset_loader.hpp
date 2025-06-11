@@ -18,6 +18,8 @@ class AssetLoader {
   public:
 	using Flag = AssetLoadFlag;
 
+	/// \param context Pointer to persistent Context instance.
+	/// \param flags Asset load flags.
 	explicit AssetLoader(gsl::not_null<Context const*> context, Flag const flags = {}) : m_context(context), m_flags(flags) {}
 
 	[[nodiscard]] auto load_bytes(std::string_view uri) const -> std::vector<std::byte>;

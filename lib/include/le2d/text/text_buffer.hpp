@@ -8,6 +8,7 @@
 #include <span>
 
 namespace le {
+/// \brief Wall of text as a single Primitive.
 class TextBuffer {
   public:
 	explicit TextBuffer(gsl::not_null<FontAtlas*> atlas, std::size_t limit, float n_line_spacing = 1.5f);

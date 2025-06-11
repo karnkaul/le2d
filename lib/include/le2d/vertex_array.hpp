@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace le {
+/// \brief Drawable vertex array.
 struct VertexArray {
 	std::vector<Vertex> vertices{};
 	std::vector<std::uint32_t> indices{};

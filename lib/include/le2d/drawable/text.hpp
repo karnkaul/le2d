@@ -4,13 +4,16 @@
 #include <le2d/text/text_geometry.hpp>
 
 namespace le::drawable {
+/// \brief Horizontal text expansion.
 enum class TextExpand : std::int8_t { eBoth, eRight, eLeft };
 
+/// \brief Text generation parameters.
 struct TextParams {
 	TextHeight height{TextHeight::Default};
 	TextExpand expand{TextExpand::eBoth};
 };
 
+/// \brief Base class for Text types.
 class TextBase : public IDrawPrimitive {
   public:
 	using Params = TextParams;
@@ -29,6 +32,8 @@ class TextBase : public IDrawPrimitive {
 	glm::vec2 m_size{};
 };
 
+/// \brief Text Draw Primitive.
 class Text : public SingleDrawPrimitive<TextBase> {};
+/// \brief Instanced Text Draw Primitive.
 class InstancedText : public InstancedDrawPrimitive<TextBase> {};
 } // namespace le::drawable
