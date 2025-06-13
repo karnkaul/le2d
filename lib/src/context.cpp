@@ -161,9 +161,9 @@ struct Audio : IAudio {
 
 void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Context shutting down"); }
 
-Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
-	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
-	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples), m_blocker(m_window.get_render_device().get_device()) {
+Context::Context(CreateInfo const& create_info)
+	: m_window(create_info.window, create_info.render_device), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples),
+	  m_blocker(m_window.get_render_device().get_device()) {
 	auto default_shader = create_default_shader(m_window.get_render_device().get_device());
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
@@ -220,14 +220,8 @@ void Context::present() {
 	update_stats(present_start);
 }
 
-auto Context::create_shader(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
-	auto vert = std::vector<std::uint32_t>{};
-	auto frag = std::vector<std::uint32_t>{};
-	if (!m_data_loader->load_spirv(vert, vertex_uri) || !m_data_loader->load_spirv(frag, fragment_uri)) {
-		log.warn("Context: failed to load SPIR-V: {} / {}", vertex_uri, fragment_uri);
-		return {};
-	}
-	return ShaderProgram{m_pass.get_render_device().get_device(), vert, frag};
+auto Context::create_shader(SpirV const vertex, SpirV const fragment) const -> ShaderProgram {
+	return ShaderProgram{m_pass.get_render_device().get_device(), vertex, fragment};
 }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }

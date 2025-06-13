@@ -1,6 +1,5 @@
 #pragma once
 #include <le2d/audio.hpp>
-#include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/gamepad.hpp>
@@ -27,17 +26,16 @@ struct ContextCreateInfo {
 /// Encapsulates RenderWindow, primary RenderPass, Audio Engine.
 class Context : public klib::Pinned {
   public:
+	using SpirV = std::span<std::uint32_t const>;
 	using CreateInfo = ContextCreateInfo;
 
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
 
-	/// \param data_loader Pointer to persistent concrete IDataLoader. Used to load assets, including shaders.
 	/// \param create_info Creation parameters.
-	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info = {});
+	explicit Context(CreateInfo const& create_info = {});
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
-	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
@@ -93,7 +91,7 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
-	[[nodiscard]] auto create_shader(std::string_view vertex_uri, std::string_view fragment_uri) const -> ShaderProgram;
+	[[nodiscard]] auto create_shader(SpirV vertex, SpirV fragment) const -> ShaderProgram;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
 	[[nodiscard]] auto create_tilesheet(kvf::Bitmap const& bitmap = {}) const -> TileSheet;
@@ -111,8 +109,6 @@ class Context : public klib::Pinned {
 	};
 
 	void update_stats(kvf::Clock::time_point present_start);
-
-	IDataLoader const* m_data_loader;
 
 	RenderWindow m_window;
 	RenderPass m_pass;

@@ -1,7 +1,6 @@
 #include <applet/tile_sheet_editor.hpp>
 #include <klib/assert.hpp>
 #include <klib/fixed_string.hpp>
-#include <le2d/asset_loader.hpp>
 #include <le2d/file_data_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <le2d/util.hpp>
@@ -108,7 +107,7 @@ void TileSheetEditor::try_load_json(FileDrop const& drop) {
 }
 
 void TileSheetEditor::try_load_tilesheet(Uri uri) {
-	auto loader = AssetLoader{&get_context()};
+	auto loader = create_asset_loader();
 	auto texture_uri = std::string{};
 	auto tile_sheet = loader.load_tile_sheet(uri.get_string(), &texture_uri);
 	if (!tile_sheet.is_loaded()) {
@@ -128,7 +127,7 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 }
 
 void TileSheetEditor::try_load_tileset(Uri const& uri) {
-	auto loader = AssetLoader{&get_context()};
+	auto loader = create_asset_loader();
 	auto const tile_set = loader.load_tile_set(uri.get_string());
 	if (!tile_set.is_loaded()) {
 		raise_error(std::format("Failed to load TileSet: '{}'", uri.get_string()));
@@ -142,7 +141,7 @@ void TileSheetEditor::try_load_tileset(Uri const& uri) {
 }
 
 void TileSheetEditor::try_load_texture(Uri uri) {
-	auto loader = AssetLoader{&get_context()};
+	auto loader = create_asset_loader();
 	auto texture = loader.load_texture(uri.get_string());
 	if (!texture.is_loaded()) {
 		raise_error(std::format("Failed to load Texture: '{}'", uri.get_string()));

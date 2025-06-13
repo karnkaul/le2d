@@ -1,6 +1,5 @@
 #include <applet/flipbook_editor.hpp>
 #include <klib/fixed_string.hpp>
-#include <le2d/asset_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <ranges>
 
@@ -148,7 +147,7 @@ void FlipbookEditor::try_load_json(FileDrop const& drop) {
 }
 
 void FlipbookEditor::try_load_tilesheet(Uri uri) {
-	auto loader = AssetLoader{&get_context()};
+	auto loader = create_asset_loader();
 	auto tile_sheet = loader.load_tile_sheet(uri.get_string());
 	if (!tile_sheet.is_loaded()) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
@@ -177,7 +176,7 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 }
 
 void FlipbookEditor::try_load_animation(Uri uri) {
-	auto loader = AssetLoader{&get_context()};
+	auto loader = create_asset_loader();
 	auto animation = loader.load_flipbook_animation(uri.get_string());
 	if (!animation.is_loaded()) {
 		raise_error(std::format("Failed to load FlipbookAnimation: '{}'", uri.get_string()));

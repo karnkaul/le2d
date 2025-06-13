@@ -20,7 +20,7 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 }
 } // namespace
 
-App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(&m_data_loader, context_create_info_v) {}
+App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(context_create_info_v) {}
 
 void App::run() {
 	m_blocker = m_context.get_render_window().get_render_device().get_device();
