@@ -3,7 +3,9 @@
 #include <djson/json.hpp>
 #include <klib/enum_ops.hpp>
 #include <le2d/anim/animation.hpp>
+#include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
+#include <le2d/shader_program.hpp>
 #include <gsl/pointers>
 
 namespace le {
@@ -18,12 +20,15 @@ class AssetLoader {
   public:
 	using Flag = AssetLoadFlag;
 
+	/// \param data_loader Pointer to persistent IDataLoader instance.
 	/// \param context Pointer to persistent Context instance.
 	/// \param flags Asset load flags.
-	explicit AssetLoader(gsl::not_null<Context const*> context, Flag const flags = {}) : m_context(context), m_flags(flags) {}
+	explicit AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<Context const*> context, Flag flags = {});
 
 	[[nodiscard]] auto load_bytes(std::string_view uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_spir_v(std::string_view uri) const -> std::vector<std::uint32_t>;
+	[[nodiscard]] auto load_shader_program(std::string_view vertex_uri, std::string_view fragment_uri) const -> ShaderProgram;
+	[[nodiscard]] auto load_string(std::string_view uri) const -> std::string;
 	[[nodiscard]] auto load_json(std::string_view uri) const -> dj::Json;
 	[[nodiscard]] auto load_font(std::string_view uri) const -> Font;
 	[[nodiscard]] auto load_tile_set(std::string_view uri) const -> TileSet;
@@ -35,11 +40,13 @@ class AssetLoader {
 
   protected:
 	[[nodiscard]] auto get_context() const -> Context const& { return *m_context; }
+	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 
 	void on_success(std::string_view type, std::string_view uri) const;
 	void on_failure(std::string_view type, std::string_view uri) const;
 
   private:
+	gsl::not_null<IDataLoader const*> m_data_loader;
 	gsl::not_null<Context const*> m_context;
 	Flag m_flags{};
 };
