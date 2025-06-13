@@ -43,6 +43,32 @@ auto AssetLoader::load_spir_v(std::string_view const uri) const -> std::vector<s
 	return ret;
 }
 
+auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
+	static constexpr std::string_view type_v{"ShaderProgram"};
+
+	auto const vertex_code = load_spir_v(vertex_uri);
+	if (vertex_code.empty()) {
+		on_failure(type_v, vertex_uri);
+		return {};
+	}
+
+	auto const fragment_code = load_spir_v(fragment_uri);
+	if (fragment_code.empty()) {
+		on_failure(type_v, fragment_uri);
+		return {};
+	}
+
+	auto const uri = std::format("{} + {}", vertex_uri, fragment_uri);
+	auto ret = ShaderProgram{get_context().get_render_window().get_render_device().get_device(), vertex_code, fragment_code};
+	if (!ret.is_loaded()) {
+		on_failure(type_v, uri);
+		return {};
+	}
+
+	on_success(type_v, uri);
+	return ret;
+}
+
 auto AssetLoader::load_json(std::string_view const uri) const -> dj::Json {
 	static constexpr std::string_view type_v{"Json"};
 

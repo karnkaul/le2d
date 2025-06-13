@@ -5,6 +5,7 @@
 #include <le2d/anim/animation.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/font.hpp>
+#include <le2d/shader_program.hpp>
 #include <gsl/pointers>
 
 namespace le {
@@ -26,6 +27,8 @@ class AssetLoader {
 
 	[[nodiscard]] auto load_bytes(std::string_view uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_spir_v(std::string_view uri) const -> std::vector<std::uint32_t>;
+	[[nodiscard]] auto load_shader_program(std::string_view vertex_uri, std::string_view fragment_uri) const -> ShaderProgram;
+	[[nodiscard]] auto load_string(std::string_view uri) const -> std::string;
 	[[nodiscard]] auto load_json(std::string_view uri) const -> dj::Json;
 	[[nodiscard]] auto load_font(std::string_view uri) const -> Font;
 	[[nodiscard]] auto load_tile_set(std::string_view uri) const -> TileSet;
