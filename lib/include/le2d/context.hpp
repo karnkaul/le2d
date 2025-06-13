@@ -13,17 +13,8 @@
 namespace le {
 /// \brief Context creation parameters.
 struct ContextCreateInfo {
-	/// \brief Vertex and fragment shader URIs.
-	struct ShaderUri {
-		std::string_view vertex;
-		std::string_view fragment;
-	};
-
 	/// \brief Window creation parameters.
-	WindowCreateInfo window;
-	/// \brief URI for default shaders.
-	ShaderUri default_shader_uri;
-
+	WindowCreateInfo window{WindowInfo{}};
 	/// \brief Render Device creation parameters.
 	kvf::RenderDeviceCreateInfo render_device{};
 	/// \brief Multi sampled anti-aliasing.
@@ -43,7 +34,7 @@ class Context : public klib::Pinned {
 
 	/// \param data_loader Pointer to persistent concrete IDataLoader. Used to load assets, including shaders.
 	/// \param create_info Creation parameters.
-	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info);
+	explicit Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info = {});
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }

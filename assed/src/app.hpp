@@ -8,14 +8,9 @@
 #include <memory>
 
 namespace le::assed {
-struct ShaderUris {
-	std::string_view vertex{"shaders/default.vert"};
-	std::string_view fragment{"shaders/default.frag"};
-};
-
 class App : public klib::Pinned {
   public:
-	explicit App(FileDataLoader data_loader, ShaderUris const& shader_uris = {});
+	explicit App(FileDataLoader data_loader);
 
 	void run();
 

@@ -6,6 +6,7 @@ set(project_name le2d)
 project(${project_name} VERSION ${le2d_version})
 
 option(LE2D_BUILD_ASSED "Build le2d Asset Editor" ${PROJECT_IS_TOP_LEVEL})
+option(LE2D_BUILD_SPIRV_EMBEDDER "Build embed-spirv" ${PROJECT_IS_TOP_LEVEL})
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,4 +19,8 @@ add_subdirectory(lib)
 
 if(LE2D_BUILD_ASSED)
   add_subdirectory(assed)
+endif()
+
+if(LE2D_BUILD_SPIRV_EMBEDDER)
+  add_subdirectory(embed_spirv)
 endif()

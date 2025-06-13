@@ -1,5 +1,6 @@
 #include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
+#include <embedded/spirv.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
@@ -24,6 +25,14 @@ constexpr auto to_mode(Vsync const vsync) {
 	default:
 	case Vsync::Strict: return vk::PresentModeKHR::eFifo;
 	}
+}
+
+[[nodiscard]] auto create_default_shader(vk::Device const device) -> ShaderProgram {
+	auto const vert_spirv = embedded::spirv_vert();
+	auto const frag_spirv = embedded::spirv_frag();
+	auto ret = ShaderProgram{device, vert_spirv, frag_spirv};
+	KLIB_ASSERT(ret.is_loaded());
+	return ret;
 }
 
 struct ResourcePool : IResourcePool {
@@ -155,7 +164,7 @@ void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Contex
 Context::Context(gsl::not_null<IDataLoader const*> data_loader, CreateInfo const& create_info)
 	: m_data_loader(data_loader), m_window(create_info.window, create_info.render_device),
 	  m_pass(&m_window.get_render_device(), create_info.framebuffer_samples), m_blocker(m_window.get_render_device().get_device()) {
-	auto default_shader = create_shader(create_info.default_shader_uri.vertex, create_info.default_shader_uri.fragment);
+	auto default_shader = create_default_shader(m_window.get_render_device().get_device());
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
 
