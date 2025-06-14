@@ -1,9 +1,9 @@
 #include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
-#include <embedded/spirv.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
+#include <spirv.hpp>
 
 namespace le {
 namespace {
@@ -28,8 +28,8 @@ constexpr auto to_mode(Vsync const vsync) {
 }
 
 [[nodiscard]] auto create_default_shader(vk::Device const device) -> ShaderProgram {
-	auto const vert_spirv = embedded::spirv_vert();
-	auto const frag_spirv = embedded::spirv_frag();
+	auto const vert_spirv = spirv::vert();
+	auto const frag_spirv = spirv::frag();
 	auto ret = ShaderProgram{device, vert_spirv, frag_spirv};
 	KLIB_ASSERT(ret.is_loaded());
 	return ret;

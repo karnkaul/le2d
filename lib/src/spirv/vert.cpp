@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <span>
 
-namespace le::embedded {
+namespace le::spirv {
 namespace {
 auto const g_code = std::array<std::uint32_t, 630>{
 	119734787,	65536,		851979,		74,			0,			131089,		1,			393227,		1,			1280527431, 1685353262, 808793134,	0,
@@ -57,5 +57,5 @@ auto const g_code = std::array<std::uint32_t, 630>{
 };
 } // namespace
 
-auto spirv_vert() -> std::span<std::uint32_t const> { return g_code; }
-} // namespace le::embedded
+auto vert() -> std::span<std::uint32_t const> { return g_code; }
+} // namespace le::spirv
