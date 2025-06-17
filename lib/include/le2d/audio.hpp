@@ -16,5 +16,7 @@ class IAudio : public klib::Polymorphic {
 	[[nodiscard]] virtual auto create_source() const -> std::unique_ptr<capo::ISource> = 0;
 	virtual void start_music(capo::ISource& source, gsl::not_null<capo::Buffer const*> buffer) const = 0;
 	virtual void start_music(capo::ISource& source, std::shared_ptr<capo::Buffer const> buffer) const = 0;
+
+	virtual void wait_idle() = 0;
 };
 } // namespace le

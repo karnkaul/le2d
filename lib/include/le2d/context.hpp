@@ -88,6 +88,10 @@ class Context : public klib::Pinned {
 	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
 	void present();
 
+	/// \brief Wait for the graphics and audio devices to become idle.
+	/// Does not account for user owned audio sources.
+	void wait_idle();
+
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
@@ -99,7 +103,7 @@ class Context : public klib::Pinned {
 
   private:
 	struct OnDestroy {
-		void operator()(int i) const noexcept;
+		void operator()(Context* ptr) const noexcept;
 	};
 
 	struct Fps {
@@ -128,7 +132,7 @@ class Context : public klib::Pinned {
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
 
-	klib::Unique<int, OnDestroy> m_on_destroy{};
+	std::unique_ptr<Context, OnDestroy> m_on_destroy{};
 
 	kvf::DeviceBlock m_blocker;
 };
