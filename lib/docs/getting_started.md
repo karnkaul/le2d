@@ -67,7 +67,7 @@ while (context.is_running()) {
 
 ## Handling Events
 
-Events are encoded as a variant in `le::Event`. `le::Context` (and its underlying `le::RenderWindow`) maintain an event queue should be iterated every frame.
+Events are encoded as a variant in `le::Event`. `le::Context` (and its underlying `le::RenderWindow`) maintain an event queue which should be iterated every frame.
 
 ```cpp
 // ...
@@ -136,7 +136,7 @@ context.wait_idle();
 
 ### Drawing a Textured Quad
 
-Load the texture, then simply assign a pointer to it via `le::Quad::texture`. It should be evident that textures must outlive drawables that use them:
+Load the texture, then simply assign its pointer to `quad.texture`. It should be evident that textures must outlive drawables that use them:
 
 ```cpp
 // ...

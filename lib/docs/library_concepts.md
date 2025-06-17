@@ -10,7 +10,7 @@ There is no validation layer code in the library or its dependencies. Users are 
 
 ## Object Ownership
 
-All class-type objects returned by the library use RAII and clean up on destruction. Some objects, eg `le::RenderWindow` and/or `le::Context`, must outlive any objects created using them, eg `le::Texture`. If a type requires observation of another as part of its invariant, it will take that `gsl::not_null<T*>` in its constructor to indicate that the passed pointer will be stored and used later, thus must remain address-stable.
+All class-type objects returned by the library use RAII and clean up on destruction. Some objects, eg `le::RenderWindow` and/or `le::Context`, must outlive any objects created using them, eg `le::Texture`. If a type requires observation of another as part of its invariant, it will take that as a `gsl::not_null<T*>` parameter in its constructor to indicate that the passed pointer will be stored and used later, thus must remain address-stable.
 
 ### Buffered Resources
 
@@ -22,4 +22,4 @@ Most of the time this will simply boil down to the order of members in your own 
 
 ## Multi-threading
 
-The engine is designed to trivially support multi-threaded resource creation / asset loading, there is no external synchronization required for this. There is no support for multi-threaded rendering, with the main noticeable consequence being that if event polling gets blocked (eg by dragging the corner of a window on Windows), so will rendering. Similarly, while double-buffered rendering will pipeline sequential renders, if every frame takes too long / frame time is too high, expect drops in framerate.
+The engine is designed to trivially support multi-threaded resource creation / asset loading, there is no external synchronization required for this. There is no support for multi-threaded rendering, with the main noticeable consequence being that if event polling gets blocked (eg by dragging the corner of a window on Windows), so will rendering. Similarly, while double-buffering will pipeline sequential renders, if every frame takes too long / frame time is too high, expect drops in framerate.
