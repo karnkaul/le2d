@@ -1,10 +1,10 @@
 #!/bin/bash
 
-tool=./embed-spirv
+tool=./spirv2cpp
 
 src=lib/glsl
 spirv_dst=spir_v
-cpp_dst=lib/src/embedded
+cpp_dst=lib/src/spirv
 vert=default.vert
 frag=default.frag
 ext=.spv
@@ -29,9 +29,9 @@ function compile() {
 }
 
 function embed() {
-  $tool -n=le::embedded -f=spirv_$2 $spirv_dst/$1$ext > $cpp_dst/spirv_$2.cpp || fail
-  clang-format -i $cpp_dst/spirv_$2.cpp || fail
-  echo "== embedded '$1' into '$cpp_dst/spirv_$2.cpp' =="
+  $tool -n=le::spirv -f=$2 $spirv_dst/$1$ext > $cpp_dst/$2.cpp || fail
+  clang-format -i $cpp_dst/$2.cpp || fail
+  echo "== embedded '$1' into '$cpp_dst/$2.cpp' =="
 }
 
 compile $vert

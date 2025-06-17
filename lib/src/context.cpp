@@ -1,9 +1,9 @@
 #include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
-#include <embedded/spirv.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
+#include <spirv.hpp>
 
 namespace le {
 namespace {
@@ -28,8 +28,8 @@ constexpr auto to_mode(Vsync const vsync) {
 }
 
 [[nodiscard]] auto create_default_shader(vk::Device const device) -> ShaderProgram {
-	auto const vert_spirv = embedded::spirv_vert();
-	auto const frag_spirv = embedded::spirv_frag();
+	auto const vert_spirv = spirv::vert();
+	auto const frag_spirv = spirv::frag();
 	auto ret = ShaderProgram{device, vert_spirv, frag_spirv};
 	KLIB_ASSERT(ret.is_loaded());
 	return ret;
@@ -118,6 +118,13 @@ struct Audio : IAudio {
 		source.play();
 	}
 
+	void wait_idle() final {
+		for (auto& source : m_sfx_sources) {
+			if (source.source->is_playing()) { source.source->wait_until_ended(); }
+			source.source->stop();
+		}
+	}
+
   private:
 	using Clock = std::chrono::steady_clock;
 
@@ -159,7 +166,10 @@ struct Audio : IAudio {
 };
 } // namespace
 
-void Context::OnDestroy::operator()(int /*i*/) const noexcept { log.info("Context shutting down"); }
+void Context::OnDestroy::operator()(Context* ptr) const noexcept {
+	log.info("Context shutting down");
+	ptr->wait_idle();
+}
 
 Context::Context(CreateInfo const& create_info)
 	: m_window(create_info.window, create_info.render_device), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples),
@@ -173,7 +183,7 @@ Context::Context(CreateInfo const& create_info)
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
 	log.info("Context initialized");
-	m_on_destroy = 42;
+	m_on_destroy.reset(this);
 }
 
 auto Context::get_latest_gamepad() -> Gamepad const& {
@@ -218,6 +228,11 @@ void Context::present() {
 	m_window.present(m_pass.get_render_target());
 	m_cmd = vk::CommandBuffer{};
 	update_stats(present_start);
+}
+
+void Context::wait_idle() {
+	m_window.get_render_device().get_device().waitIdle();
+	static_cast<Audio&>(*m_audio).wait_idle();
 }
 
 auto Context::create_shader(SpirV const vertex, SpirV const fragment) const -> ShaderProgram {

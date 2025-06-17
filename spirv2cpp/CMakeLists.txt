@@ -1,4 +1,4 @@
-project(embed-spirv)
+project(spirv2cpp)
 
 add_executable(${PROJECT_NAME})
 
