@@ -10,7 +10,7 @@
 namespace le::assed {
 namespace {
 constexpr auto context_create_info_v = ContextCreateInfo{
-	.window = WindowInfo{.size = {600, 600}, .title = "Asset Editor", .decorated = true},
+	.window = WindowInfo{.size = {600, 600}, .title = "Asset Editor"},
 	.framebuffer_samples = vk::SampleCountFlagBits::e2,
 };
 

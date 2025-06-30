@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
 #include <klib/c_string.hpp>
+#include <klib/enum_ops.hpp>
 #include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/window.hpp>
@@ -8,17 +9,45 @@
 #include <variant>
 
 namespace le {
+enum class WindowFlag : std::uint8_t;
+}
+
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::WindowFlag> = true;
+
+namespace le {
+/// \brief Window creation flags.
+enum class WindowFlag : std::uint8_t {
+	None = 0,
+	/// \brief Window is decorated (has title bar, close button, etc).
+	Decorated = 1 << 0,
+	/// \brief Window is resizable.
+	Resizeable = 1 << 1,
+	/// \brief Window is visible on creation.
+	Visible = 1 << 2,
+	/// \brief Window is maximized on creation.
+	Maximized = 1 << 3,
+	/// \brief Window is given input focus when shown.
+	FocusOnShow = 1 << 4,
+	/// \brief Content area is resized based on content scale changes.
+	ScaleToMonitor = 1 << 5,
+	/// \brief Framebuffer is resized based on content scale changes.
+	ScaleFramebuffer = 1 << 6,
+};
+
+/// \brief Default Window creation flags.
+inline constexpr auto default_window_flags_v = WindowFlag::Decorated | WindowFlag::Resizeable | WindowFlag::Visible;
+
 /// \brief Windowed RenderWindow parameters.
 struct WindowInfo {
 	glm::ivec2 size{600};
 	klib::CString title;
-	bool decorated{true};
+	WindowFlag flags{default_window_flags_v};
 };
 
 /// \brief Fullscreen RenderWindow parameters.
 struct FullscreenInfo {
 	klib::CString title;
-	GLFWmonitor* target{nullptr};
 };
 
 /// \brief RenderWindow creation parameters.

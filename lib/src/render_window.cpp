@@ -4,8 +4,8 @@
 #include <kvf/util.hpp>
 #include <le2d/error.hpp>
 #include <le2d/render_window.hpp>
+#include <array>
 #include <optional>
-#include <span>
 
 namespace le {
 namespace {
@@ -119,8 +119,21 @@ auto RenderWindow::self(GLFWwindow* window) -> RenderWindow& { return *static_ca
 
 auto RenderWindow::create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow {
 	auto const visitor = klib::Visitor{
-		[](WindowInfo const& wi) { return kvf::create_window(wi.size, wi.title, wi.decorated); },
-		[](FullscreenInfo const& fi) { return kvf::create_fullscreen_window(fi.title, fi.target); },
+		[](WindowInfo const& wi) {
+			using Hint = kvf::WindowHint;
+			auto const hints = std::array{
+				Hint{.hint = GLFW_RESIZABLE, .value = (wi.flags & WindowFlag::Resizeable) == WindowFlag::Resizeable ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_DECORATED, .value = (wi.flags & WindowFlag::Decorated) == WindowFlag::Decorated ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_VISIBLE, .value = (wi.flags & WindowFlag::Visible) == WindowFlag::Visible ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_MAXIMIZED, .value = (wi.flags & WindowFlag::Maximized) == WindowFlag::Maximized ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_FOCUS_ON_SHOW, .value = (wi.flags & WindowFlag::FocusOnShow) == WindowFlag::FocusOnShow ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_SCALE_TO_MONITOR, .value = (wi.flags & WindowFlag::ScaleToMonitor) == WindowFlag::ScaleToMonitor ? GLFW_TRUE : GLFW_FALSE},
+				Hint{.hint = GLFW_SCALE_FRAMEBUFFER,
+					 .value = (wi.flags & WindowFlag::ScaleFramebuffer) == WindowFlag::ScaleFramebuffer ? GLFW_TRUE : GLFW_FALSE},
+			};
+			return kvf::create_window(wi.size, wi.title, hints);
+		},
+		[](FullscreenInfo const& fi) { return kvf::create_fullscreen_window(fi.title); },
 	};
 	auto ret = std::visit(visitor, wci);
 	KLIB_ASSERT(ret);
