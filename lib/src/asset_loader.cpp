@@ -199,7 +199,7 @@ auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> capo::B
 		return {};
 	}
 
-	auto const encoding = capo::guess_encoding(std::string{uri}.c_str());
+	auto const encoding = capo::guess_encoding(uri);
 	auto ret = capo::Buffer{};
 	if (!ret.decode_bytes(bytes, encoding)) {
 		on_failure(type_v, uri);
