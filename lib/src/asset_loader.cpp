@@ -4,55 +4,23 @@
 #include <log.hpp>
 
 namespace le {
-AssetLoader::AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<Context const*> context, Flag const flags)
-	: m_data_loader(data_loader), m_context(context), m_flags(flags) {}
+AssetLoader::AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<Context const*> context)
+	: m_data_loader(data_loader), m_context(context) {}
 
-void AssetLoader::on_success(std::string_view const type, std::string_view const uri) const {
-	if ((m_flags & Flag::Quiet) == Flag::Quiet) { return; }
-	log.info("=='{}'== {} loaded", uri, type);
-}
+void AssetLoader::on_success(std::string_view const type, std::string_view const uri) { log.info("=='{}'== {} loaded", uri, type); }
 
-void AssetLoader::on_failure(std::string_view const type, std::string_view const uri) const {
-	if ((m_flags & Flag::Quiet) == Flag::Quiet) { return; }
-	log.warn("'{}' Failed to load '{}'", type, uri);
-}
-
-auto AssetLoader::load_bytes(std::string_view const uri) const -> std::vector<std::byte> {
-	static constexpr std::string_view type_v{"Bytes"};
-
-	auto ret = std::vector<std::byte>{};
-	if (!get_data_loader().load_bytes(ret, uri)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	on_success(type_v, uri);
-	return ret;
-}
-
-auto AssetLoader::load_spir_v(std::string_view const uri) const -> std::vector<std::uint32_t> {
-	static constexpr std::string_view type_v{"SpirV"};
-
-	auto ret = std::vector<std::uint32_t>{};
-	if (!get_data_loader().load_spirv(ret, uri)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	on_success(type_v, uri);
-	return ret;
-}
+void AssetLoader::on_failure(std::string_view const type, std::string_view const uri) { log.warn("'{}' Failed to load '{}'", type, uri); }
 
 auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
 	static constexpr std::string_view type_v{"ShaderProgram"};
 
-	auto const vertex_code = load_spir_v(vertex_uri);
+	auto const vertex_code = get_data_loader().load_spir_v(vertex_uri);
 	if (vertex_code.empty()) {
 		on_failure(type_v, vertex_uri);
 		return {};
 	}
 
-	auto const fragment_code = load_spir_v(fragment_uri);
+	auto const fragment_code = get_data_loader().load_spir_v(fragment_uri);
 	if (fragment_code.empty()) {
 		on_failure(type_v, fragment_uri);
 		return {};
@@ -69,23 +37,10 @@ auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::st
 	return ret;
 }
 
-auto AssetLoader::load_json(std::string_view const uri) const -> dj::Json {
-	static constexpr std::string_view type_v{"Json"};
-
-	auto ret = dj::Json{};
-	if (!get_data_loader().load_json(ret, uri)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	on_success(type_v, uri);
-	return ret;
-}
-
 auto AssetLoader::load_font(std::string_view const uri) const -> Font {
 	static constexpr std::string_view type_v{"Font"};
 
-	auto bytes = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_bytes(uri);
+	auto bytes = get_data_loader().load_bytes(uri);
 	if (bytes.empty()) {
 		on_failure(type_v, uri);
 		return {};
@@ -104,7 +59,7 @@ auto AssetLoader::load_font(std::string_view const uri) const -> Font {
 auto AssetLoader::load_tile_set(std::string_view const uri) const -> TileSet {
 	static constexpr std::string_view type_v{"TileSet"};
 
-	auto const json = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_json(uri);
+	auto const json = get_data_loader().load_json(uri);
 	if (!is_json_type<TileSet>(json)) {
 		on_failure(type_v, uri);
 		return {};
@@ -119,7 +74,7 @@ auto AssetLoader::load_tile_set(std::string_view const uri) const -> TileSet {
 auto AssetLoader::load_texture(std::string_view const uri) const -> Texture {
 	static constexpr std::string_view type_v{"Texture"};
 
-	auto const bytes = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_bytes(uri);
+	auto const bytes = get_data_loader().load_bytes(uri);
 	auto ret = get_context().create_texture();
 	if (bytes.empty() || !ret.load_and_write(bytes)) {
 		on_failure(type_v, uri);
@@ -130,12 +85,11 @@ auto AssetLoader::load_texture(std::string_view const uri) const -> Texture {
 	return ret;
 }
 
-auto AssetLoader::load_tile_sheet(std::string_view uri, std::string* out_texture_uri) const -> TileSheet {
+auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_texture_uri) const -> TileSheet {
 	static constexpr std::string_view type_v{"TileSheet"};
 
-	auto const quiet_loader = AssetLoader{m_data_loader, m_context, Flag::Quiet};
 	auto ret = get_context().create_tilesheet();
-	auto const json = quiet_loader.load_json(uri);
+	auto const json = get_data_loader().load_json(uri);
 	if (!is_json_type<TileSheet>(json)) {
 		on_failure(type_v, uri);
 		return ret;
@@ -143,7 +97,7 @@ auto AssetLoader::load_tile_sheet(std::string_view uri, std::string* out_texture
 
 	auto const texture_uri = json["texture"].as_string_view();
 	if (out_texture_uri) { *out_texture_uri = texture_uri; }
-	auto const bytes = quiet_loader.load_bytes(texture_uri);
+	auto const bytes = get_data_loader().load_bytes(texture_uri);
 	if (bytes.empty() || !ret.load_and_write(bytes)) {
 		on_failure(type_v, uri);
 		return ret;
@@ -164,7 +118,7 @@ auto AssetLoader::load_transform_animation(std::string_view const uri) const -> 
 	static constexpr std::string_view type_v{"TransformAnimation"};
 
 	auto ret = anim::TransformAnimation{};
-	auto const json = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_json(uri);
+	auto const json = get_data_loader().load_json(uri);
 	if (!is_json_type(json, ret)) {
 		on_failure(type_v, uri);
 		return {};
@@ -179,7 +133,7 @@ auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> a
 	static constexpr std::string_view type_v{"FlipbookAnimation"};
 
 	auto ret = anim::FlipbookAnimation{};
-	auto const json = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_json(uri);
+	auto const json = get_data_loader().load_json(uri);
 	if (!is_json_type(json, ret)) {
 		on_failure(type_v, uri);
 		return {};
@@ -193,7 +147,7 @@ auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> a
 auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> capo::Buffer {
 	static constexpr std::string_view type_v{"AudioBuffer"};
 
-	auto const bytes = AssetLoader{m_data_loader, m_context, Flag::Quiet}.load_bytes(uri);
+	auto const bytes = get_data_loader().load_bytes(uri);
 	if (bytes.empty()) {
 		on_failure(type_v, uri);
 		return {};

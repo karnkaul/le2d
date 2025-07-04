@@ -18,15 +18,15 @@ auto FileDataLoader::upfind(std::string_view const suffix, std::string_view leaf
 
 FileDataLoader::FileDataLoader(std::string_view const root_dir) { set_root_dir(root_dir); }
 
-auto FileDataLoader::load_bytes(std::vector<std::byte>& out, std::string_view const uri) const -> bool {
+auto FileDataLoader::try_load_bytes(std::vector<std::byte>& out, std::string_view const uri) const -> bool {
 	return from_file(out, uri, &kvf::util::bytes_from_file);
 }
 
-auto FileDataLoader::load_spirv(std::vector<std::uint32_t>& out, std::string_view const uri) const -> bool {
+auto FileDataLoader::try_load_spirv(std::vector<std::uint32_t>& out, std::string_view const uri) const -> bool {
 	return from_file(out, uri, &kvf::util::spirv_from_file);
 }
 
-auto FileDataLoader::load_string(std::string& out, std::string_view const uri) const -> bool { return from_file(out, uri, &kvf::util::string_from_file); }
+auto FileDataLoader::try_load_string(std::string& out, std::string_view const uri) const -> bool { return from_file(out, uri, &kvf::util::string_from_file); }
 
 auto FileDataLoader::save_bytes(std::span<std::byte const> bytes, std::string_view const uri) const -> bool {
 	if (uri.empty()) { return false; }
