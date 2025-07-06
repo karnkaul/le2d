@@ -14,11 +14,11 @@ All class-type objects returned by the library use RAII and clean up on destruct
 
 ### Buffered Resources
 
-Rendering is double-buffered, with commands for frame N+1 being recorded on the CPU while the commands for frame N are executed on the GPU (after which the image is submitted to the display engine / compositor for presentation). Since the user owns Vulkan resources associated with a `le::Texture` object, they must ensure it does not get destroyed while in use by the GPU. The simplest way to prevent this is to use `kvf::DeviceBlock` to block the calling thread (in its destructor) or to call `le::Context::wait_idle()` before the texture's destruction. Such blocking will also be needed for `le::Context` and/or `le::RenderPass` objects, since they own Vulkan images as offscreen render targets.
+Rendering is double-buffered, with commands for frame N+1 being recorded on the CPU while the commands for frame N are executed on the GPU (after which the image is submitted to the display engine / compositor for presentation). Since the user owns Vulkan resources associated with a `le::Texture` or `le::Font` object, they must ensure it does not get destroyed while in use by the GPU. The simplest way to prevent this is to use `kvf::DeviceBlock` to block the calling thread (in its destructor) or to call `le::Context::wait_idle()` before the texture's destruction. Alternatively, create a custom subclass that owns a device blocker. Ideally this needs to happen at a higher/batch level to avoid pipeline stalls for individual objects.
 
 Note that while interaction with the Audio Device is not explicitly double-buffered, the basic concept of "don't destroy the AudioBuffer before the AudioSouce that's playing it" still applies.
 
-Most of the time this will simply boil down to the order of members in your own classes, and perhaps a `kvf::DeviceBlock` member at the end.
+Most of the time this will simply boil down to the order of members in your own classes, and perhaps a `kvf::DeviceBlock` member at the end. Keep in mind that while `le::Context` owns a `kvf::DeviceBlock`, all resources must be destroyed before `le::Context`: its blocker cannot be reused by eg placing the context as the last member (after associated `le::Texture`s).
 
 ## Multi-threading
 

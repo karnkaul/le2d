@@ -10,7 +10,7 @@ Texture::Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap co
 
 auto Texture::get_size() const -> glm::ivec2 { return kvf::util::to_glm_vec<int>(m_texture.get_extent()); }
 
-void Texture::overwrite(kvf::Bitmap const& bitmap) { m_texture = kvf::vma::Texture{m_render_device.get(), bitmap}; }
+void Texture::overwrite(kvf::Bitmap const& bitmap) { m_texture = kvf::vma::Texture{m_render_device, bitmap}; }
 
 auto Texture::load_and_write(std::span<std::byte const> compressed_image) -> bool {
 	auto const image = kvf::ImageBitmap{compressed_image};

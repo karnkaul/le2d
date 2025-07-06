@@ -17,7 +17,7 @@ class IResourcePool : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_default_shader() const -> ShaderProgram const& = 0;
 
 	[[nodiscard]] auto descriptor_image(ITexture const* texture) const -> vk::DescriptorImageInfo {
-		return texture != nullptr ? texture->descriptor_info() : get_white_texture().descriptor_info();
+		return texture && texture->is_ready() ? texture->descriptor_info() : get_white_texture().descriptor_info();
 	}
 
 	std::vector<std::byte> scratch_buffer{};

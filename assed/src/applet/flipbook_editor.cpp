@@ -149,12 +149,12 @@ void FlipbookEditor::try_load_json(FileDrop const& drop) {
 void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	auto loader = create_asset_loader();
 	auto tile_sheet = loader.load_tile_sheet(uri.get_string());
-	if (!tile_sheet.is_loaded()) {
+	if (!tile_sheet) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
 	}
 
-	m_tile_sheet = std::move(tile_sheet);
+	m_tile_sheet = std::move(*tile_sheet);
 	auto const tiles = m_tile_sheet.tile_set.get_tiles();
 	m_generate.select_tiles.entries.clear();
 	m_generate.select_tiles.entries.reserve(tiles.size());
@@ -178,12 +178,12 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 void FlipbookEditor::try_load_animation(Uri uri) {
 	auto loader = create_asset_loader();
 	auto animation = loader.load_flipbook_animation(uri.get_string());
-	if (!animation.is_loaded()) {
+	if (!animation) {
 		raise_error(std::format("Failed to load FlipbookAnimation: '{}'", uri.get_string()));
 		return;
 	}
 
-	m_animation = std::move(animation);
+	m_animation = std::move(*animation);
 	m_animator.set_animation(&m_animation);
 	m_generate.duration = m_animation.get_timeline().duration.count();
 	m_unsaved = false;

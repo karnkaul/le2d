@@ -11,7 +11,7 @@ void AssetLoader::on_success(std::string_view const type, std::string_view const
 
 void AssetLoader::on_failure(std::string_view const type, std::string_view const uri) { log.warn("'{}' Failed to load '{}'", type, uri); }
 
-auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> ShaderProgram {
+auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> std::optional<ShaderProgram> {
 	static constexpr std::string_view type_v{"ShaderProgram"};
 
 	auto const vertex_code = get_data_loader().load_spir_v(vertex_uri);
@@ -37,7 +37,7 @@ auto AssetLoader::load_shader_program(std::string_view const vertex_uri, std::st
 	return ret;
 }
 
-auto AssetLoader::load_font(std::string_view const uri) const -> Font {
+auto AssetLoader::load_font(std::string_view const uri) const -> std::optional<Font> {
 	static constexpr std::string_view type_v{"Font"};
 
 	auto bytes = get_data_loader().load_bytes(uri);
@@ -56,7 +56,7 @@ auto AssetLoader::load_font(std::string_view const uri) const -> Font {
 	return ret;
 }
 
-auto AssetLoader::load_tile_set(std::string_view const uri) const -> TileSet {
+auto AssetLoader::load_tile_set(std::string_view const uri) const -> std::optional<TileSet> {
 	static constexpr std::string_view type_v{"TileSet"};
 
 	auto const json = get_data_loader().load_json(uri);
@@ -71,28 +71,28 @@ auto AssetLoader::load_tile_set(std::string_view const uri) const -> TileSet {
 	return ret;
 }
 
-auto AssetLoader::load_texture(std::string_view const uri) const -> Texture {
+auto AssetLoader::load_texture(std::string_view const uri) const -> std::optional<Texture> {
 	static constexpr std::string_view type_v{"Texture"};
 
 	auto const bytes = get_data_loader().load_bytes(uri);
 	auto ret = get_context().create_texture();
 	if (bytes.empty() || !ret.load_and_write(bytes)) {
 		on_failure(type_v, uri);
-		return ret;
+		return {};
 	}
 
 	on_success(type_v, uri);
 	return ret;
 }
 
-auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_texture_uri) const -> TileSheet {
+auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_texture_uri) const -> std::optional<TileSheet> {
 	static constexpr std::string_view type_v{"TileSheet"};
 
 	auto ret = get_context().create_tilesheet();
 	auto const json = get_data_loader().load_json(uri);
 	if (!is_json_type<TileSheet>(json)) {
 		on_failure(type_v, uri);
-		return ret;
+		return {};
 	}
 
 	auto const texture_uri = json["texture"].as_string_view();
@@ -100,12 +100,17 @@ auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_t
 	auto const bytes = get_data_loader().load_bytes(texture_uri);
 	if (bytes.empty() || !ret.load_and_write(bytes)) {
 		on_failure(type_v, uri);
-		return ret;
+		return {};
 	}
 
 	auto const& tile_set_json = json["tile_set"];
 	if (tile_set_json.is_string()) {
-		ret.tile_set = load_tile_set(json["tile_set"].as_string_view());
+		auto tile_set = load_tile_set(tile_set_json.as_string_view());
+		if (!tile_set) {
+			on_failure(type_v, uri);
+			return {};
+		}
+		ret.tile_set = std::move(*tile_set);
 	} else {
 		from_json(tile_set_json, ret.tile_set);
 	}
@@ -114,7 +119,7 @@ auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_t
 	return ret;
 }
 
-auto AssetLoader::load_transform_animation(std::string_view const uri) const -> anim::TransformAnimation {
+auto AssetLoader::load_transform_animation(std::string_view const uri) const -> std::optional<anim::TransformAnimation> {
 	static constexpr std::string_view type_v{"TransformAnimation"};
 
 	auto ret = anim::TransformAnimation{};
@@ -129,7 +134,7 @@ auto AssetLoader::load_transform_animation(std::string_view const uri) const -> 
 	return ret;
 }
 
-auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> anim::FlipbookAnimation {
+auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> std::optional<anim::FlipbookAnimation> {
 	static constexpr std::string_view type_v{"FlipbookAnimation"};
 
 	auto ret = anim::FlipbookAnimation{};
@@ -144,7 +149,7 @@ auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> a
 	return ret;
 }
 
-auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> capo::Buffer {
+auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> std::optional<capo::Buffer> {
 	static constexpr std::string_view type_v{"AudioBuffer"};
 
 	auto const bytes = get_data_loader().load_bytes(uri);

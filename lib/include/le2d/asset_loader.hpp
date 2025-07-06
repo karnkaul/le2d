@@ -6,6 +6,7 @@
 #include <le2d/font.hpp>
 #include <le2d/shader_program.hpp>
 #include <gsl/pointers>
+#include <optional>
 
 namespace le {
 class Context;
@@ -20,15 +21,14 @@ class AssetLoader {
 	[[nodiscard]] auto get_context() const -> Context const& { return *m_context; }
 	[[nodiscard]] auto get_data_loader() const -> IDataLoader const& { return *m_data_loader; }
 
-	[[nodiscard]] auto load_shader_program(std::string_view vertex_uri, std::string_view fragment_uri) const -> ShaderProgram;
-	[[nodiscard]] auto load_string(std::string_view uri) const -> std::string;
-	[[nodiscard]] auto load_font(std::string_view uri) const -> Font;
-	[[nodiscard]] auto load_tile_set(std::string_view uri) const -> TileSet;
-	[[nodiscard]] auto load_texture(std::string_view uri) const -> Texture;
-	[[nodiscard]] auto load_tile_sheet(std::string_view uri, std::string* out_texture_uri = {}) const -> TileSheet;
-	[[nodiscard]] auto load_transform_animation(std::string_view uri) const -> anim::TransformAnimation;
-	[[nodiscard]] auto load_flipbook_animation(std::string_view uri) const -> anim::FlipbookAnimation;
-	[[nodiscard]] auto load_audio_buffer(std::string_view uri) const -> capo::Buffer;
+	[[nodiscard]] auto load_shader_program(std::string_view vertex_uri, std::string_view fragment_uri) const -> std::optional<ShaderProgram>;
+	[[nodiscard]] auto load_font(std::string_view uri) const -> std::optional<Font>;
+	[[nodiscard]] auto load_tile_set(std::string_view uri) const -> std::optional<TileSet>;
+	[[nodiscard]] auto load_texture(std::string_view uri) const -> std::optional<Texture>;
+	[[nodiscard]] auto load_tile_sheet(std::string_view uri, std::string* out_texture_uri = {}) const -> std::optional<TileSheet>;
+	[[nodiscard]] auto load_transform_animation(std::string_view uri) const -> std::optional<anim::TransformAnimation>;
+	[[nodiscard]] auto load_flipbook_animation(std::string_view uri) const -> std::optional<anim::FlipbookAnimation>;
+	[[nodiscard]] auto load_audio_buffer(std::string_view uri) const -> std::optional<capo::Buffer>;
 
   protected:
 	static void on_success(std::string_view type, std::string_view uri);

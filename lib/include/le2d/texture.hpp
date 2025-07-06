@@ -14,6 +14,8 @@ class ITexture : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
 
 	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
+
+	[[nodiscard]] virtual auto is_ready() const -> bool = 0;
 };
 
 /// \brief Concrete drawable Texture.
@@ -35,7 +37,8 @@ class Texture : public ITexture {
 	/// \returns true if successfully decompressed.
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool;
 
-	[[nodiscard]] auto is_loaded() const -> bool { return m_texture.is_loaded(); }
+	/// \returns true if a valid Image has been allocated and can be bound to descriptor sets.
+	[[nodiscard]] auto is_ready() const -> bool final { return m_texture.is_ready(); }
 
   protected:
 	gsl::not_null<kvf::RenderDevice*> m_render_device;

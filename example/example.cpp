@@ -41,11 +41,11 @@ void run() {
 	quad.create({100.0f, 100.0f});
 	// reposition it and set the loaded texture.
 	quad.transform.position.y -= 30.0f;
-	quad.texture = &texture;
+	if (texture) { quad.texture = &texture.value(); }
 
 	// create a Text instance.
 	auto text = le::drawable::Text{};
-	text.set_string(font, "hello from le2d!");
+	if (font) { text.set_string(*font, "hello from le2d!"); }
 	// reposition and tint it.
 	text.transform.position.y += 30.0f;
 	text.tint = kvf::yellow_v;
@@ -61,9 +61,9 @@ void run() {
 
 		// update audio playback.
 		audio_wait -= dt;
-		if (audio_wait < 0s && !audio_played) {
+		if (audio_buffer && audio_wait < 0s && !audio_played) {
 			// play the loaded audio buffer.
-			context.get_audio().play_sfx(&audio_buffer);
+			context.get_audio().play_sfx(&audio_buffer.value());
 			audio_played = true;
 		}
 
