@@ -4,9 +4,10 @@
 #include <ranges>
 
 namespace le::assed {
-FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_tile_sheet(services->get<Context>().create_tilesheet()) {
+FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
+	: Applet(services), m_tile_sheet(services->get<Context>().get_resource_factory().create_tilesheet()) {
 	m_drawer.quad.create();
-	m_drawer.quad.texture = &m_tile_sheet;
+	m_drawer.quad.texture = m_tile_sheet.get();
 	m_sprite.set_base_size(glm::vec2{200.0f});
 	m_save_modal.title = "Save Flipbook";
 	m_drop_types = FileDrop::Type::Json;
@@ -14,7 +15,7 @@ FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services) : 
 }
 
 void FlipbookEditor::tick(kvf::Seconds const dt) {
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	if (m_animator.has_animation() && !tiles.empty() && !m_drawer.tile_frames.empty()) {
 		auto const anim_dt = m_paused ? 0s : dt;
 		m_animator.tick(anim_dt);
@@ -27,7 +28,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 			m_drawer.selected_tile = index;
 			m_drawer.update();
 		}
-		m_sprite.set_tile(&m_tile_sheet, tile_id);
+		m_sprite.set_tile(m_tile_sheet.get(), tile_id);
 	}
 
 	inspect();
@@ -154,8 +155,9 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 		return;
 	}
 
-	m_tile_sheet = std::move(*tile_sheet);
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	wait_idle();
+	m_tile_sheet = std::move(tile_sheet);
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	m_generate.select_tiles.entries.clear();
 	m_generate.select_tiles.entries.reserve(tiles.size());
 	for (auto const& tile : tiles) {
@@ -167,9 +169,9 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	}
 	m_generate.select_tiles.sync_to_selection();
 
-	m_drawer.setup(m_tile_sheet.tile_set.get_tiles(), m_tile_sheet.get_size());
-	m_drawer.quad.texture = &m_tile_sheet;
-	m_sprite.set_tile(&m_tile_sheet, TileId{1});
+	m_drawer.setup(m_tile_sheet->tile_set.get_tiles(), m_tile_sheet->get_size());
+	m_drawer.quad.texture = m_tile_sheet.get();
+	m_sprite.set_tile(m_tile_sheet.get(), TileId{1});
 
 	m_uri.tile_sheet = std::move(uri);
 	log.info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
@@ -216,7 +218,7 @@ void FlipbookEditor::generate_timeline() {
 	timeline.keyframes.reserve(std::size_t(keyframe_count));
 	auto const keyframe_dt = timeline.duration / float(keyframe_count);
 	auto timestamp = kvf::Seconds{0s};
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	for (auto const [index, tile_entry] : std::views::enumerate(m_generate.select_tiles.entries)) {
 		if (!tile_entry.is_selected) { continue; }
 		auto const tile_id = tiles[std::size_t(index)].id;

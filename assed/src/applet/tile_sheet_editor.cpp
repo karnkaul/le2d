@@ -7,7 +7,8 @@
 #include <ranges>
 
 namespace le::assed {
-TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_texture(services->get<Context>().create_texture()) {
+TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
+	: Applet(services), m_texture(services->get<Context>().get_resource_factory().create_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<TileSheet>};
@@ -66,7 +67,7 @@ void TileSheetEditor::inspect() {
 
 		ImGui::TextUnformatted(klib::FixedString<256>{"TileSheet: {}", m_uri.tile_sheet.get_string()}.c_str());
 		ImGui::TextUnformatted(klib::FixedString<256>{"Texture: {}", m_uri.texture.get_string()}.c_str());
-		auto const size = m_texture.get_size();
+		auto const size = m_texture->get_size();
 		ImGui::TextUnformatted(klib::FixedString{"dimensions: {}x{}", size.x, size.y}.c_str());
 
 		ImGui::Separator();
@@ -87,10 +88,10 @@ void TileSheetEditor::inspect() {
 }
 
 void TileSheetEditor::inspect_selected() {
-	auto const texture_size = m_texture.get_size();
+	auto const texture_size = m_texture->get_size();
 	auto& selected_tile = m_tiles.at(*m_drawer.selected_tile);
 	ImGui::TextUnformatted(klib::FixedString{"ID: {}", std::to_underlying(selected_tile.id)}.c_str());
-	if (imcpp::drag_tex_rect(selected_tile.uv, m_texture.get_size())) {
+	if (imcpp::drag_tex_rect(selected_tile.uv, texture_size)) {
 		auto const rect = uv_to_world(selected_tile.uv, texture_size);
 		m_drawer.tile_frames.at(*m_drawer.selected_tile) = m_drawer.create_tile_frame(rect);
 		m_drawer.update();
@@ -116,8 +117,8 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 	}
 
 	set_tiles(tile_sheet->tile_set.get_tiles());
-	set_texture(static_cast<Texture&&>(*tile_sheet));
-	m_drawer.setup(m_tiles, m_texture.get_size());
+	set_texture(std::move(tile_sheet));
+	m_drawer.setup(m_tiles, m_texture->get_size());
 	m_uri.texture = std::move(texture_uri);
 	m_uri.tile_sheet = std::move(uri);
 	m_unsaved = false;
@@ -135,7 +136,7 @@ void TileSheetEditor::try_load_tileset(Uri const& uri) {
 	}
 
 	set_tiles(tile_set->get_tiles());
-	m_drawer.setup(m_tiles, m_texture.get_size());
+	m_drawer.setup(m_tiles, m_texture->get_size());
 
 	log.info("loaded TileSet: '{}'", uri.get_string());
 }
@@ -148,8 +149,8 @@ void TileSheetEditor::try_load_texture(Uri uri) {
 		return;
 	}
 
-	set_texture(std::move(*texture));
-	m_drawer.setup(m_tiles, m_texture.get_size());
+	set_texture(std::move(texture));
+	m_drawer.setup(m_tiles, m_texture->get_size());
 	m_uri.texture = std::move(uri);
 
 	log.info("loaded Texture: '{}'", m_uri.texture.get_string());
@@ -160,16 +161,16 @@ void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
 	m_drawer.selected_tile.reset();
 }
 
-void TileSheetEditor::set_texture(Texture texture) {
+void TileSheetEditor::set_texture(std::unique_ptr<ITexture> texture) {
 	wait_idle();
 	m_texture = std::move(texture);
-	m_drawer.quad.create(m_texture.get_size());
-	m_drawer.quad.texture = &m_texture;
+	m_drawer.quad.create(m_texture->get_size());
+	m_drawer.quad.texture = m_texture.get();
 }
 
 void TileSheetEditor::generate_tiles() {
 	m_tiles = util::divide_into_tiles(m_split_dims.y, m_split_dims.x);
-	m_drawer.setup(m_tiles, m_texture.get_size());
+	m_drawer.setup(m_tiles, m_texture->get_size());
 	set_unsaved();
 }
 

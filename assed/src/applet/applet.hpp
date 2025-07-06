@@ -43,7 +43,7 @@ class Applet : public input::Listener {
 	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;
 	[[nodiscard]] auto load_json(Uri const& uri) const -> dj::Json;
-	[[nodiscard]] auto create_asset_loader() const -> AssetLoader { return AssetLoader{&get_data_loader(), &get_context()}; }
+	[[nodiscard]] auto create_asset_loader() const -> AssetLoader { return AssetLoader{&get_data_loader(), &get_context().get_resource_factory()}; }
 
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 
