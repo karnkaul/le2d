@@ -2,7 +2,7 @@
 #include <le2d/text/line_input.hpp>
 
 namespace le {
-LineInput::LineInput(gsl::not_null<Font*> font, TextHeight const height) : m_atlas(&font->get_atlas(height)) {}
+LineInput::LineInput(gsl::not_null<IFont*> font, TextHeight const height) : m_atlas(&font->get_atlas(height)) {}
 
 auto LineInput::to_primitive() const -> Primitive { return m_geometry.to_primitive(m_atlas->get_texture()); }
 

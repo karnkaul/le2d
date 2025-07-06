@@ -1,5 +1,6 @@
 #pragma once
 #include <le2d/audio.hpp>
+#include <le2d/audio_mixer.hpp>
 #include <le2d/font.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/gamepad.hpp>
@@ -40,6 +41,7 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
+	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
 
 	/// \brief Get the updated state of the last used Gamepad (if any).
@@ -122,6 +124,7 @@ class Context : public klib::Pinned {
 
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
 	std::unique_ptr<IResourcePool> m_resource_pool{};
+	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 	std::unique_ptr<IAudio> m_audio{};
 
 	Gamepad m_latest_gamepad{};

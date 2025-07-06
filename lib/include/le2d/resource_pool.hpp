@@ -1,7 +1,7 @@
 #pragma once
 #include <le2d/pipeline_fixed_state.hpp>
+#include <le2d/resource/texture.hpp>
 #include <le2d/shader_program.hpp>
-#include <le2d/texture.hpp>
 #include <cstddef>
 #include <vector>
 
@@ -13,10 +13,10 @@ class IResourcePool : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_pipeline_layout() const -> vk::PipelineLayout = 0;
 	[[nodiscard]] virtual auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> = 0;
 
-	[[nodiscard]] virtual auto get_white_texture() const -> Texture const& = 0;
+	[[nodiscard]] virtual auto get_white_texture() const -> ITexture2 const& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> ShaderProgram const& = 0;
 
-	[[nodiscard]] auto descriptor_image(ITexture const* texture) const -> vk::DescriptorImageInfo {
+	[[nodiscard]] auto descriptor_image(ITextureBase const* texture) const -> vk::DescriptorImageInfo {
 		return texture && texture->is_ready() ? texture->descriptor_info() : get_white_texture().descriptor_info();
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/font.hpp>
 #include <le2d/primitive.hpp>
+#include <le2d/resource/font.hpp>
 #include <le2d/text/text_geometry.hpp>
 #include <gsl/pointers>
 
@@ -8,7 +8,7 @@ namespace le {
 /// \brief Interactive text input for a single line.
 class LineInput {
   public:
-	explicit LineInput(gsl::not_null<Font*> font, TextHeight height = TextHeight::Default);
+	explicit LineInput(gsl::not_null<IFont*> font, TextHeight height = TextHeight::Default);
 
 	[[nodiscard]] auto get_string() const -> std::string_view { return m_line; }
 	[[nodiscard]] auto get_height() const -> TextHeight { return m_atlas->get_height(); }
@@ -17,8 +17,8 @@ class LineInput {
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
 
-	[[nodiscard]] auto get_atlas() const -> FontAtlas& { return *m_atlas; }
-	[[nodiscard]] auto get_texture() const -> Texture const& { return get_atlas().get_texture(); }
+	[[nodiscard]] auto get_atlas() const -> IFontAtlas& { return *m_atlas; }
+	[[nodiscard]] auto get_texture() const -> ITexture2 const& { return get_atlas().get_texture(); }
 
 	[[nodiscard]] auto to_primitive() const -> Primitive;
 
@@ -38,7 +38,7 @@ class LineInput {
   private:
 	void update_cursor_x();
 
-	gsl::not_null<FontAtlas*> m_atlas;
+	gsl::not_null<IFontAtlas*> m_atlas;
 
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
 	TextGeometry m_geometry{};

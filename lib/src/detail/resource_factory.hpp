@@ -1,4 +1,5 @@
 #pragma once
+#include <detail/audio_buffer.hpp>
 #include <detail/font.hpp>
 #include <detail/shader.hpp>
 #include <detail/texture.hpp>
@@ -23,6 +24,8 @@ class ResourceFactory : public IResourceFactory {
 	}
 
 	[[nodiscard]] auto create_font() const -> std::unique_ptr<IFont> final { return std::make_unique<Font>(m_render_api); }
+
+	[[nodiscard]] auto create_audio_buffer() const -> std::unique_ptr<IAudioBuffer> final { return std::make_unique<AudioBuffer>(); }
 
 	gsl::not_null<kvf::IRenderApi const*> m_render_api;
 };

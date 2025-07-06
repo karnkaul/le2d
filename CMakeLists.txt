@@ -23,7 +23,7 @@ if(LE2D_BUILD_EXAMPLE)
 endif()
 
 if(LE2D_BUILD_ASSED)
-  add_subdirectory(assed)
+  # add_subdirectory(assed)
 endif()
 
 if(LE2D_BUILD_SPIRV2CPP)

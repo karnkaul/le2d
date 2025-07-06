@@ -1,4 +1,5 @@
 #include <capo/engine.hpp>
+#include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <detail/resource_factory.hpp>
 #include <klib/assert.hpp>
@@ -46,14 +47,14 @@ struct ResourcePool : IResourcePool {
 
 	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return m_pipelines.get_layout(); }
 	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return m_pipelines.get_set_layouts(); }
-	[[nodiscard]] auto get_white_texture() const -> Texture const& final { return m_white_texture; }
+	[[nodiscard]] auto get_white_texture() const -> ITexture2 const& final { return m_white_texture; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& final { return m_default_shader; }
 
   private:
 	detail::PipelinePool m_pipelines;
 	ShaderProgram m_default_shader{};
 
-	Texture m_white_texture;
+	detail::Texture m_white_texture;
 
 	kvf::DeviceBlock m_blocker;
 };
@@ -179,6 +180,7 @@ Context::Context(CreateInfo const& create_info)
 	auto default_shader = create_default_shader(m_window.get_render_device().get_device());
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);
+	m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
 
 	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();
 	m_supported_vsync.reserve(supported_modes.size());

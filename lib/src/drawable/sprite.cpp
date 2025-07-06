@@ -26,13 +26,13 @@ void SpriteBase::set_uv(kvf::UvRect const& uv) {
 	update(get_base_size(), get_origin(), uv);
 }
 
-void SpriteBase::set_texture(ITexture const* texture, kvf::UvRect const& uv) {
+void SpriteBase::set_texture(ITextureBase const* texture, kvf::UvRect const& uv) {
 	if (texture == m_texture && uv == get_uv()) { return; }
 	m_texture = texture;
 	update(get_base_size(), get_origin(), uv);
 }
 
-void SpriteBase::set_tile(TileSheet const* sheet, TileId const tile_id) {
+void SpriteBase::set_tile(ITileSheet const* sheet, TileId const tile_id) {
 	auto const uv = sheet != nullptr ? sheet->get_uv(tile_id) : kvf::uv_rect_v;
 	if (sheet == m_texture && uv == get_uv()) { return; }
 	m_texture = sheet;

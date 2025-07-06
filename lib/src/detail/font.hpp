@@ -16,16 +16,16 @@ class FontAtlas : public IFontAtlas {
 	using Glyph = kvf::ttf::Glyph;
 	using GlyphLayout = kvf::ttf::GlyphLayout;
 
-	explicit FontAtlas(gsl::not_null<kvf::IRenderApi const*> render_api) : m_texture(std::make_unique<Texture>(render_api)) {}
+	explicit FontAtlas(gsl::not_null<kvf::IRenderApi const*> render_api) : m_texture(render_api) {}
 
-	[[nodiscard]] auto is_ready() const -> bool final { return m_texture && m_texture->is_ready() && m_face && m_face->is_loaded(); }
+	[[nodiscard]] auto is_ready() const -> bool final { return m_texture.is_ready() && m_face && m_face->is_loaded(); }
 
 	auto build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height) -> bool final {
-		if (!is_ready()) { return false; }
+		if (!m_texture.is_ready()) { return false; }
 
 		height = clamp(height);
 		auto ttf_atlas = face->build_atlas(std::uint32_t(height));
-		m_texture->overwrite(ttf_atlas.bitmap.bitmap());
+		m_texture.overwrite(ttf_atlas.bitmap.bitmap());
 
 		m_face = face;
 		m_height = height;
@@ -35,7 +35,7 @@ class FontAtlas : public IFontAtlas {
 	}
 
 	[[nodiscard]] auto get_glyphs() const -> std::span<Glyph const> final { return m_glyphs; }
-	[[nodiscard]] auto get_texture() const -> std::shared_ptr<ITexture2 const> final { return m_texture; }
+	[[nodiscard]] auto get_texture() const -> ITexture2 const& final { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight final { return m_height; }
 
 	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view const text, float const n_line_height, bool const use_tofu) const -> glm::vec2 final {
@@ -51,7 +51,7 @@ class FontAtlas : public IFontAtlas {
 
   private:
 	kvf::ttf::Typeface* m_face{};
-	std::shared_ptr<Texture> m_texture{};
+	Texture m_texture;
 	std::vector<Glyph> m_glyphs{};
 	TextHeight m_height{};
 };
