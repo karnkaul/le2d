@@ -1,7 +1,7 @@
 #include <capo/engine.hpp>
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
-#include <detail/resource_factory.hpp>
+#include <detail/resource/resource_factory.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>

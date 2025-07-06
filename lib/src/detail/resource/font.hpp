@@ -1,5 +1,5 @@
 #pragma once
-#include <detail/texture.hpp>
+#include <detail/resource/texture.hpp>
 #include <klib/assert.hpp>
 #include <le2d/resource/font.hpp>
 #include <le2d/text_height.hpp>

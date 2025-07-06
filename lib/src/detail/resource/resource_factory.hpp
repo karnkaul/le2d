@@ -1,8 +1,8 @@
 #pragma once
-#include <detail/audio_buffer.hpp>
-#include <detail/font.hpp>
-#include <detail/shader.hpp>
-#include <detail/texture.hpp>
+#include <detail/resource/audio_buffer.hpp>
+#include <detail/resource/font.hpp>
+#include <detail/resource/shader.hpp>
+#include <detail/resource/texture.hpp>
 #include <kvf/render_api.hpp>
 #include <le2d/resource/resource_factory.hpp>
 #include <gsl/pointers>
