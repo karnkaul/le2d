@@ -235,8 +235,11 @@ void Context::present() {
 }
 
 void Context::wait_idle() {
+	log.debug("Context: waiting idle");
 	m_window.get_render_device().get_device().waitIdle();
+	// TODO: remove
 	static_cast<Audio&>(*m_audio).wait_idle();
+	m_audio_mixer->wait_idle();
 }
 
 auto Context::create_shader(SpirV const vertex, SpirV const fragment) const -> ShaderProgram {

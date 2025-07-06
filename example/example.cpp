@@ -21,19 +21,18 @@ void run() {
 	// create a FileDataLoader instance, mounting the assets directory.
 	auto const data_loader = le::FileDataLoader{"assets"};
 
-	auto const& resource_factory = context.get_resource_factory();
+	// create an AssetLoader instance.
+	// this is a lightweight wrapper around IDataLoader and IResourceFactory.
+	auto asset_loader = le::AssetLoader{&data_loader, &context.get_resource_factory()};
 
-	auto font = resource_factory.create_font();
-	auto font_bytes = data_loader.load_bytes("fonts/Vera.ttf");
-	if (!font->load_face(std::move(font_bytes))) { throw std::runtime_error{"Failed to load font bytes."}; }
+	auto font = asset_loader.load_font("fonts/Vera.ttf");
+	if (!font) { throw std::runtime_error{"Failed to load font bytes."}; }
 
-	auto texture = resource_factory.create_texture();
-	auto const texture_bytes = data_loader.load_bytes("images/awesomeface.png");
-	if (!texture->load_and_write(texture_bytes)) { throw std::runtime_error{"Failed to load texture bytes."}; }
+	auto texture = asset_loader.load_texture("images/awesomeface.png");
+	if (!texture) { throw std::runtime_error{"Failed to load texture bytes."}; }
 
-	auto audio_buffer = resource_factory.create_audio_buffer();
-	auto const audio_bytes = data_loader.load_bytes("audio/explode.wav");
-	if (!audio_buffer->decode(audio_bytes)) { throw std::runtime_error{"Failed to load audio bytes."}; }
+	auto audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
+	if (!audio_buffer) { throw std::runtime_error{"Failed to load audio bytes."}; }
 
 	// store playback trigger data.
 	auto audio_wait = kvf::Seconds{2.0f};
