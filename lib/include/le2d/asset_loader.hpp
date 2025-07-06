@@ -20,7 +20,7 @@ class AssetLoader {
 	[[nodiscard]] auto load_shader(std::string_view vertex_uri, std::string_view fragment_uri) const -> std::unique_ptr<IShader>;
 	[[nodiscard]] auto load_font(std::string_view uri) const -> std::unique_ptr<IFont>;
 	[[nodiscard]] auto load_tile_set(std::string_view uri) const -> std::unique_ptr<TileSet>;
-	[[nodiscard]] auto load_texture(std::string_view uri) const -> std::unique_ptr<ITexture2>;
+	[[nodiscard]] auto load_texture(std::string_view uri) const -> std::unique_ptr<ITexture>;
 	[[nodiscard]] auto load_tile_sheet(std::string_view uri, std::string* out_texture_uri = {}) const -> std::unique_ptr<ITileSheet>;
 	[[nodiscard]] auto load_audio_buffer(std::string_view uri) const -> std::unique_ptr<IAudioBuffer>;
 	[[nodiscard]] auto load_transform_animation(std::string_view uri) const -> std::unique_ptr<anim::TransformAnimation>;

@@ -8,7 +8,7 @@
 
 namespace le {
 /// \brief Interface for drawable texture.
-class ITexture : public klib::Polymorphic {
+class ITextureOld : public klib::Polymorphic {
   public:
 	[[nodiscard]] virtual auto get_image() const -> vk::ImageView = 0;
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
@@ -19,7 +19,7 @@ class ITexture : public klib::Polymorphic {
 };
 
 /// \brief Concrete drawable Texture.
-class Texture : public ITexture {
+class Texture : public ITextureOld {
   public:
 	explicit Texture(gsl::not_null<kvf::RenderDevice*> render_device, kvf::Bitmap const& bitmap = {},
 					 vk::SamplerCreateInfo const& sampler = kvf::vma::sampler_ci_v);

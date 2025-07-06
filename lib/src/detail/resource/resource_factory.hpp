@@ -15,7 +15,7 @@ class ResourceFactory : public IResourceFactory {
   private:
 	[[nodiscard]] auto create_shader() const -> std::unique_ptr<IShader> final { return std::make_unique<Shader>(m_render_api->get_device()); }
 
-	[[nodiscard]] auto create_texture(TextureSampler const& sampler) const -> std::unique_ptr<ITexture2> final {
+	[[nodiscard]] auto create_texture(TextureSampler const& sampler) const -> std::unique_ptr<ITexture> final {
 		return std::make_unique<Texture>(m_render_api, sampler);
 	}
 

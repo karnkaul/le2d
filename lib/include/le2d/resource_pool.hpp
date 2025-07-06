@@ -13,7 +13,7 @@ class IResourcePool : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_pipeline_layout() const -> vk::PipelineLayout = 0;
 	[[nodiscard]] virtual auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> = 0;
 
-	[[nodiscard]] virtual auto get_white_texture() const -> ITexture2 const& = 0;
+	[[nodiscard]] virtual auto get_white_texture() const -> ITexture const& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> ShaderProgram const& = 0;
 
 	[[nodiscard]] auto descriptor_image(ITextureBase const* texture) const -> vk::DescriptorImageInfo {

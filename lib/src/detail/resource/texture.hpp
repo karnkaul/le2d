@@ -39,6 +39,6 @@ class TextureImpl : public BaseT {
 	kvf::vma::Texture m_texture;
 };
 
-using Texture = TextureImpl<ITexture2>;
+using Texture = TextureImpl<ITexture>;
 using TileSheet = TextureImpl<ITileSheet>;
 } // namespace le::detail

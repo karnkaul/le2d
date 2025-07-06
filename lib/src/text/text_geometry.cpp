@@ -6,7 +6,7 @@ void TextGeometry::append_glyphs(std::span<kvf::ttf::GlyphLayout const> layouts,
 	write_glyphs(m_vertices, layouts, offset, color);
 }
 
-auto TextGeometry::to_primitive(ITexture2 const& font_atlas) const -> Primitive {
+auto TextGeometry::to_primitive(ITexture const& font_atlas) const -> Primitive {
 	return Primitive{
 		.vertices = m_vertices.vertices,
 		.indices = m_vertices.indices,

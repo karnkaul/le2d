@@ -70,7 +70,7 @@ auto AssetLoader::load_tile_set(std::string_view const uri) const -> std::unique
 	return ret;
 }
 
-auto AssetLoader::load_texture(std::string_view const uri) const -> std::unique_ptr<ITexture2> {
+auto AssetLoader::load_texture(std::string_view const uri) const -> std::unique_ptr<ITexture> {
 	static constexpr std::string_view type_v{"Texture"};
 
 	auto const bytes = get_data_loader().load_bytes(uri);

@@ -35,7 +35,7 @@ class FontAtlas : public IFontAtlas {
 	}
 
 	[[nodiscard]] auto get_glyphs() const -> std::span<Glyph const> final { return m_glyphs; }
-	[[nodiscard]] auto get_texture() const -> ITexture2 const& final { return m_texture; }
+	[[nodiscard]] auto get_texture() const -> ITexture const& final { return m_texture; }
 	[[nodiscard]] auto get_height() const -> TextHeight final { return m_height; }
 
 	auto push_layouts(std::vector<GlyphLayout>& out, std::string_view const text, float const n_line_height, bool const use_tofu) const -> glm::vec2 final {

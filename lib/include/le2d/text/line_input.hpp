@@ -18,7 +18,7 @@ class LineInput {
 	[[nodiscard]] auto get_glyph_layouts() const -> std::span<kvf::ttf::GlyphLayout const> { return m_glyph_layouts; }
 
 	[[nodiscard]] auto get_atlas() const -> IFontAtlas& { return *m_atlas; }
-	[[nodiscard]] auto get_texture() const -> ITexture2 const& { return get_atlas().get_texture(); }
+	[[nodiscard]] auto get_texture() const -> ITexture const& { return get_atlas().get_texture(); }
 
 	[[nodiscard]] auto to_primitive() const -> Primitive;
 

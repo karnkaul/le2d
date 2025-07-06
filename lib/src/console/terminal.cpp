@@ -19,7 +19,7 @@ namespace le::console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
-	ITexture2 const* texture{};
+	ITexture const* texture{};
 	RenderInstance instance{};
 	float text_x{};
 

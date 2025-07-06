@@ -16,7 +16,7 @@ class TextGeometry : public IGeometry {
 	void clear_vertices() { m_vertices.clear(); }
 
 	[[nodiscard]] auto get_vertex_array() const -> VertexArray const& { return m_vertices; }
-	[[nodiscard]] auto to_primitive(ITexture2 const& font_atlas) const -> Primitive;
+	[[nodiscard]] auto to_primitive(ITexture const& font_atlas) const -> Primitive;
 
   private:
 	VertexArray m_vertices{};

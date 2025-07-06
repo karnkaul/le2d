@@ -47,7 +47,7 @@ struct ResourcePool : IResourcePool {
 
 	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return m_pipelines.get_layout(); }
 	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return m_pipelines.get_set_layouts(); }
-	[[nodiscard]] auto get_white_texture() const -> ITexture2 const& final { return m_white_texture; }
+	[[nodiscard]] auto get_white_texture() const -> ITexture const& final { return m_white_texture; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& final { return m_default_shader; }
 
   private:

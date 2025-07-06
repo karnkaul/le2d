@@ -23,7 +23,7 @@ struct TextureSampler {
 };
 
 /// \brief Concrete drawable Texture.
-class ITexture2 : public ITextureBase {
+class ITexture : public ITextureBase {
   public:
 	/// \brief Write bitmap to image.
 	/// \param bitmap Bitmap to write.
@@ -35,7 +35,7 @@ class ITexture2 : public ITextureBase {
 };
 
 /// \brief Texture with a TileSet.
-class ITileSheet : public ITexture2 {
+class ITileSheet : public ITexture {
   public:
 	/// \brief Get the UV coordinates for a given Tile ID.
 	/// \param id Tile ID to query.
