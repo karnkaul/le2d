@@ -1,5 +1,6 @@
 #include <capo/engine.hpp>
 #include <detail/pipeline_pool.hpp>
+#include <detail/resource_factory.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <log.hpp>
@@ -173,7 +174,8 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 
 Context::Context(CreateInfo const& create_info)
 	: m_window(create_info.window, create_info.render_device), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples),
-	  m_blocker(m_window.get_render_device().get_device()) {
+	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window.get_render_device())), m_blocker(m_window.get_render_device().get_device()) {
+
 	auto default_shader = create_default_shader(m_window.get_render_device().get_device());
 	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio = std::make_unique<Audio>(create_info.sfx_buffers);

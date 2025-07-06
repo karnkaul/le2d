@@ -5,6 +5,7 @@
 #include <le2d/gamepad.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
+#include <le2d/resource/resource_factory.hpp>
 #include <le2d/resource_pool.hpp>
 #include <le2d/shader_program.hpp>
 #include <le2d/vsync.hpp>
@@ -36,6 +37,7 @@ class Context : public klib::Pinned {
 	explicit Context(CreateInfo const& create_info = {});
 
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
+	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
@@ -118,6 +120,7 @@ class Context : public klib::Pinned {
 	RenderPass m_pass;
 	std::vector<Vsync> m_supported_vsync{};
 
+	std::unique_ptr<IResourceFactory> m_resource_factory{};
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudio> m_audio{};
 
