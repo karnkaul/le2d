@@ -1,6 +1,7 @@
 #include <capo/engine.hpp>
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
+#include <detail/render_window.hpp>
 #include <detail/resource/resource_factory.hpp>
 #include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
@@ -46,14 +47,15 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 }
 
 Context::Context(CreateInfo const& create_info)
-	: m_window(create_info.window, create_info.render_device), m_pass(&m_window.get_render_device(), create_info.framebuffer_samples),
-	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window.get_render_device())), m_blocker(m_window.get_render_device().get_device()) {
+	: m_window(std::make_unique<detail::RenderWindow>(create_info.window, create_info.render_device)),
+	  m_pass(&m_window->get_render_device(), create_info.framebuffer_samples),
+	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())), m_blocker(m_window->get_render_device().get_device()) {
 
 	auto default_shader = create_default_shader(get_resource_factory());
-	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
+	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window->get_render_device(), std::move(default_shader));
 	m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
 
-	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();
+	auto const supported_modes = m_window->get_render_device().get_supported_present_modes();
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
@@ -78,15 +80,15 @@ auto Context::set_render_scale(float const scale) -> bool {
 	return true;
 }
 
-auto Context::get_vsync() const -> Vsync { return to_vsync(m_window.get_render_device().get_present_mode()); }
+auto Context::get_vsync() const -> Vsync { return to_vsync(m_window->get_render_device().get_present_mode()); }
 
 auto Context::set_vsync(Vsync const vsync) -> bool {
 	if (vsync == get_vsync()) { return true; }
-	return m_window.get_render_device().set_present_mode(to_mode(vsync));
+	return m_window->get_render_device().set_present_mode(to_mode(vsync));
 }
 
 auto Context::next_frame() -> vk::CommandBuffer {
-	m_cmd = m_window.next_frame();
+	m_cmd = m_window->next_frame();
 	++m_fps.counter;
 	m_frame_start = kvf::Clock::now();
 	return m_cmd;
@@ -100,14 +102,14 @@ auto Context::begin_render(kvf::Color const clear) -> Renderer {
 
 void Context::present() {
 	auto const present_start = kvf::Clock::now();
-	m_window.present(m_pass.get_render_target());
+	m_window->present(m_pass.get_render_target());
 	m_cmd = vk::CommandBuffer{};
 	update_stats(present_start);
 }
 
 void Context::wait_idle() {
 	log.debug("Context: waiting idle");
-	m_window.get_render_device().get_device().waitIdle();
+	m_window->get_render_device().get_device().waitIdle();
 	m_audio_mixer->wait_idle();
 }
 

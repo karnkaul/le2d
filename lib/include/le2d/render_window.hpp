@@ -53,23 +53,18 @@ struct FullscreenInfo {
 /// \brief RenderWindow creation parameters.
 using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
 
-/// \brief Owns the Window and the RenderDevice.
+/// \brief Opaque interface to the render window.
+///
+/// Owns the Window and the RenderDevice.
 /// Provides a view into the Window's Event Queue.
-/// A separately owned RenderPass is required to render to the Window.
-class RenderWindow {
+class IRenderWindow : public klib::Polymorphic {
   public:
-	/// \param wci Window creation parameters (windowed or fullscreen).
-	/// \param rdci Render Device creation parameters.
-	explicit RenderWindow(WindowCreateInfo const& wci, kvf::RenderDeviceCreateInfo const& rdci = {});
-
-	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& { return m_render_device; }
-	[[nodiscard]] auto get_render_device() -> kvf::RenderDevice& { return m_render_device; }
-	[[nodiscard]] auto get_window() const -> GLFWwindow* { return m_window.get(); }
-
 	/// \returns Window size as reported by GLFW.
 	[[nodiscard]] auto window_size() const -> glm::ivec2;
 	/// \returns Framebuffer size as reported by GLFW.
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
+	/// \returns Ratio of framebuffer to window sizes.
+	[[nodiscard]] auto display_ratio() const -> glm::vec2;
 
 	/// \brief Check if Window is (and should remain) open.
 	/// \returns true unless the close flag has been set.
@@ -81,17 +76,14 @@ class RenderWindow {
 	void cancel_close();
 
 	/// \returns Events that occurred since the last frame.
-	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_event_queue; }
-
-	/// \returns Ratio of framebuffer to window sizes.
-	[[nodiscard]] auto display_ratio() const -> glm::vec2;
+	[[nodiscard]] virtual auto event_queue() const -> std::span<Event const> = 0;
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
 	/// \returns Current virtual frame's Command Buffer.
-	auto next_frame() -> vk::CommandBuffer;
+	virtual auto next_frame() -> vk::CommandBuffer = 0;
 	/// \brief Submit recorded commands and present a Render Target to the screen.
-	void present(kvf::RenderTarget const& render_target);
+	virtual void present(kvf::RenderTarget const& render_target) = 0;
 
 	[[nodiscard]] auto get_title() const -> klib::CString;
 	void set_title(klib::CString title) const;
@@ -102,20 +94,8 @@ class RenderWindow {
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
 	void set_windowed(glm::ivec2 size = {1280, 720});
 
-  private:
-	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow&;
-
-	[[nodiscard]] auto create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow;
-
-	static void set_glfw_callbacks(GLFWwindow* window);
-
-	void on_cursor_pos(window::vec2 pos);
-	void on_drop(int count, char const** paths);
-
-	kvf::UniqueWindow m_window;
-	kvf::RenderDevice m_render_device;
-
-	std::vector<Event> m_event_queue{};
-	std::vector<std::string> m_drops{};
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
+	[[nodiscard]] auto get_render_device() -> kvf::RenderDevice&;
+	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
 };
 } // namespace le

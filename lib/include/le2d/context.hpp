@@ -35,7 +35,7 @@ class Context : public klib::Pinned {
 	/// \param create_info Creation parameters.
 	explicit Context(CreateInfo const& create_info = {});
 
-	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
+	[[nodiscard]] auto get_render_window() const -> IRenderWindow const& { return *m_window; }
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
@@ -46,20 +46,20 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_latest_gamepad() -> Gamepad const&;
 
 	/// \returns Current size of swapchain images.
-	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window.framebuffer_size(); }
+	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window->framebuffer_size(); }
 	/// \returns Scaled render framebuffer size.
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
 	/// \returns Events that occurred since the last frame.
-	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window.event_queue(); }
+	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window->event_queue(); }
 
 	/// \brief Check if Window is (and should remain) open.
 	/// \returns true unless the close flag has been set.
-	[[nodiscard]] auto is_running() const -> bool { return m_window.is_open(); }
+	[[nodiscard]] auto is_running() const -> bool { return m_window->is_open(); }
 	/// \brief Set the Window close flag.
 	/// Note: the window will remain visible until this object is destroyed by owning code.
-	void shutdown() { m_window.set_closing(); }
+	void shutdown() { m_window->set_closing(); }
 	/// \brief Reset the Window close flag.
-	void cancel_window_close() { m_window.cancel_close(); }
+	void cancel_window_close() { m_window->cancel_close(); }
 
 	/// \returns Current render scale.
 	[[nodiscard]] auto get_render_scale() const -> float { return m_render_scale; }
@@ -75,8 +75,8 @@ class Context : public klib::Pinned {
 	/// \returns true if desired mode is supported.
 	auto set_vsync(Vsync vsync) -> bool;
 
-	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window.set_fullscreen(target); }
-	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window.set_windowed(size); }
+	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
+	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
@@ -95,7 +95,7 @@ class Context : public klib::Pinned {
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
-	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
+	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window->get_render_device().get_device(); }
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 
   private:
@@ -111,7 +111,7 @@ class Context : public klib::Pinned {
 
 	void update_stats(kvf::Clock::time_point present_start);
 
-	RenderWindow m_window;
+	std::unique_ptr<IRenderWindow> m_window{};
 	RenderPass m_pass;
 	std::vector<Vsync> m_supported_vsync{};
 
