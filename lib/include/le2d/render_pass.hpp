@@ -3,7 +3,7 @@
 #include <kvf/device_block.hpp>
 #include <kvf/render_pass.hpp>
 #include <le2d/renderer.hpp>
-#include <le2d/resource_pool.hpp>
+#include <le2d/resource/resource_pool.hpp>
 
 namespace le {
 /// \brief 2D render pass, owns a multi-sampled color Render Target.

@@ -4,8 +4,8 @@
 #include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
 #include <le2d/render_stats.hpp>
+#include <le2d/resource/resource_pool.hpp>
 #include <le2d/resource/shader.hpp>
-#include <le2d/resource_pool.hpp>
 #include <le2d/user_draw_data.hpp>
 
 namespace kvf {

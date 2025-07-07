@@ -2,6 +2,7 @@
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <detail/resource/resource_factory.hpp>
+#include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
 #include <le2d/context.hpp>
 #include <le2d/error.hpp>
@@ -37,28 +38,6 @@ constexpr auto to_mode(Vsync const vsync) {
 	if (!ret->load(vert_spirv, frag_spirv)) { throw Error{"Failed to create default shader"}; }
 	return ret;
 }
-
-struct ResourcePool : IResourcePool {
-	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, std::unique_ptr<IShader> default_shader)
-		: m_pipelines(render_device), m_default_shader(std::move(default_shader)), m_white_texture(render_device), m_blocker(render_device->get_device()) {}
-
-	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, IShader const& shader) -> vk::Pipeline final {
-		return m_pipelines.allocate(state, shader);
-	}
-
-	[[nodiscard]] auto get_pipeline_layout() const -> vk::PipelineLayout final { return m_pipelines.get_layout(); }
-	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const> final { return m_pipelines.get_set_layouts(); }
-	[[nodiscard]] auto get_white_texture() const -> ITexture const& final { return m_white_texture; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return *m_default_shader; }
-
-  private:
-	detail::PipelinePool m_pipelines;
-	std::unique_ptr<IShader> m_default_shader{};
-
-	detail::Texture m_white_texture;
-
-	kvf::DeviceBlock m_blocker;
-};
 } // namespace
 
 void Context::OnDestroy::operator()(Context* ptr) const noexcept {
@@ -71,7 +50,7 @@ Context::Context(CreateInfo const& create_info)
 	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window.get_render_device())), m_blocker(m_window.get_render_device().get_device()) {
 
 	auto default_shader = create_default_shader(get_resource_factory());
-	m_resource_pool = std::make_unique<ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
+	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window.get_render_device(), std::move(default_shader));
 	m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
 
 	auto const supported_modes = m_window.get_render_device().get_supported_present_modes();

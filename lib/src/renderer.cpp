@@ -5,7 +5,6 @@
 #include <kvf/render_pass.hpp>
 #include <kvf/util.hpp>
 #include <le2d/renderer.hpp>
-#include <le2d/resource_pool.hpp>
 
 namespace le {
 namespace {
