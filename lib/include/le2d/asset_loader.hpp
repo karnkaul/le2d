@@ -13,7 +13,7 @@ namespace le {
 class AssetLoader {
   public:
 	/// \param data_loader Pointer to persistent IDataLoader instance.
-	/// \param context Pointer to persistent Context instance.
+	/// \param factory Pointer to persistent IResourceFactory instance.
 	explicit AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<IResourceFactory const*> factory);
 
 	[[nodiscard]] auto get_factory() const -> IResourceFactory const& { return *m_factory; }

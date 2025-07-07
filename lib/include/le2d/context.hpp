@@ -1,4 +1,5 @@
 #pragma once
+#include <le2d/asset_loader.hpp>
 #include <le2d/audio_mixer.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/frame_stats.hpp>
@@ -100,6 +101,7 @@ class Context : public klib::Pinned {
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
+	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
 
   private:
 	struct OnDestroy {

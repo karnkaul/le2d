@@ -118,6 +118,10 @@ auto Context::create_waiter() -> Waiter { return this; }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
+auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
+	return AssetLoader{data_loader, &get_resource_factory()};
+}
+
 void Context::update_stats(kvf::Clock::time_point const present_start) {
 	auto const now = kvf::Clock::now();
 	m_frame_stats.present_dt = now - present_start;

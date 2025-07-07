@@ -22,7 +22,7 @@ void run() {
 	auto const data_loader = le::FileDataLoader{"assets"};
 
 	// create an AssetLoader instance to load shared resources.
-	auto const asset_loader = le::AssetLoader{&data_loader, &context.get_resource_factory()};
+	auto const asset_loader = context.create_asset_loader(&data_loader);
 
 	auto font = asset_loader.load_font("fonts/Vera.ttf");
 	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
@@ -46,7 +46,7 @@ void run() {
 	quad.create({100.0f, 100.0f});
 	// reposition it and set the loaded texture.
 	quad.transform.position.y -= 30.0f;
-	if (texture) { quad.texture = texture.get(); }
+	quad.texture = texture.get();
 
 	// create a Text instance.
 	auto text = le::drawable::Text{};
