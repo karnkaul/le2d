@@ -21,18 +21,21 @@ void run() {
 	// create a FileDataLoader instance, mounting the assets directory.
 	auto const data_loader = le::FileDataLoader{"assets"};
 
-	// create an AssetLoader instance.
-	// this is a lightweight wrapper around IDataLoader and IResourceFactory.
-	auto asset_loader = le::AssetLoader{&data_loader, &context.get_resource_factory()};
+	// create an AssetLoader instance to load shared resources.
+	auto const asset_loader = le::AssetLoader{&data_loader, &context.get_resource_factory()};
 
 	auto font = asset_loader.load_font("fonts/Vera.ttf");
-	if (!font) { throw std::runtime_error{"Failed to load font bytes."}; }
+	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
 	auto texture = asset_loader.load_texture("images/awesomeface.png");
-	if (!texture) { throw std::runtime_error{"Failed to load texture bytes."}; }
+	if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
 
 	auto audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
-	if (!audio_buffer) { throw std::runtime_error{"Failed to load audio bytes."}; }
+	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
+
+	// the waiter blocks on destruction until the context is idle,
+	// after which the loaded resources can be safely destroyed.
+	auto const waiter = context.create_waiter();
 
 	// store playback trigger data.
 	auto audio_wait = kvf::Seconds{2.0f};
@@ -91,9 +94,6 @@ void run() {
 		// submit the frame for presentation.
 		context.present();
 	}
-
-	// wait for the context to be idle before destroying any resources.
-	context.wait_idle();
 }
 } // namespace
 } // namespace example
