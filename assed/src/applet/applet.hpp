@@ -3,7 +3,7 @@
 #include <file_drop.hpp>
 #include <imcpp.hpp>
 #include <kvf/time.hpp>
-#include <le2d/asset_loader.hpp>
+#include <le2d/asset/asset_loader.hpp>
 #include <le2d/context.hpp>
 #include <le2d/file_data_loader.hpp>
 #include <le2d/input/listener.hpp>

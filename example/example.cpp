@@ -1,4 +1,4 @@
-#include <le2d/asset_loader.hpp>
+#include <le2d/asset/asset_loader.hpp>
 #include <le2d/context.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/drawable/text.hpp>

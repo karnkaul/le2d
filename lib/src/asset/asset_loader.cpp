@@ -1,4 +1,4 @@
-#include <le2d/asset_loader.hpp>
+#include <le2d/asset/asset_loader.hpp>
 #include <le2d/json_io.hpp>
 #include <log.hpp>
 

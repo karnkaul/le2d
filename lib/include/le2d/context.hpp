@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/asset_loader.hpp>
+#include <le2d/asset/asset_loader.hpp>
 #include <le2d/audio_mixer.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/frame_stats.hpp>
