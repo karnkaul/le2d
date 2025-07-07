@@ -101,7 +101,7 @@ class Context : public klib::Pinned {
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
-	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
+	[[nodiscard]] auto create_asset_loader2(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
 
   private:
 	struct OnDestroy {
@@ -115,6 +115,9 @@ class Context : public klib::Pinned {
 	};
 
 	void update_stats(kvf::Clock::time_point present_start);
+
+	template <typename... Ts>
+	void add_loaders(AssetLoader& out, IDataLoader const& data_loader) const;
 
 	std::unique_ptr<IRenderWindow> m_window{};
 	RenderPass m_pass;

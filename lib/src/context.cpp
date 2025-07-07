@@ -6,6 +6,7 @@
 #include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
 #include <klib/version_str.hpp>
+#include <le2d/asset/asset_loaders.hpp>
 #include <le2d/context.hpp>
 #include <le2d/error.hpp>
 #include <log.hpp>
@@ -40,6 +41,18 @@ constexpr auto to_mode(Vsync const vsync) {
 	if (!ret->load(vert_spirv, frag_spirv)) { throw Error{"Failed to create default shader"}; }
 	return ret;
 }
+
+struct AssetLoaderBuilder {
+	template <typename... Ts>
+	auto build() {
+		auto ret = AssetLoader{};
+		(ret.add_loader(std::make_unique<Ts>(&data_loader, &resource_factory)), ...);
+		return ret;
+	}
+
+	IDataLoader const& data_loader;
+	IResourceFactory const& resource_factory;
+};
 } // namespace
 
 void Context::OnDestroy::operator()(Context* ptr) const noexcept {
@@ -118,8 +131,10 @@ auto Context::create_waiter() -> Waiter { return this; }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
-auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
-	return AssetLoader{data_loader, &get_resource_factory()};
+auto Context::create_asset_loader2(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
+	auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
+	return builder
+		.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader, FlipbookAnimationLoader>();
 }
 
 void Context::update_stats(kvf::Clock::time_point const present_start) {

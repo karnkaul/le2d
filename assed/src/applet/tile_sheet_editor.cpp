@@ -108,9 +108,8 @@ void TileSheetEditor::try_load_json(FileDrop const& drop) {
 }
 
 void TileSheetEditor::try_load_tilesheet(Uri uri) {
-	auto loader = create_asset_loader();
-	auto texture_uri = std::string{};
-	auto tile_sheet = loader.load_tile_sheet(uri.get_string(), &texture_uri);
+	auto const& loader = get_asset_loader();
+	auto tile_sheet = loader.load<ITileSheet>(uri.get_string());
 	if (!tile_sheet) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
@@ -119,7 +118,7 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 	set_tiles(tile_sheet->tile_set.get_tiles());
 	set_texture(std::move(tile_sheet));
 	m_drawer.setup(m_tiles, m_texture->get_size());
-	m_uri.texture = std::move(texture_uri);
+	m_uri.texture = get_data_loader().load_json(uri.get_string())["texture"].as_string();
 	m_uri.tile_sheet = std::move(uri);
 	m_unsaved = false;
 	set_title(m_uri.tile_sheet.get_string());
@@ -128,8 +127,8 @@ void TileSheetEditor::try_load_tilesheet(Uri uri) {
 }
 
 void TileSheetEditor::try_load_tileset(Uri const& uri) {
-	auto loader = create_asset_loader();
-	auto const tile_set = loader.load_tile_set(uri.get_string());
+	auto const& loader = get_asset_loader();
+	auto const tile_set = loader.load<TileSet>(uri.get_string());
 	if (!tile_set) {
 		raise_error(std::format("Failed to load TileSet: '{}'", uri.get_string()));
 		return;
@@ -142,8 +141,8 @@ void TileSheetEditor::try_load_tileset(Uri const& uri) {
 }
 
 void TileSheetEditor::try_load_texture(Uri uri) {
-	auto loader = create_asset_loader();
-	auto texture = loader.load_texture(uri.get_string());
+	auto const& loader = get_asset_loader();
+	auto texture = loader.load<ITexture>(uri.get_string());
 	if (!texture) {
 		raise_error(std::format("Failed to load Texture: '{}'", uri.get_string()));
 		return;

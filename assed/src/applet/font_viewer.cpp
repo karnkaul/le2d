@@ -83,8 +83,8 @@ void FontViewer::inspect_input_text() {
 }
 
 void FontViewer::try_load_font(Uri const& uri) {
-	auto const asset_loader = create_asset_loader();
-	auto font = asset_loader.load_font(uri.get_string());
+	auto const& asset_loader = get_asset_loader();
+	auto font = asset_loader.load<IFont>(uri.get_string());
 	if (!font) {
 		raise_error(std::format("Failed to load font: '{}'", uri.get_string()));
 		return;

@@ -1,4 +1,3 @@
-#include <le2d/asset/asset_loader.hpp>
 #include <le2d/context.hpp>
 #include <le2d/drawable/shape.hpp>
 #include <le2d/drawable/text.hpp>
@@ -20,17 +19,18 @@ void run() {
 
 	// create a FileDataLoader instance, mounting the assets directory.
 	auto const data_loader = le::FileDataLoader{"assets"};
+	auto const& resource_factory = context.get_resource_factory();
 
 	// create an AssetLoader instance to load shared resources.
-	auto const asset_loader = context.create_asset_loader(&data_loader);
+	auto asset_loader = context.create_asset_loader2(&data_loader);
 
-	auto font = asset_loader.load_font("fonts/Vera.ttf");
+	auto font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
 	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
-	auto texture = asset_loader.load_texture("images/awesomeface.png");
+	auto texture = asset_loader.load<le::ITexture>("images/awesomeface.png");
 	if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
 
-	auto audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
+	auto audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
 	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
 	// the waiter blocks on destruction until the context is idle,

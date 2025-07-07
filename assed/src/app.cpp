@@ -23,11 +23,13 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(context_create_info_v) {}
 
 void App::run() {
-	m_blocker = m_context.get_render_window().get_render_device().get_device();
+	m_waiter = m_context.create_waiter();
+	m_asset_loader = m_context.create_asset_loader2(&m_data_loader);
 
 	m_service_locator.bind(&m_data_loader);
 	m_service_locator.bind(&m_context);
 	m_service_locator.bind(&m_input_dispatch);
+	m_service_locator.bind(&m_asset_loader);
 	create_factories();
 
 	set_applet(m_factories.front());
@@ -118,7 +120,7 @@ void App::applet_menu() {
 }
 
 void App::set_applet(Factory const& factory) {
-	m_blocker.get().waitIdle();
+	m_context.wait_idle();
 	m_applet = factory.create(&m_service_locator);
 	m_applet->do_setup();
 	log.info("loaded '{}'", factory.name.as_view());
