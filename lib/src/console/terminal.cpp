@@ -19,11 +19,11 @@ namespace le::console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
-	Texture const* texture{};
+	ITexture const* texture{};
 	RenderInstance instance{};
 	float text_x{};
 
-	void create(FontAtlas& atlas, char const c) {
+	void create(IFontAtlas& atlas, char const c) {
 		auto const text = std::format("{} ", c);
 		auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
 		layouts.reserve(2);
@@ -46,7 +46,7 @@ struct Line {
 struct Buffer {
 	struct Printer;
 
-	explicit Buffer(FontAtlas& atlas, std::size_t const limit, float n_line_spacing) : m_text_buffer(&atlas, limit, n_line_spacing) {}
+	explicit Buffer(IFontAtlas& atlas, std::size_t const limit, float n_line_spacing) : m_text_buffer(&atlas, limit, n_line_spacing) {}
 
 	void push(std::string text, kvf::Color color) { m_text_buffer.push_front(std::move(text), color); }
 	void push(std::span<std::string> lines, kvf::Color color) { m_text_buffer.push_front(lines, color); }
@@ -110,7 +110,7 @@ struct Terminal::Impl : IPrinter {
 
 	inline static auto const log = klib::TaggedLogger{"le::console"};
 
-	explicit Impl(Font& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
+	explicit Impl(IFont& font, glm::vec2 const framebuffer_size, CreateInfo const& info)
 		: m_info(info), m_framebuffer_size(framebuffer_size), m_input(&font, to_input_text_params(info)),
 		  m_buffer(font.get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(font);
@@ -233,7 +233,7 @@ struct Terminal::Impl : IPrinter {
 		}
 	};
 
-	void setup(Font& font) {
+	void setup(IFont& font) {
 		m_input.set_interactive(false);
 
 		m_separator.tint = m_info.colors.separator;
@@ -491,7 +491,7 @@ struct Terminal::Impl : IPrinter {
 
 void Terminal::Deleter::operator()(Impl* ptr) const noexcept { std::default_delete<Impl>{}(ptr); }
 
-Terminal::Terminal(gsl::not_null<Font*> font, glm::vec2 const framebuffer_size, CreateInfo const& create_info)
+Terminal::Terminal(gsl::not_null<IFont*> font, glm::vec2 const framebuffer_size, CreateInfo const& create_info)
 	: m_impl(new Impl{*font, framebuffer_size, create_info}) {}
 
 auto Terminal::is_active() const -> bool { return m_impl->is_active(); }

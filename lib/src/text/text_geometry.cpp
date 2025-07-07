@@ -1,9 +1,9 @@
-#include <le2d/font.hpp>
 #include <le2d/text/text_geometry.hpp>
+#include <le2d/text/util.hpp>
 
 namespace le {
 void TextGeometry::append_glyphs(std::span<kvf::ttf::GlyphLayout const> layouts, glm::vec2 const offset, kvf::Color const color) {
-	write_glyphs(m_vertices, layouts, offset, color);
+	util::write_glyphs(m_vertices, layouts, offset, color);
 }
 
 auto TextGeometry::to_primitive(ITexture const& font_atlas) const -> Primitive {

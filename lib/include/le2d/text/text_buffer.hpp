@@ -1,7 +1,7 @@
 #pragma once
-#include <le2d/font.hpp>
 #include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
+#include <le2d/resource/font.hpp>
 #include <le2d/text/text_geometry.hpp>
 #include <deque>
 #include <gsl/pointers>
@@ -11,7 +11,7 @@ namespace le {
 /// \brief Wall of text as a single Primitive.
 class TextBuffer {
   public:
-	explicit TextBuffer(gsl::not_null<FontAtlas*> atlas, std::size_t limit, float n_line_spacing = 1.5f);
+	explicit TextBuffer(gsl::not_null<IFontAtlas*> atlas, std::size_t limit, float n_line_spacing = 1.5f);
 
 	void push_front(std::string text, kvf::Color color) { push_front({&text, 1}, color); }
 	void push_front(std::span<std::string> lines, kvf::Color color);
@@ -28,7 +28,7 @@ class TextBuffer {
 
 	void refresh();
 
-	gsl::not_null<FontAtlas*> m_atlas;
+	gsl::not_null<IFontAtlas*> m_atlas;
 	std::size_t m_limit;
 	float m_n_line_spacing;
 

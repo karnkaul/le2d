@@ -2,7 +2,7 @@
 #include <algorithm>
 
 namespace le {
-TextBuffer::TextBuffer(gsl::not_null<FontAtlas*> atlas, std::size_t const limit, float n_line_spacing)
+TextBuffer::TextBuffer(gsl::not_null<IFontAtlas*> atlas, std::size_t const limit, float n_line_spacing)
 	: m_atlas(atlas), m_limit(limit), m_n_line_spacing(n_line_spacing) {}
 
 void TextBuffer::push_front(std::span<std::string> lines, kvf::Color color) {

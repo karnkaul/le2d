@@ -1,7 +1,6 @@
 #pragma once
 #include <le2d/drawable/draw_primitive.hpp>
 #include <le2d/geometry.hpp>
-#include <le2d/shape/quad.hpp>
 #include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
@@ -23,7 +22,7 @@ class FigureBase : public Type, public IFigure {
 		};
 	}
 
-	ITexture const* texture{};
+	ITextureBase const* texture{};
 };
 
 /// \brief Base class for Figures using a single Render Instance.

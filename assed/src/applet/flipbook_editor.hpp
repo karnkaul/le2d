@@ -38,7 +38,7 @@ class FlipbookEditor : public Applet {
 
 	void generate_timeline();
 
-	TileSheet m_tile_sheet;
+	std::unique_ptr<ITileSheet> m_tile_sheet{};
 
 	TileDrawer m_drawer{};
 

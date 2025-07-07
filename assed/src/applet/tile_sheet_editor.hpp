@@ -31,7 +31,7 @@ class TileSheetEditor : public Applet {
 	void try_load_texture(Uri uri);
 
 	void set_tiles(std::span<Tile const> tiles);
-	void set_texture(Texture texture);
+	void set_texture(std::unique_ptr<ITexture> texture);
 
 	void generate_tiles();
 	void set_unsaved();
@@ -39,7 +39,7 @@ class TileSheetEditor : public Applet {
 	void on_click();
 	void on_save();
 
-	Texture m_texture;
+	std::unique_ptr<ITexture> m_texture{};
 	TileDrawer m_drawer{};
 	std::vector<Tile> m_tiles{};
 	glm::vec2 m_cursor_pos{};

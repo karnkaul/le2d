@@ -2,7 +2,7 @@
 #include <applet/applet.hpp>
 #include <le2d/drawable/input_text.hpp>
 #include <le2d/drawable/shape.hpp>
-#include <le2d/font.hpp>
+#include <le2d/resource/font.hpp>
 #include <optional>
 
 namespace le::assed {
@@ -35,8 +35,8 @@ class FontViewer : public Applet {
 	void create_input_text();
 	void set_display(Display display);
 
-	Font m_font{};
-	FontAtlas const* m_atlas{};
+	std::unique_ptr<IFont> m_font{};
+	IFontAtlas const* m_atlas{};
 	TextHeight m_text_height{TextHeight::Default};
 
 	drawable::Quad m_quad{};
