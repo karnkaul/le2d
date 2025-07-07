@@ -4,7 +4,7 @@
 #include <le2d/console/terminal_create_info.hpp>
 #include <le2d/drawable/drawable.hpp>
 #include <le2d/event.hpp>
-#include <le2d/font.hpp>
+#include <le2d/resource/font.hpp>
 #include <gsl/pointers>
 #include <memory>
 #include <string_view>
@@ -18,7 +18,7 @@ class Terminal : public IDrawable, public IPrinter {
   public:
 	using CreateInfo = TerminalCreateInfo;
 
-	explicit Terminal(gsl::not_null<Font*> font, glm::vec2 framebuffer_size, CreateInfo const& info = {});
+	explicit Terminal(gsl::not_null<IFont*> font, glm::vec2 framebuffer_size, CreateInfo const& info = {});
 
 	[[nodiscard]] auto is_active() const -> bool;
 

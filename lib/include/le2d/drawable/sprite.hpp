@@ -25,9 +25,9 @@ class SpriteBase : public IDrawPrimitive {
 	[[nodiscard]] auto get_uv() const -> kvf::UvRect { return m_quad.get_uv(); }
 	void set_uv(kvf::UvRect const& uv);
 
-	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_texture; }
-	void set_texture(ITexture const* texture, kvf::UvRect const& uv = kvf::uv_rect_v);
-	void set_tile(TileSheet const* sheet, TileId tile_id);
+	[[nodiscard]] auto get_texture() const -> ITextureBase const* { return m_texture; }
+	void set_texture(ITextureBase const* texture, kvf::UvRect const& uv = kvf::uv_rect_v);
+	void set_tile(ITileSheet const* sheet, TileId tile_id);
 
 	[[nodiscard]] auto get_resize_aspect() const -> kvf::ResizeAspect { return m_aspect; }
 	void set_resize_aspect(kvf::ResizeAspect aspect);
@@ -36,7 +36,7 @@ class SpriteBase : public IDrawPrimitive {
 	void update(glm::vec2 base_size, glm::vec2 origin, kvf::UvRect const& uv);
 
 	shape::Quad m_quad{};
-	ITexture const* m_texture{};
+	ITextureBase const* m_texture{};
 	glm::vec2 m_size{};
 	kvf::ResizeAspect m_aspect{kvf::ResizeAspect::None};
 };

@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq ninja-build mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: uname -m; sudo apt update -yqq && sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
         run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
       - name: build debug
@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq ninja-build clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: uname -m; sudo apt update -yqq && sudo apt install -yqq clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
         run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
       - name: build debug
@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq ninja-build mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: uname -m; sudo apt update -yqq && sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
         run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
       - name: build debug
@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq ninja-build clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: uname -m; sudo apt update -yqq && sudo apt install -yqq clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
       - name: configure
         run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
       - name: build debug
@@ -74,7 +74,7 @@ jobs:
       - name: test release
         run: cd build && ctest -V -C Release
   x64-windows-vs22:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
       - name: configure
@@ -88,11 +88,9 @@ jobs:
       - name: test release
         run: cd build && ctest -V -C Release
   x64-windows-clang:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
-      - name: init
-        run: choco install ninja
       - name: configure
         run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF
       - name: build debug

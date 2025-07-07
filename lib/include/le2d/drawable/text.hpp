@@ -1,6 +1,6 @@
 #pragma once
 #include <le2d/drawable/draw_primitive.hpp>
-#include <le2d/font.hpp>
+#include <le2d/resource/font.hpp>
 #include <le2d/text/text_geometry.hpp>
 
 namespace le::drawable {
@@ -20,15 +20,15 @@ class TextBase : public IDrawPrimitive {
 
 	[[nodiscard]] auto to_primitive() const -> Primitive final;
 
-	void set_string(Font& font, std::string_view line, Params const& params = {});
+	void set_string(IFont& font, std::string_view line, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
-	[[nodiscard]] auto get_texture() const -> Texture const* { return m_texture; }
+	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_texture; }
 
   private:
 	TextGeometry m_geometry{};
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
-	Texture const* m_texture{};
+	ITexture const* m_texture{};
 	glm::vec2 m_size{};
 };
 

@@ -38,13 +38,13 @@ class FlipbookEditor : public Applet {
 
 	void generate_timeline();
 
-	TileSheet m_tile_sheet;
+	std::unique_ptr<ITileSheet> m_tile_sheet{};
 
 	TileDrawer m_drawer{};
 
 	drawable::Sprite m_sprite{};
-	anim::FlipbookAnimation m_animation{};
-	anim::FlipbookAnimator m_animator{};
+	FlipbookAnimation m_animation{};
+	FlipbookAnimator m_animator{};
 
 	struct {
 		Uri tile_sheet{};
