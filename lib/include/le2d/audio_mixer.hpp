@@ -14,6 +14,8 @@ class IAudioMixer : public klib::Polymorphic {
 
 	virtual void play_sfx(gsl::not_null<IAudioBuffer const*> buffer) = 0;
 
+	[[nodiscard]] virtual auto is_playing() const -> bool = 0;
 	virtual void wait_idle() = 0;
+	virtual void stop_all() = 0;
 };
 } // namespace le

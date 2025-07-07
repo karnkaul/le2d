@@ -42,6 +42,7 @@ constexpr auto to_mode(Vsync const vsync) {
 } // namespace
 
 void Context::OnDestroy::operator()(Context* ptr) const noexcept {
+	if (!ptr) { return; }
 	log.info("Context shutting down");
 	ptr->wait_idle();
 }
@@ -49,7 +50,7 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 Context::Context(CreateInfo const& create_info)
 	: m_window(std::make_unique<detail::RenderWindow>(create_info.window, create_info.render_device)),
 	  m_pass(&m_window->get_render_device(), create_info.framebuffer_samples),
-	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())), m_blocker(m_window->get_render_device().get_device()) {
+	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())) {
 
 	auto default_shader = create_default_shader(get_resource_factory());
 	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window->get_render_device(), std::move(default_shader));
@@ -108,10 +109,11 @@ void Context::present() {
 }
 
 void Context::wait_idle() {
-	log.debug("Context: waiting idle");
 	m_window->get_render_device().get_device().waitIdle();
-	m_audio_mixer->wait_idle();
+	m_audio_mixer->stop_all();
 }
+
+auto Context::create_waiter() -> Waiter { return this; }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
@@ -127,5 +129,10 @@ void Context::update_stats(kvf::Clock::time_point const present_start) {
 	m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
 	++m_frame_stats.total_frames;
 	m_frame_stats.run_time = now - m_runtime_start;
+}
+
+void Context::Waiter::Deleter::operator()(Context* ptr) const {
+	if (!ptr) { return; }
+	ptr->wait_idle();
 }
 } // namespace le

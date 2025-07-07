@@ -1,5 +1,4 @@
 #pragma once
-#include <kvf/device_block.hpp>
 #include <le2d/audio_mixer.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/gamepad.hpp>
@@ -26,6 +25,9 @@ struct ContextCreateInfo {
 /// Encapsulates RenderWindow, primary RenderPass, Audio Engine.
 class Context : public klib::Pinned {
   public:
+	/// \brief RAII wrapper over wait_idle().
+	class Waiter;
+
 	using SpirV = std::span<std::uint32_t const>;
 	using CreateInfo = ContextCreateInfo;
 
@@ -95,7 +97,7 @@ class Context : public klib::Pinned {
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
-	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window->get_render_device().get_device(); }
+	[[nodiscard]] auto create_waiter() -> Waiter;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
 
   private:
@@ -131,7 +133,26 @@ class Context : public klib::Pinned {
 	FrameStats m_frame_stats{};
 
 	std::unique_ptr<Context, OnDestroy> m_on_destroy{};
+};
 
-	kvf::DeviceBlock m_blocker;
+/// \brief Calls Context::wait_idle() in its destructor.
+class Context::Waiter {
+  public:
+	Waiter() = default;
+
+	Waiter(std::nullptr_t) = delete;
+
+	explicit(false) Waiter(Context* context) : m_context(context) {}
+
+	[[nodiscard]] auto is_active() const -> bool { return m_context != nullptr; }
+
+	[[nodiscard]] auto get_context() const -> Context* { return m_context.get(); }
+
+  private:
+	struct Deleter {
+		void operator()(Context* ptr) const;
+	};
+
+	std::unique_ptr<Context, Deleter> m_context{};
 };
 } // namespace le

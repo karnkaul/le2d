@@ -10,15 +10,16 @@ There is no validation layer code in the library or its dependencies. Users are 
 
 ## Object Ownership
 
-All class-type objects returned by the library use RAII and clean up on destruction. Some objects, eg `le::RenderWindow` and/or `le::Context`, must outlive any objects created using them, eg `le::Texture`. If a type requires observation of another as part of its invariant, it will take that as a `gsl::not_null<T*>` parameter in its constructor to indicate that the passed pointer will be stored and used later, thus must remain address-stable.
+All class-type objects returned by the library use RAII and clean up on destruction. There must be only a single `le::Context` object and it must outlive all `le::IResource` objects created since (eg `le::ITexture`). If a type requires observation of another as part of its invariant, it will take that as a `gsl::not_null<T*>` parameter in its constructor to indicate that the passed pointer will be stored and used later, thus must remain address-stable.
 
-### Buffered Resources
+### Shared Resources
 
-Rendering is double-buffered, with commands for frame N+1 being recorded on the CPU while the commands for frame N are executed on the GPU (after which the image is submitted to the display engine / compositor for presentation). Since the user owns Vulkan resources associated with a `le::Texture` or `le::Font` object, they must ensure it does not get destroyed while in use by the GPU. The simplest way to prevent this is to use `kvf::DeviceBlock` to block the calling thread (in its destructor) or to call `le::Context::wait_idle()` before the texture's destruction. Alternatively, create a custom subclass that owns a device blocker. Ideally this needs to happen at a higher/batch level to avoid pipeline stalls for individual objects.
+Subtypes of `le::IResource` represent resources that are shared between the CPU (user) and the graphics or audio device. Such objects have two constraints in terms of lifetime:
 
-Note that while interaction with the Audio Device is not explicitly double-buffered, the basic concept of "don't destroy the AudioBuffer before the AudioSouce that's playing it" still applies.
+1. Must not outlive `le::Context`
+2. Must outlive usage by device
 
-Most of the time this will simply boil down to the order of members in your own classes, and perhaps a `kvf::DeviceBlock` member at the end. Keep in mind that while `le::Context` owns a `kvf::DeviceBlock`, all resources must be destroyed before `le::Context`: its blocker cannot be reused by eg placing the context as the last member (after associated `le::Texture`s).
+The first is an application-level concern, where `le::Context` must not be destroyed before all `le::IResource`s have been destroyed. The second is a per-resource concern, eg an `le::ITexture` must not be destroyed while it's being read by the GPU in a draw call; similarly, an `le::IAudioBuffer` must outlive playback. The simplest way to ensure this is to call `le::Context::wait_idle()` before any resource's destruction. `le::Context::Waiter` is an RAII wrapper that calls this in its destructor, an active instance as the last member of a type will ensure this is called before any other members are destroyed.
 
 ## Multi-threading
 

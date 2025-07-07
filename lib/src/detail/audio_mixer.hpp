@@ -23,6 +23,7 @@ class AudioMixer : public IAudioMixer {
 		}
 	}
 
+  private:
 	[[nodiscard]] auto get_sfx_gain() const -> float final { return m_sfx_gain; }
 
 	void set_sfx_gain(float const gain) final {
@@ -60,6 +61,10 @@ class AudioMixer : public IAudioMixer {
 	// 	source.play();
 	// }
 
+	[[nodiscard]] auto is_playing() const -> bool final {
+		return std::ranges::any_of(m_sfx_sources, [](SfxSource const& s) { return s.source->is_playing(); });
+	}
+
 	void wait_idle() final {
 		for (auto& source : m_sfx_sources) {
 			if (source.source->is_playing()) { source.source->wait_until_ended(); }
@@ -67,7 +72,10 @@ class AudioMixer : public IAudioMixer {
 		}
 	}
 
-  private:
+	void stop_all() final {
+		for (auto& source : m_sfx_sources) { source.source->stop(); }
+	}
+
 	using Clock = std::chrono::steady_clock;
 
 	struct SfxSource {
