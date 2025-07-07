@@ -19,10 +19,9 @@ void run() {
 
 	// create a FileDataLoader instance, mounting the assets directory.
 	auto const data_loader = le::FileDataLoader{"assets"};
-	auto const& resource_factory = context.get_resource_factory();
 
 	// create an AssetLoader instance to load shared resources.
-	auto asset_loader = context.create_asset_loader2(&data_loader);
+	auto const asset_loader = context.create_asset_loader(&data_loader);
 
 	auto font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
 	if (!font) { throw std::runtime_error{"Failed to load Font."}; }

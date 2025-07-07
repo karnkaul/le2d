@@ -1,4 +1,4 @@
-#include <le2d/asset/asset_loaders.hpp>
+#include <le2d/asset/asset_type_loaders.hpp>
 #include <le2d/json_io.hpp>
 
 namespace le {

@@ -1,8 +1,6 @@
 #pragma once
 #include <klib/assert.hpp>
-#include <le2d/asset/asset.hpp>
-#include <le2d/data_loader.hpp>
-#include <le2d/resource/resource_factory.hpp>
+#include <le2d/asset/asset_type_loader.hpp>
 #include <gsl/pointers>
 #include <memory>
 #include <string_view>
@@ -10,45 +8,24 @@
 #include <unordered_map>
 
 namespace le {
-namespace detail {
-class IAssetLoaderBase : public klib::Polymorphic {
-  public:
-	[[nodiscard]] virtual auto type_name() const -> std::string_view = 0;
-
-	[[nodiscard]] virtual auto type_index() const -> std::type_index = 0;
-	[[nodiscard]] virtual auto load_base(std::string_view uri) const -> std::unique_ptr<IAsset> = 0;
-};
-} // namespace detail
-
-/// \brief Customizable loader for a particular asset type.
-template <std::derived_from<IAsset> AssetTypeT>
-class IAssetLoader : public detail::IAssetLoaderBase {
-  public:
-	using BaseType = IAssetLoader;
-
-	explicit IAssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<IResourceFactory const*> resource_factory)
-		: m_data_loader(data_loader), m_resource_factory(resource_factory) {}
-
-	[[nodiscard]] virtual auto load_asset(std::string_view uri) const -> std::unique_ptr<AssetTypeT> = 0;
-
-  private:
-	[[nodiscard]] auto type_index() const -> std::type_index final { return std::type_index{typeid(AssetTypeT)}; }
-	[[nodiscard]] auto load_base(std::string_view uri) const -> std::unique_ptr<IAsset> final { return load_asset(uri); }
-
-  protected:
-	gsl::not_null<IDataLoader const*> m_data_loader;
-	gsl::not_null<IResourceFactory const*> m_resource_factory;
-};
-
+/// \brief Set of AssetTypeLoaders mapped to their corrseponding AssetTypes.
 class AssetLoader {
   public:
-	void add_loader(std::unique_ptr<detail::IAssetLoaderBase> loader);
+	/// \brief Associate a loader with its type.
+	/// \param loader concrete IAssetTypeLoader instance.
+	void add_loader(std::unique_ptr<detail::IAssetTypeLoaderBase> loader);
 
+	/// \tparam AssetTypeT Type of asset.
+	/// \returns true if loader associated with AssetTypeT exists.
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto has_loader() const -> bool {
 		return m_map.contains(std::type_index{typeid(AssetTypeT)});
 	}
 
+	/// \brief Load an asset given its URI.
+	/// \tparam AssetTypeT Type of asset.
+	/// \param uri URI to load from.
+	/// \returns Asset instance if loaded, otherwise null.
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto load(std::string_view const uri) const -> std::unique_ptr<AssetTypeT> {
 		auto ret = load_impl(std::type_index{typeid(AssetTypeT)}, uri);
@@ -60,6 +37,6 @@ class AssetLoader {
   private:
 	[[nodiscard]] auto load_impl(std::type_index type, std::string_view uri) const -> std::unique_ptr<IAsset>;
 
-	std::unordered_map<std::type_index, std::unique_ptr<detail::IAssetLoaderBase>> m_map{};
+	std::unordered_map<std::type_index, std::unique_ptr<detail::IAssetTypeLoaderBase>> m_map{};
 };
 } // namespace le

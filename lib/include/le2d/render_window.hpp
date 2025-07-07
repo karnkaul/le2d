@@ -54,7 +54,6 @@ struct FullscreenInfo {
 using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
 
 /// \brief Opaque interface to the render window.
-///
 /// Owns the Window and the RenderDevice.
 /// Provides a view into the Window's Event Queue.
 class IRenderWindow : public klib::Polymorphic {

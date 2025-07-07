@@ -24,7 +24,7 @@ App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_
 
 void App::run() {
 	m_waiter = m_context.create_waiter();
-	m_asset_loader = m_context.create_asset_loader2(&m_data_loader);
+	m_asset_loader = m_context.create_asset_loader(&m_data_loader);
 
 	m_service_locator.bind(&m_data_loader);
 	m_service_locator.bind(&m_context);

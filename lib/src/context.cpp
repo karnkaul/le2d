@@ -6,7 +6,7 @@
 #include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
 #include <klib/version_str.hpp>
-#include <le2d/asset/asset_loaders.hpp>
+#include <le2d/asset/asset_type_loaders.hpp>
 #include <le2d/context.hpp>
 #include <le2d/error.hpp>
 #include <log.hpp>
@@ -131,7 +131,7 @@ auto Context::create_waiter() -> Waiter { return this; }
 
 auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
 
-auto Context::create_asset_loader2(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
+auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
 	auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
 	return builder
 		.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader, FlipbookAnimationLoader>();
