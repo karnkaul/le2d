@@ -61,7 +61,7 @@ Renderer::Renderer(kvf::RenderPass& render_pass, IResourcePool& resource_pool)
 		return;
 	}
 
-	if (!*m_shader || !bind_shader(vk::PrimitiveTopology::eTriangleList)) {
+	if (!m_shader->is_ready() || !bind_shader(vk::PrimitiveTopology::eTriangleList)) {
 		end_render();
 		return;
 	}
@@ -77,8 +77,8 @@ auto Renderer::set_line_width(float const width) -> bool {
 	return true;
 }
 
-auto Renderer::set_shader(ShaderProgram const& shader) -> bool {
-	if (!is_rendering() || !shader) { return false; }
+auto Renderer::set_shader(IShader const& shader) -> bool {
+	if (!is_rendering() || !shader.is_ready()) { return false; }
 	if (m_shader == &shader) { return true; }
 
 	m_shader = &shader;

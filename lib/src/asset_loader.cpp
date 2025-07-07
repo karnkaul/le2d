@@ -93,7 +93,7 @@ auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_t
 	static constexpr std::string_view type_v{"TileSheet"};
 
 	auto const json = get_data_loader().load_json(uri);
-	if (!is_json_type<TileSheet>(json)) {
+	if (!is_json_type<ITileSheet>(json)) {
 		on_failure(type_v, uri);
 		return {};
 	}

@@ -1,14 +1,12 @@
 #pragma once
-#include <le2d/audio.hpp>
+#include <kvf/device_block.hpp>
 #include <le2d/audio_mixer.hpp>
-#include <le2d/font.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/gamepad.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
 #include <le2d/resource_pool.hpp>
-#include <le2d/shader_program.hpp>
 #include <le2d/vsync.hpp>
 
 namespace le {
@@ -40,9 +38,8 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_render_window() const -> RenderWindow const& { return m_window; }
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
-	[[nodiscard]] auto get_audio() const -> IAudio& { return *m_audio; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> ShaderProgram const& { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
 
 	/// \brief Get the updated state of the last used Gamepad (if any).
 	/// \returns If unset or disconnected, le::Gamepad::get_active(), else updated Gamepad state.
@@ -99,11 +96,7 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_device_block() const -> kvf::DeviceBlock { return m_window.get_render_device().get_device(); }
-	[[nodiscard]] auto create_shader(SpirV vertex, SpirV fragment) const -> ShaderProgram;
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
-	[[nodiscard]] auto create_texture(kvf::Bitmap const& bitmap = {}) const -> Texture;
-	[[nodiscard]] auto create_tilesheet(kvf::Bitmap const& bitmap = {}) const -> TileSheet;
-	[[nodiscard]] auto create_font(std::vector<std::byte> font_bytes = {}) const -> Font;
 
   private:
 	struct OnDestroy {
@@ -125,7 +118,6 @@ class Context : public klib::Pinned {
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
-	std::unique_ptr<IAudio> m_audio{};
 
 	Gamepad m_latest_gamepad{};
 

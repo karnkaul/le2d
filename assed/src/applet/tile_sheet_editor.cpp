@@ -11,7 +11,7 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
 	: Applet(services), m_texture(services->get<Context>().get_resource_factory().create_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
-	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<TileSheet>};
+	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};
 }
 
 auto TileSheetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
@@ -102,7 +102,7 @@ void TileSheetEditor::inspect_selected() {
 void TileSheetEditor::try_load_json(FileDrop const& drop) {
 	if (drop.json_type == json_type_name_v<TileSet>) {
 		try_load_tileset(drop.uri);
-	} else if (drop.json_type == json_type_name_v<TileSheet>) {
+	} else if (drop.json_type == json_type_name_v<ITileSheet>) {
 		try_load_tilesheet(drop.uri);
 	}
 }
@@ -197,7 +197,7 @@ void TileSheetEditor::on_click() {
 
 void TileSheetEditor::on_save() {
 	auto json = dj::Json{};
-	set_json_type<TileSheet>(json);
+	set_json_type<ITileSheet>(json);
 	to_json(json["texture"], m_uri.texture.get_string());
 	auto tile_set = TileSet{};
 	tile_set.set_tiles(m_tiles);

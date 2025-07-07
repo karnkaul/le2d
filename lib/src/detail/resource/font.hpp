@@ -1,14 +1,11 @@
 #pragma once
 #include <detail/resource/texture.hpp>
 #include <klib/assert.hpp>
+#include <kvf/is_positive.hpp>
 #include <le2d/resource/font.hpp>
+#include <le2d/text/util.hpp>
 #include <le2d/text_height.hpp>
-#include <algorithm>
 #include <unordered_map>
-
-namespace le {
-inline auto IFontAtlas::clamp(TextHeight height) -> TextHeight { return std::clamp(height, TextHeight::Min, TextHeight::Max); }
-} // namespace le
 
 namespace le::detail {
 class FontAtlas : public IFontAtlas {
@@ -23,7 +20,7 @@ class FontAtlas : public IFontAtlas {
 	auto build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height) -> bool final {
 		if (!m_texture.is_ready()) { return false; }
 
-		height = clamp(height);
+		height = util::clamp(height);
 		auto ttf_atlas = face->build_atlas(std::uint32_t(height));
 		m_texture.overwrite(ttf_atlas.bitmap.bitmap());
 
@@ -76,7 +73,7 @@ class Font : public IFont {
 
 	[[nodiscard]] auto get_atlas(TextHeight height) -> FontAtlas& final {
 		KLIB_ASSERT(is_ready());
-		height = FontAtlas::clamp(height);
+		height = util::clamp(height);
 		auto it = m_atlases.find(height);
 		if (it == m_atlases.end()) {
 			auto atlas = FontAtlas{m_render_api};
@@ -92,6 +89,4 @@ class Font : public IFont {
 	kvf::ttf::Typeface m_face{};
 	std::unordered_map<TextHeight, FontAtlas> m_atlases{};
 };
-
-// void write_glyphs(VertexArray& out, std::span<kvf::ttf::GlyphLayout const> glyphs, glm::vec2 position = {}, kvf::Color color = kvf::white_v);
 } // namespace le::detail
