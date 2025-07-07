@@ -11,7 +11,7 @@ FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
 	m_sprite.set_base_size(glm::vec2{200.0f});
 	m_save_modal.title = "Save Flipbook";
 	m_drop_types = FileDrop::Type::Json;
-	m_json_types = {json_type_name_v<ITileSheet>, json_type_name_v<anim::FlipbookAnimation>};
+	m_json_types = {json_type_name_v<ITileSheet>, json_type_name_v<FlipbookAnimation>};
 }
 
 void FlipbookEditor::tick(kvf::Seconds const dt) {
@@ -142,7 +142,7 @@ void FlipbookEditor::inspect_keyframes() {
 void FlipbookEditor::try_load_json(FileDrop const& drop) {
 	if (drop.json_type == json_type_name_v<ITileSheet>) {
 		try_load_tilesheet(drop.uri);
-	} else if (drop.json_type == json_type_name_v<anim::FlipbookAnimation>) {
+	} else if (drop.json_type == json_type_name_v<FlipbookAnimation>) {
 		try_load_animation(drop.uri);
 	}
 }

@@ -43,8 +43,8 @@ class FlipbookEditor : public Applet {
 	TileDrawer m_drawer{};
 
 	drawable::Sprite m_sprite{};
-	anim::FlipbookAnimation m_animation{};
-	anim::FlipbookAnimator m_animator{};
+	FlipbookAnimation m_animation{};
+	FlipbookAnimator m_animator{};
 
 	struct {
 		Uri tile_sheet{};

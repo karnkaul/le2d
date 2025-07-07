@@ -2,7 +2,8 @@
 #include <le2d/anim/animation.hpp>
 #include <le2d/anim/sampler.hpp>
 
-namespace le::anim {
+namespace le {
+namespace anim {
 /// \brief Class template for Animator types.
 template <typename PayloadT, typename SamplerT = SamplerFloor<PayloadT>>
 class Animator {
@@ -52,7 +53,8 @@ class Animator {
 	AnimationT const* m_animation{};
 	Payload m_payload{};
 };
+} // namespace anim
 
-using TransformAnimator = Animator<Transform, TransformSampler>;
-using FlipbookAnimator = Animator<TileId, FlipbookSampler>;
-} // namespace le::anim
+using TransformAnimator = anim::Animator<Transform, anim::TransformSampler>;
+using FlipbookAnimator = anim::Animator<TileId, anim::FlipbookSampler>;
+} // namespace le

@@ -3,12 +3,57 @@
 #include <log.hpp>
 
 namespace le {
-AssetLoader::AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<IResourceFactory const*> factory)
-	: m_data_loader(data_loader), m_factory(factory) {}
+AssetLoader::AssetLoader(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<IResourceFactory const*> resource_factory)
+	: m_data_loader(data_loader), m_resource_factory(resource_factory) {}
 
 void AssetLoader::on_success(std::string_view const type, std::string_view const uri) { log.info("=='{}'== {} loaded", uri, type); }
 
 void AssetLoader::on_failure(std::string_view const type, std::string_view const uri) { log.warn("'{}' Failed to load '{}'", type, uri); }
+
+auto AssetLoader::load_tile_set(std::string_view const uri) const -> std::unique_ptr<TileSet> {
+	static constexpr std::string_view type_v{"TileSet"};
+
+	auto const json = get_data_loader().load_json(uri);
+	if (!is_json_type<TileSet>(json)) {
+		on_failure(type_v, uri);
+		return {};
+	}
+
+	auto ret = std::make_unique<TileSet>();
+	from_json(json, *ret);
+	on_success(type_v, uri);
+	return ret;
+}
+
+auto AssetLoader::load_transform_animation(std::string_view const uri) const -> std::unique_ptr<TransformAnimation> {
+	static constexpr std::string_view type_v{"TransformAnimation"};
+
+	auto const json = get_data_loader().load_json(uri);
+	if (!is_json_type<TransformAnimation>(json)) {
+		on_failure(type_v, uri);
+		return {};
+	}
+
+	auto ret = std::make_unique<TransformAnimation>();
+	from_json(json, *ret);
+	on_success(type_v, uri);
+	return ret;
+}
+
+auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> std::unique_ptr<FlipbookAnimation> {
+	static constexpr std::string_view type_v{"FlipbookAnimation"};
+
+	auto const json = get_data_loader().load_json(uri);
+	if (!is_json_type<FlipbookAnimation>(json)) {
+		on_failure(type_v, uri);
+		return {};
+	}
+
+	auto ret = std::make_unique<FlipbookAnimation>();
+	from_json(json, *ret);
+	on_success(type_v, uri);
+	return ret;
+}
 
 auto AssetLoader::load_shader(std::string_view const vertex_uri, std::string_view const fragment_uri) const -> std::unique_ptr<IShader> {
 	static constexpr std::string_view type_v{"Shader"};
@@ -26,7 +71,7 @@ auto AssetLoader::load_shader(std::string_view const vertex_uri, std::string_vie
 	}
 
 	auto const uri = std::format("{} + {}", vertex_uri, fragment_uri);
-	auto ret = m_factory->create_shader();
+	auto ret = m_resource_factory->create_shader();
 	if (!ret->load(vertex_code, fragment_code)) {
 		on_failure(type_v, uri);
 		return {};
@@ -45,27 +90,12 @@ auto AssetLoader::load_font(std::string_view const uri) const -> std::unique_ptr
 		return {};
 	}
 
-	auto ret = m_factory->create_font();
+	auto ret = m_resource_factory->create_font();
 	if (!ret->load_face(std::move(bytes))) {
 		on_failure(type_v, uri);
 		return {};
 	}
 
-	on_success(type_v, uri);
-	return ret;
-}
-
-auto AssetLoader::load_tile_set(std::string_view const uri) const -> std::unique_ptr<TileSet> {
-	static constexpr std::string_view type_v{"TileSet"};
-
-	auto const json = get_data_loader().load_json(uri);
-	if (!is_json_type<TileSet>(json)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	auto ret = std::make_unique<TileSet>();
-	from_json(json, *ret);
 	on_success(type_v, uri);
 	return ret;
 }
@@ -79,7 +109,7 @@ auto AssetLoader::load_texture(std::string_view const uri) const -> std::unique_
 		return {};
 	}
 
-	auto ret = m_factory->create_texture();
+	auto ret = m_resource_factory->create_texture();
 	if (!ret->load_and_write(bytes)) {
 		on_failure(type_v, uri);
 		return {};
@@ -106,7 +136,7 @@ auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_t
 		return {};
 	}
 
-	auto ret = m_factory->create_tilesheet();
+	auto ret = m_resource_factory->create_tilesheet();
 	if (!ret->load_and_write(bytes)) {
 		on_failure(type_v, uri);
 		return {};
@@ -128,36 +158,6 @@ auto AssetLoader::load_tile_sheet(std::string_view const uri, std::string* out_t
 	return ret;
 }
 
-auto AssetLoader::load_transform_animation(std::string_view const uri) const -> std::unique_ptr<anim::TransformAnimation> {
-	static constexpr std::string_view type_v{"TransformAnimation"};
-
-	auto ret = std::make_unique<anim::TransformAnimation>();
-	auto const json = get_data_loader().load_json(uri);
-	if (!is_json_type(json, *ret)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	from_json(json, *ret);
-	on_success(type_v, uri);
-	return ret;
-}
-
-auto AssetLoader::load_flipbook_animation(std::string_view const uri) const -> std::unique_ptr<anim::FlipbookAnimation> {
-	static constexpr std::string_view type_v{"FlipbookAnimation"};
-
-	auto ret = std::make_unique<anim::FlipbookAnimation>();
-	auto const json = get_data_loader().load_json(uri);
-	if (!is_json_type(json, *ret)) {
-		on_failure(type_v, uri);
-		return {};
-	}
-
-	from_json(json, *ret);
-	on_success(type_v, uri);
-	return ret;
-}
-
 auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> std::unique_ptr<IAudioBuffer> {
 	static constexpr std::string_view type_v{"AudioBuffer"};
 
@@ -168,7 +168,7 @@ auto AssetLoader::load_audio_buffer(std::string_view const uri) const -> std::un
 	}
 
 	auto const encoding = capo::guess_encoding(uri);
-	auto ret = m_factory->create_audio_buffer();
+	auto ret = m_resource_factory->create_audio_buffer();
 	if (!ret->decode(bytes, encoding)) {
 		on_failure(type_v, uri);
 		return {};
