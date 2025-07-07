@@ -1,6 +1,5 @@
 #pragma once
 #include <klib/hash_combine.hpp>
-#include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <le2d/pipeline_fixed_state.hpp>
 #include <le2d/resource/shader.hpp>
@@ -19,7 +18,7 @@ class PipelinePool {
 
 	static constexpr std::size_t set_count_v{3};
 
-	explicit PipelinePool(gsl::not_null<kvf::RenderDevice const*> render_device) : m_render_device(render_device), m_blocker(render_device->get_device()) {
+	explicit PipelinePool(gsl::not_null<kvf::RenderDevice const*> render_device) : m_render_device(render_device) {
 		create_set_layouts();
 		create_layout();
 	}
@@ -125,7 +124,5 @@ class PipelinePool {
 	std::array<vk::DescriptorSetLayout, set_count_v> m_set_layouts{};
 
 	std::unordered_map<Entry, vk::UniquePipeline, Hasher> m_map{};
-
-	kvf::DeviceBlock m_blocker;
 };
 } // namespace le::detail

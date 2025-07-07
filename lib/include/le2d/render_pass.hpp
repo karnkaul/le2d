@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/vec2.hpp>
-#include <kvf/device_block.hpp>
+#include <kvf/device_waiter.hpp>
 #include <kvf/render_pass.hpp>
 #include <le2d/renderer.hpp>
 #include <le2d/resource/resource_pool.hpp>
@@ -36,6 +36,6 @@ class RenderPass {
 	kvf::RenderDevice* m_render_device;
 	kvf::RenderPass m_render_pass;
 
-	kvf::DeviceBlock m_blocker;
+	kvf::DeviceWaiter m_waiter;
 };
 } // namespace le
