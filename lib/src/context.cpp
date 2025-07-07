@@ -5,6 +5,7 @@
 #include <detail/resource/resource_factory.hpp>
 #include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
+#include <klib/version_str.hpp>
 #include <le2d/context.hpp>
 #include <le2d/error.hpp>
 #include <log.hpp>
@@ -60,7 +61,7 @@ Context::Context(CreateInfo const& create_info)
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
-	log.info("Context initialized");
+	log.info("[{}] Context initialized", build_version_v);
 	m_on_destroy.reset(this);
 }
 
