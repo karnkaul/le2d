@@ -21,17 +21,22 @@ void run() {
 	// create a FileDataLoader instance, mounting the assets directory.
 	auto const data_loader = le::FileDataLoader{"assets"};
 
-	// create an AssetLoader instance.
-	// This is a cheap, (mostly) stateless, utility wrapper.
-	auto asset_loader = le::AssetLoader{&data_loader, &context};
+	// create an AssetLoader instance to load shared resources.
+	auto const asset_loader = le::AssetLoader{&data_loader, &context.get_resource_factory()};
 
-	// load the Font.
 	auto font = asset_loader.load_font("fonts/Vera.ttf");
-	// load the image as a Texture.
-	auto texture = asset_loader.load_texture("images/awesomeface.png");
+	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
-	// load the audio file as a capo::Buffer.
+	auto texture = asset_loader.load_texture("images/awesomeface.png");
+	if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
+
 	auto audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
+	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
+
+	// the waiter blocks on destruction until the context is idle,
+	// after which the loaded resources can be safely destroyed.
+	auto const waiter = context.create_waiter();
+
 	// store playback trigger data.
 	auto audio_wait = kvf::Seconds{2.0f};
 	auto audio_played = false;
@@ -41,11 +46,11 @@ void run() {
 	quad.create({100.0f, 100.0f});
 	// reposition it and set the loaded texture.
 	quad.transform.position.y -= 30.0f;
-	quad.texture = &texture;
+	if (texture) { quad.texture = texture.get(); }
 
 	// create a Text instance.
 	auto text = le::drawable::Text{};
-	text.set_string(font, "hello from le2d!");
+	text.set_string(*font, "hello from le2d!");
 	// reposition and tint it.
 	text.transform.position.y += 30.0f;
 	text.tint = kvf::yellow_v;
@@ -63,7 +68,7 @@ void run() {
 		audio_wait -= dt;
 		if (audio_wait < 0s && !audio_played) {
 			// play the loaded audio buffer.
-			context.get_audio().play_sfx(&audio_buffer);
+			context.get_audio_mixer().play_sfx(audio_buffer.get());
 			audio_played = true;
 		}
 
@@ -89,9 +94,6 @@ void run() {
 		// submit the frame for presentation.
 		context.present();
 	}
-
-	// wait for the context to be idle before destroying any resources.
-	context.wait_idle();
 }
 } // namespace
 } // namespace example

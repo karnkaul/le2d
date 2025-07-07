@@ -4,17 +4,18 @@
 #include <ranges>
 
 namespace le::assed {
-FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_tile_sheet(services->get<Context>().create_tilesheet()) {
+FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
+	: Applet(services), m_tile_sheet(services->get<Context>().get_resource_factory().create_tilesheet()) {
 	m_drawer.quad.create();
-	m_drawer.quad.texture = &m_tile_sheet;
+	m_drawer.quad.texture = m_tile_sheet.get();
 	m_sprite.set_base_size(glm::vec2{200.0f});
 	m_save_modal.title = "Save Flipbook";
 	m_drop_types = FileDrop::Type::Json;
-	m_json_types = {json_type_name_v<TileSheet>, json_type_name_v<anim::FlipbookAnimation>};
+	m_json_types = {json_type_name_v<ITileSheet>, json_type_name_v<anim::FlipbookAnimation>};
 }
 
 void FlipbookEditor::tick(kvf::Seconds const dt) {
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	if (m_animator.has_animation() && !tiles.empty() && !m_drawer.tile_frames.empty()) {
 		auto const anim_dt = m_paused ? 0s : dt;
 		m_animator.tick(anim_dt);
@@ -27,7 +28,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 			m_drawer.selected_tile = index;
 			m_drawer.update();
 		}
-		m_sprite.set_tile(&m_tile_sheet, tile_id);
+		m_sprite.set_tile(m_tile_sheet.get(), tile_id);
 	}
 
 	inspect();
@@ -139,7 +140,7 @@ void FlipbookEditor::inspect_keyframes() {
 }
 
 void FlipbookEditor::try_load_json(FileDrop const& drop) {
-	if (drop.json_type == json_type_name_v<TileSheet>) {
+	if (drop.json_type == json_type_name_v<ITileSheet>) {
 		try_load_tilesheet(drop.uri);
 	} else if (drop.json_type == json_type_name_v<anim::FlipbookAnimation>) {
 		try_load_animation(drop.uri);
@@ -149,13 +150,14 @@ void FlipbookEditor::try_load_json(FileDrop const& drop) {
 void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	auto loader = create_asset_loader();
 	auto tile_sheet = loader.load_tile_sheet(uri.get_string());
-	if (!tile_sheet.is_loaded()) {
+	if (!tile_sheet) {
 		raise_error(std::format("Failed to load TileSheet: '{}'", uri.get_string()));
 		return;
 	}
 
+	wait_idle();
 	m_tile_sheet = std::move(tile_sheet);
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	m_generate.select_tiles.entries.clear();
 	m_generate.select_tiles.entries.reserve(tiles.size());
 	for (auto const& tile : tiles) {
@@ -167,9 +169,9 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 	}
 	m_generate.select_tiles.sync_to_selection();
 
-	m_drawer.setup(m_tile_sheet.tile_set.get_tiles(), m_tile_sheet.get_size());
-	m_drawer.quad.texture = &m_tile_sheet;
-	m_sprite.set_tile(&m_tile_sheet, TileId{1});
+	m_drawer.setup(m_tile_sheet->tile_set.get_tiles(), m_tile_sheet->get_size());
+	m_drawer.quad.texture = m_tile_sheet.get();
+	m_sprite.set_tile(m_tile_sheet.get(), TileId{1});
 
 	m_uri.tile_sheet = std::move(uri);
 	log.info("loaded TileSheet: '{}'", m_uri.tile_sheet.get_string());
@@ -178,12 +180,12 @@ void FlipbookEditor::try_load_tilesheet(Uri uri) {
 void FlipbookEditor::try_load_animation(Uri uri) {
 	auto loader = create_asset_loader();
 	auto animation = loader.load_flipbook_animation(uri.get_string());
-	if (!animation.is_loaded()) {
+	if (!animation) {
 		raise_error(std::format("Failed to load FlipbookAnimation: '{}'", uri.get_string()));
 		return;
 	}
 
-	m_animation = std::move(animation);
+	m_animation = std::move(*animation);
 	m_animator.set_animation(&m_animation);
 	m_generate.duration = m_animation.get_timeline().duration.count();
 	m_unsaved = false;
@@ -216,7 +218,7 @@ void FlipbookEditor::generate_timeline() {
 	timeline.keyframes.reserve(std::size_t(keyframe_count));
 	auto const keyframe_dt = timeline.duration / float(keyframe_count);
 	auto timestamp = kvf::Seconds{0s};
-	auto const tiles = m_tile_sheet.tile_set.get_tiles();
+	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	for (auto const [index, tile_entry] : std::views::enumerate(m_generate.select_tiles.entries)) {
 		if (!tile_entry.is_selected) { continue; }
 		auto const tile_id = tiles[std::size_t(index)].id;

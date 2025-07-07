@@ -4,8 +4,8 @@
 #include <le2d/primitive.hpp>
 #include <le2d/render_instance.hpp>
 #include <le2d/render_stats.hpp>
-#include <le2d/resource_pool.hpp>
-#include <le2d/shader_program.hpp>
+#include <le2d/resource/resource_pool.hpp>
+#include <le2d/resource/shader.hpp>
 #include <le2d/user_draw_data.hpp>
 
 namespace kvf {
@@ -30,7 +30,7 @@ class Renderer {
 	~Renderer() { end_render(); }
 
 	auto set_line_width(float width) -> bool;
-	auto set_shader(ShaderProgram const& shader) -> bool;
+	auto set_shader(IShader const& shader) -> bool;
 	auto set_render_area(kvf::UvRect const& n_rect) -> bool;
 	auto set_scissor_rect(kvf::UvRect const& n_rect) -> bool;
 	auto set_user_data(UserDrawData const& user_data) -> bool;
@@ -66,7 +66,7 @@ class Renderer {
 	IResourcePool* m_resource_pool{};
 	vk::CommandBuffer m_cmd{};
 
-	ShaderProgram const* m_shader{};
+	IShader const* m_shader{};
 	vk::Viewport m_viewport{};
 	vk::Rect2D m_scissor{};
 	UserDrawData m_user_data{};

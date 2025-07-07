@@ -10,8 +10,8 @@ auto TextBase::to_primitive() const -> Primitive {
 	};
 }
 
-void TextBase::set_string(Font& font, std::string_view const line, Params const& params) {
-	if (!font.is_loaded()) { return; }
+void TextBase::set_string(IFont& font, std::string_view const line, Params const& params) {
+	if (!font.is_ready()) { return; }
 
 	m_geometry.clear_vertices();
 	m_glyph_layouts.clear();

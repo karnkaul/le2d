@@ -2,10 +2,10 @@
 #include <kvf/buffer_write.hpp>
 
 namespace le {
-class ITexture;
+class ITextureBase;
 
 struct UserDrawData {
 	kvf::BufferWrite ssbo{};
-	ITexture const* texture{};
+	ITextureBase const* texture{};
 };
 } // namespace le
