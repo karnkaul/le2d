@@ -143,7 +143,7 @@ Load the texture, then simply assign its pointer to `quad.texture`. It should be
 ```cpp
 // ...
 // load the image as a Texture.
-auto texture = asset_loader.load_texture("images/awesomeface.png");
+auto const texture = asset_loader.load_texture("images/awesomeface.png");
 if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
 
 // ...
@@ -160,7 +160,7 @@ Text can be drawn via `le::drawable::Text`. Naturally, it requires a loaded `le:
 ```cpp
 // ...
 // load the Font.
-auto font = asset_loader.load_font("fonts/Vera.ttf");
+auto const font = asset_loader.load_font("fonts/Vera.ttf");
 if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
 // ...
@@ -195,7 +195,7 @@ Audio is loaded as `capo::Buffer` assets. One-shot sound effects can be fired-an
 
 ```cpp
 // load the audio file as a capo::Buffer.
-auto audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
+auto const audio_buffer = asset_loader.load_audio_buffer("audio/explode.wav");
 if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
 // ...

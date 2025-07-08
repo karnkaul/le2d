@@ -21,9 +21,25 @@ class AudioMixer : public IAudioMixer {
 			auto& sfx_source = m_sfx_sources.emplace_back();
 			sfx_source.source = m_engine->create_source();
 		}
+
+		m_deck.primary = m_engine->create_source();
+		m_deck.secondary = m_engine->create_source();
 	}
 
   private:
+	using Clock = std::chrono::steady_clock;
+
+	struct SfxSource {
+		std::unique_ptr<capo::ISource> source{};
+		Clock::time_point timestamp{};
+	};
+
+	struct Deck {
+		std::unique_ptr<capo::ISource> primary{};
+		std::unique_ptr<capo::ISource> secondary{};
+		float gain{1.0f};
+	};
+
 	[[nodiscard]] auto get_sfx_gain() const -> float final { return m_sfx_gain; }
 
 	void set_sfx_gain(float const gain) final {
@@ -42,46 +58,71 @@ class AudioMixer : public IAudioMixer {
 		play_sfx(*source, [buffer](capo::ISource& source) { buffer->bind(source); });
 	}
 
-	// [[nodiscard]] auto create_source() const -> std::unique_ptr<capo::ISource> final {
-	// 	if (!m_engine) { return {}; }
-	// 	return m_engine->create_source();
-	// }
+	void stop_sfx() final {
+		for (auto& source : m_sfx_sources) { source.source->unbind(); }
+	}
 
-	// void start_music(capo::ISource& source, gsl::not_null<capo::Buffer const*> buffer) const final {
-	// 	source.stop();
-	// 	if (buffer->get_samples().empty()) { return; }
-	// 	source.bind_to(buffer);
-	// 	source.play();
-	// }
+	[[nodiscard]] auto get_music_gain() const -> float final { return m_deck.gain; }
 
-	// void start_music(capo::ISource& source, std::shared_ptr<capo::Buffer const> buffer) const final {
-	// 	source.stop();
-	// 	if (!buffer || buffer->get_samples().empty()) { return; }
-	// 	source.bind_to(std::move(buffer));
-	// 	source.play();
-	// }
+	void set_music_gain(float const gain) final {
+		m_deck.gain = gain;
+		m_deck.primary->set_gain(gain);
+	}
+
+	void loop_music(gsl::not_null<IAudioBuffer const*> buffer, kvf::Seconds const fade) final {
+		if (m_deck.primary->is_playing()) {
+			m_deck.secondary->stop();
+			m_deck.primary->set_looping(false);
+			m_deck.primary->set_fade_out(fade);
+			std::swap(m_deck.primary, m_deck.secondary);
+		}
+		m_deck.primary->stop();
+		if (!buffer->bind(*m_deck.primary)) { return; }
+		m_deck.primary->set_looping(true);
+		m_deck.primary->set_fade_in(fade, m_deck.gain);
+		m_deck.primary->play();
+	}
+
+	void pause_music() final {
+		auto const pause = [](capo::ISource& source) { source.stop(); };
+		pause(*m_deck.primary);
+		pause(*m_deck.secondary);
+	}
+
+	void resume_music() final {
+		auto const resume = [](capo::ISource& source) { source.play(); };
+		resume(*m_deck.primary);
+		resume(*m_deck.secondary);
+	}
+
+	void stop_music() final {
+		auto const stop = [](capo::ISource& source) { source.unbind(); };
+		stop(*m_deck.primary);
+		stop(*m_deck.secondary);
+	}
+
+	[[nodiscard]] auto create_source() const -> std::unique_ptr<capo::ISource> final {
+		if (!m_engine) { return {}; }
+		return m_engine->create_source();
+	}
 
 	[[nodiscard]] auto is_playing() const -> bool final {
-		return std::ranges::any_of(m_sfx_sources, [](SfxSource const& s) { return s.source->is_playing(); });
+		if (std::ranges::any_of(m_sfx_sources, [](SfxSource const& s) { return s.source->is_playing(); })) { return true; }
+		return m_deck.primary->is_playing() || m_deck.secondary->is_playing();
 	}
 
 	void wait_idle() final {
 		for (auto& source : m_sfx_sources) {
 			if (source.source->is_playing()) { source.source->wait_until_ended(); }
-			source.source->stop();
+			source.source->unbind();
 		}
+		stop_music();
 	}
 
 	void stop_all() final {
-		for (auto& source : m_sfx_sources) { source.source->stop(); }
+		stop_sfx();
+		stop_music();
 	}
-
-	using Clock = std::chrono::steady_clock;
-
-	struct SfxSource {
-		std::unique_ptr<capo::ISource> source{};
-		Clock::time_point timestamp{};
-	};
 
 	[[nodiscard]] auto get_idle_source() -> SfxSource* {
 		for (auto& source : m_sfx_sources) {
@@ -112,6 +153,7 @@ class AudioMixer : public IAudioMixer {
 	std::unique_ptr<capo::IEngine> m_engine{};
 
 	std::vector<SfxSource> m_sfx_sources{};
+	Deck m_deck{};
 	float m_sfx_gain{1.0f};
 };
 } // namespace le::detail

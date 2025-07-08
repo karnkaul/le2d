@@ -5,6 +5,7 @@
 #if defined(_WIN32)
 #include <Windows.h>
 #elif defined(__linux__)
+#include <cxxabi.h>
 #include <linux/limits.h>
 #include <unistd.h>
 #endif
@@ -27,6 +28,33 @@ auto util::exe_path() -> std::string {
 		return ret;
 	}();
 	return ret;
+}
+
+auto util::demangled_name(std::type_info const& info) -> std::string {
+#if defined(_WIN32)
+	using namespace std::string_view_literals;
+	static constexpr auto prefixes_v = std::array{
+		"struct "sv,
+		"class "sv,
+		"enum "sv,
+	};
+	auto view = std::string_view{info.name()};
+	for (auto const prefix : prefixes_v) {
+		if (view.starts_with(prefix)) {
+			view.remove_prefix(prefix.size());
+			break;
+		}
+	}
+	return std::string{view};
+#elif defined(__linux__)
+	auto status = int{};
+	auto const buf = std::unique_ptr<char, decltype(std::free)*>{
+		abi::__cxa_demangle(info.name(), nullptr, nullptr, &status),
+		std::free,
+	};
+	if (status == 0) { return buf.get(); }
+#endif
+	return info.name();
 }
 
 auto util::divide_into_tiles(int const rows, int const cols) -> std::vector<Tile> {

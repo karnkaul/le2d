@@ -18,11 +18,11 @@ auto AssetLoader::load_impl(std::type_index const type, std::string_view const u
 	auto const& loader = *it->second;
 	auto ret = loader.load_base(uri);
 	if (!ret) {
-		log.warn("'{}' Failed to load {}", uri, loader.type_name_impl());
+		log.warn("'{}' Failed to load {}", uri, loader.type_name());
 		return {};
 	}
 
-	log.info("=='{}'== {} loaded", uri, loader.type_name_impl());
+	log.info("=='{}'== {} loaded", uri, loader.type_name());
 	return ret;
 }
 } // namespace le
