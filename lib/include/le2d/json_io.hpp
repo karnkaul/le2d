@@ -1,6 +1,7 @@
 #pragma once
 #include <djson/json.hpp>
 #include <le2d/anim/animation.hpp>
+#include <le2d/resource/shader.hpp>
 #include <le2d/resource/texture.hpp>
 #include <le2d/tile/tile_set.hpp>
 #include <le2d/uri.hpp>
@@ -9,6 +10,8 @@ namespace le {
 template <typename Type>
 constexpr auto json_type_name_v = std::string_view{};
 
+template <>
+inline constexpr auto json_type_name_v<IShader> = std::string_view{"Shader"};
 template <>
 inline constexpr auto json_type_name_v<TileSet> = std::string_view{"TileSet"};
 template <>
