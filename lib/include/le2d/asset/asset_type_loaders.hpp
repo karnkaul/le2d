@@ -27,16 +27,12 @@ class ShaderLoader : public IAssetTypeLoaderCommon<IShader> {
   public:
 	using BaseType::BaseType;
 
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "Shader"; }
-
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<IShader> final;
 };
 
 class FontLoader : public IAssetTypeLoaderCommon<IFont> {
   public:
 	using BaseType::BaseType;
-
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "Font"; }
 
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<IFont> final;
 };
@@ -45,16 +41,12 @@ class TextureLoader : public IAssetTypeLoaderCommon<ITexture> {
   public:
 	using BaseType::BaseType;
 
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "Texture"; }
-
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<ITexture> final;
 };
 
 class TileSetLoader : public IAssetTypeLoaderCommon<TileSet> {
   public:
 	using BaseType::BaseType;
-
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "TileSet"; }
 
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<TileSet> final;
 };
@@ -63,16 +55,12 @@ class TileSheetLoader : public IAssetTypeLoaderCommon<ITileSheet> {
   public:
 	using BaseType::BaseType;
 
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "TileSheet"; }
-
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<ITileSheet> final;
 };
 
 class AudioBufferLoader : public IAssetTypeLoaderCommon<IAudioBuffer> {
   public:
 	using BaseType::BaseType;
-
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "AudioBuffer"; }
 
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<IAudioBuffer> final;
 };
@@ -81,16 +69,12 @@ class TransformAnimationLoader : public IAssetTypeLoaderCommon<TransformAnimatio
   public:
 	using BaseType::BaseType;
 
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "TransformAnimation"; }
-
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<TransformAnimation> final;
 };
 
 class FlipbookAnimationLoader : public IAssetTypeLoaderCommon<FlipbookAnimation> {
   public:
 	using BaseType::BaseType;
-
-	[[nodiscard]] auto type_name() const -> std::string_view final { return "FlipbookAnimation"; }
 
 	[[nodiscard]] auto load_asset(std::string_view uri) const -> std::unique_ptr<FlipbookAnimation> final;
 };
