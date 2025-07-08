@@ -98,6 +98,12 @@ class PipelinePool {
 			vk::VertexInputAttributeDescription{2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, uv)},
 		};
 
+		static constexpr auto blend_state_v = [] {
+			auto ret = kvf::PipelineState::default_blend_state();
+			ret.setSrcAlphaBlendFactor(vk::BlendFactor::eZero).setDstAlphaBlendFactor(vk::BlendFactor::eOne);
+			return ret;
+		}();
+
 		auto const modules = shader.get_modules();
 		auto const pipeline_state = kvf::PipelineState{
 			.vertex_bindings = bindings_v,
@@ -107,8 +113,9 @@ class PipelinePool {
 			.topology = state.topology,
 			.polygon_mode = state.polygon_mode,
 			.cull_mode = vk::CullModeFlagBits::eNone,
+			.blend_state = blend_state_v,
 			.depth_compare = vk::CompareOp::eNever,
-			.flags = kvf::PipelineFlag::AlphaBlend,
+			.flags = kvf::PipelineFlag::None,
 		};
 		auto const format = kvf::PipelineFormat{
 			.samples = state.samples,
