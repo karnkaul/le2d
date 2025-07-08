@@ -2,7 +2,6 @@
 #include <glm/vec2.hpp>
 #include <klib/c_string.hpp>
 #include <klib/enum_ops.hpp>
-#include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/window.hpp>
 #include <le2d/event.hpp>

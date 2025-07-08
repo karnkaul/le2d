@@ -1,6 +1,7 @@
 #pragma once
 #include <detail/pipeline_pool.hpp>
 #include <detail/resource/texture.hpp>
+#include <kvf/device_waiter.hpp>
 #include <kvf/render_device.hpp>
 #include <le2d/resource/resource_pool.hpp>
 
@@ -8,7 +9,7 @@ namespace le::detail {
 class ResourcePool : public IResourcePool {
   public:
 	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, std::unique_ptr<IShader> default_shader)
-		: m_pipelines(render_device), m_default_shader(std::move(default_shader)), m_white_texture(render_device), m_blocker(render_device->get_device()) {}
+		: m_pipelines(render_device), m_default_shader(std::move(default_shader)), m_white_texture(render_device), m_waiter(render_device->get_device()) {}
 
 	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, IShader const& shader) -> vk::Pipeline final {
 		return m_pipelines.allocate(state, shader);
@@ -25,6 +26,6 @@ class ResourcePool : public IResourcePool {
 
 	Texture m_white_texture;
 
-	kvf::DeviceBlock m_blocker;
+	kvf::DeviceWaiter m_waiter;
 };
 } // namespace le::detail

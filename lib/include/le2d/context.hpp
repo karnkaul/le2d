@@ -42,7 +42,7 @@ class Context : public klib::Pinned {
 
 	[[nodiscard]] auto get_render_window() const -> IRenderWindow const& { return *m_window; }
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
-	[[nodiscard]] auto get_resource_pool() const -> IResourcePool const& { return *m_resource_pool; }
+	[[nodiscard]] auto get_resource_pool() const -> IResourcePool& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
 

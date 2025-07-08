@@ -6,6 +6,10 @@
 #include <le2d/tile/tile_set.hpp>
 #include <gsl/pointers>
 
+namespace kvf {
+class RenderPass;
+} // namespace kvf
+
 namespace le {
 /// \brief Interface for drawable texture.
 class ITextureBase : public IResource {
@@ -43,5 +47,23 @@ class ITileSheet : public ITexture {
 	[[nodiscard]] auto get_uv(TileId const id) const -> kvf::UvRect { return tile_set.get_uv(id); }
 
 	TileSet tile_set{};
+};
+
+/// \brief Wraps a RenderTarget as a texture.
+/// This is just a view type, it doesn't own any resources.
+class RenderTexture : public ITextureBase {
+  public:
+	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
+	explicit RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass);
+
+	[[nodiscard]] auto is_ready() const -> bool final;
+
+	[[nodiscard]] auto get_image() const -> vk::ImageView final;
+	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
+
+	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final;
+
+  private:
+	gsl::not_null<kvf::RenderPass const*> m_render_pass;
 };
 } // namespace le

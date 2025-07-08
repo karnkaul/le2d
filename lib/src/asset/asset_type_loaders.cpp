@@ -15,7 +15,7 @@ template <std::derived_from<IAsset> Type>
 
 auto ShaderLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<IShader> {
 	auto const json = m_data_loader->load_json(uri);
-	if (!json) { return {}; }
+	if (!is_json_type<IShader>(json)) { return {}; }
 	auto const vert = m_data_loader->load_spir_v(json["vertex"].as_string_view());
 	auto const frag = m_data_loader->load_spir_v(json["fragment"].as_string_view());
 	if (vert.empty() || frag.empty()) { return {}; }
