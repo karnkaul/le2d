@@ -20,11 +20,11 @@ class InputText : public RenderInstance, public IDrawable {
   public:
 	using Params = InputTextParams;
 
-	explicit InputText(gsl::not_null<Font*> font, Params const& params = {});
+	explicit InputText(gsl::not_null<IFont*> font, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
-	[[nodiscard]] auto get_font() const -> Font& { return *m_font; }
-	[[nodiscard]] auto get_atlas() const -> FontAtlas& { return m_line_input.get_atlas(); }
+	[[nodiscard]] auto get_font() const -> IFont& { return *m_font; }
+	[[nodiscard]] auto get_atlas() const -> IFontAtlas& { return m_line_input.get_atlas(); }
 
 	[[nodiscard]] auto is_interactive() const -> bool { return m_interactive; }
 	void set_interactive(bool interactive);
@@ -55,7 +55,7 @@ class InputText : public RenderInstance, public IDrawable {
 	void update();
 	void reset_blink();
 
-	gsl::not_null<Font*> m_font;
+	gsl::not_null<IFont*> m_font;
 
 	LineInput m_line_input;
 	TextGeometry m_cursor{};

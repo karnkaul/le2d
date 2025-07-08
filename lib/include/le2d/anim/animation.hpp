@@ -1,13 +1,15 @@
 #pragma once
 #include <le2d/anim/timeline.hpp>
+#include <le2d/asset/asset.hpp>
 #include <le2d/tile/tile_id.hpp>
 #include <le2d/transform.hpp>
 #include <algorithm>
 
-namespace le::anim {
+namespace le {
+namespace anim {
 /// \brief Class template for Animation types.
 template <typename PayloadT>
-class Animation {
+class Animation : public IAsset {
   public:
 	using Payload = PayloadT;
 
@@ -26,7 +28,8 @@ class Animation {
   private:
 	Timeline<Payload> m_timeline{};
 };
+} // namespace anim
 
-using TransformAnimation = Animation<Transform>;
-using FlipbookAnimation = Animation<TileId>;
-} // namespace le::anim
+using TransformAnimation = anim::Animation<Transform>;
+using FlipbookAnimation = anim::Animation<TileId>;
+} // namespace le

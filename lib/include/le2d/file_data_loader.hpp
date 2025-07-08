@@ -13,9 +13,9 @@ class FileDataLoader : public IDataLoader {
 	/// \param root_dir Mount point. Will be prefixed to URIs for loads.
 	explicit FileDataLoader(std::string_view root_dir = ".");
 
-	auto load_bytes(std::vector<std::byte>& out, std::string_view uri) const -> bool final;
-	auto load_spirv(std::vector<std::uint32_t>& out, std::string_view uri) const -> bool final;
-	auto load_string(std::string& out, std::string_view uri) const -> bool final;
+	auto try_load_bytes(std::vector<std::byte>& out, std::string_view uri) const -> bool final;
+	auto try_load_spirv(std::vector<std::uint32_t>& out, std::string_view uri) const -> bool final;
+	auto try_load_string(std::string& out, std::string_view uri) const -> bool final;
 
 	/// \param bytes Bytes to save to file.
 	/// \param uri URI to save file at.

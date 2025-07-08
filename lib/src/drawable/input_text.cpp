@@ -4,7 +4,7 @@
 #include <numbers>
 
 namespace le::drawable {
-InputText::InputText(gsl::not_null<Font*> font, Params const& params)
+InputText::InputText(gsl::not_null<IFont*> font, Params const& params)
 	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
 	auto& atlas = m_line_input.get_atlas();
 

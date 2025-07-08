@@ -41,6 +41,7 @@ class App : public klib::Pinned {
 
 	Context m_context;
 	input::Dispatch m_input_dispatch{};
+	AssetLoader m_asset_loader{};
 
 	ServiceLocator m_service_locator{};
 	std::vector<Factory> m_factories{};
@@ -49,6 +50,6 @@ class App : public klib::Pinned {
 	std::string_view m_next_applet{};
 	kvf::DeltaTime m_delta_time{};
 
-	kvf::DeviceBlock m_blocker{};
+	Context::Waiter m_waiter{};
 };
 } // namespace le::assed

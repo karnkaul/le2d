@@ -1,9 +1,8 @@
 #pragma once
 #include <klib/hash_combine.hpp>
-#include <kvf/device_block.hpp>
 #include <kvf/render_device.hpp>
 #include <le2d/pipeline_fixed_state.hpp>
-#include <le2d/shader_program.hpp>
+#include <le2d/resource/shader.hpp>
 #include <le2d/vertex.hpp>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_hash.hpp>
@@ -19,7 +18,7 @@ class PipelinePool {
 
 	static constexpr std::size_t set_count_v{3};
 
-	explicit PipelinePool(gsl::not_null<kvf::RenderDevice const*> render_device) : m_render_device(render_device), m_blocker(render_device->get_device()) {
+	explicit PipelinePool(gsl::not_null<kvf::RenderDevice const*> render_device) : m_render_device(render_device) {
 		create_set_layouts();
 		create_layout();
 	}
@@ -27,7 +26,7 @@ class PipelinePool {
 	[[nodiscard]] auto get_layout() const -> vk::PipelineLayout { return *m_layout; }
 	[[nodiscard]] auto get_set_layouts() const -> std::span<vk::DescriptorSetLayout const, set_count_v> { return m_set_layouts; }
 
-	[[nodiscard]] auto allocate(FixedState const& state, ShaderProgram const& shader) -> vk::Pipeline {
+	[[nodiscard]] auto allocate(FixedState const& state, IShader const& shader) -> vk::Pipeline {
 		auto const entry = Entry{
 			.shader_hash = shader.get_hash(),
 			.samples = state.samples,
@@ -88,7 +87,7 @@ class PipelinePool {
 		m_layout = m_render_device->get_device().createPipelineLayoutUnique(plci);
 	}
 
-	[[nodiscard]] auto create(FixedState const& state, ShaderProgram const& shader) const -> vk::UniquePipeline {
+	[[nodiscard]] auto create(FixedState const& state, IShader const& shader) const -> vk::UniquePipeline {
 		static constexpr auto bindings_v = std::array{
 			vk::VertexInputBindingDescription{0, sizeof(Vertex)},
 		};
@@ -99,6 +98,12 @@ class PipelinePool {
 			vk::VertexInputAttributeDescription{2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, uv)},
 		};
 
+		static constexpr auto blend_state_v = [] {
+			auto ret = kvf::PipelineState::default_blend_state();
+			ret.setSrcAlphaBlendFactor(vk::BlendFactor::eZero).setDstAlphaBlendFactor(vk::BlendFactor::eOne);
+			return ret;
+		}();
+
 		auto const modules = shader.get_modules();
 		auto const pipeline_state = kvf::PipelineState{
 			.vertex_bindings = bindings_v,
@@ -108,8 +113,9 @@ class PipelinePool {
 			.topology = state.topology,
 			.polygon_mode = state.polygon_mode,
 			.cull_mode = vk::CullModeFlagBits::eNone,
+			.blend_state = blend_state_v,
 			.depth_compare = vk::CompareOp::eNever,
-			.flags = kvf::PipelineFlag::AlphaBlend,
+			.flags = kvf::PipelineFlag::None,
 		};
 		auto const format = kvf::PipelineFormat{
 			.samples = state.samples,
@@ -125,7 +131,5 @@ class PipelinePool {
 	std::array<vk::DescriptorSetLayout, set_count_v> m_set_layouts{};
 
 	std::unordered_map<Entry, vk::UniquePipeline, Hasher> m_map{};
-
-	kvf::DeviceBlock m_blocker;
 };
 } // namespace le::detail

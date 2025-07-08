@@ -3,7 +3,6 @@
 #include <file_drop.hpp>
 #include <imcpp.hpp>
 #include <kvf/time.hpp>
-#include <le2d/asset_loader.hpp>
 #include <le2d/context.hpp>
 #include <le2d/file_data_loader.hpp>
 #include <le2d/input/listener.hpp>
@@ -38,12 +37,12 @@ class Applet : public input::Listener {
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
 	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
+	[[nodiscard]] auto get_asset_loader() const -> AssetLoader const& { return get_services().get<AssetLoader>(); }
 	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().framebuffer_size(); }
 
 	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;
 	[[nodiscard]] auto load_json(Uri const& uri) const -> dj::Json;
-	[[nodiscard]] auto create_asset_loader() const -> AssetLoader { return AssetLoader{&get_data_loader(), &get_context()}; }
 
 	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
 

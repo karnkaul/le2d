@@ -5,28 +5,56 @@
 #if defined(_WIN32)
 #include <Windows.h>
 #elif defined(__linux__)
+#include <cxxabi.h>
+#include <linux/limits.h>
 #include <unistd.h>
-#include <climits>
 #endif
 
 namespace le {
 auto util::exe_path() -> std::string {
-	static auto ret = std::string{}; // can never change throughout the process existance
-	if (!ret.empty()) { return ret; }
-
+	static auto const ret = [] {
+		auto ret = std::string{};
 #if defined(_WIN32)
-	auto buffer = std::array<char, MAX_PATH>{};
-	DWORD length = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
-	if (length == 0) { return {}; }
-	ret = std::string{buffer.data(), length};
+		auto buffer = std::array<char, MAX_PATH>{};
+		DWORD length = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
+		if (length == 0) { return ret; }
+		ret = std::string{buffer.data(), length};
 #elif defined(__linux__)
-	auto buffer = std::array<char, PATH_MAX>{};
-	ssize_t length = ::readlink("/proc/self/exe", buffer.data(), buffer.size());
-	if (length == -1) { return {}; }
-	ret = std::string{buffer.data(), std::size_t(length)};
+		auto buffer = std::array<char, PATH_MAX>{};
+		ssize_t length = ::readlink("/proc/self/exe", buffer.data(), buffer.size());
+		if (length == -1) { return ret; }
+		ret = std::string{buffer.data(), std::size_t(length)};
 #endif
-
+		return ret;
+	}();
 	return ret;
+}
+
+auto util::demangled_name(std::type_info const& info) -> std::string {
+#if defined(_WIN32)
+	using namespace std::string_view_literals;
+	static constexpr auto prefixes_v = std::array{
+		"struct "sv,
+		"class "sv,
+		"enum "sv,
+	};
+	auto view = std::string_view{info.name()};
+	for (auto const prefix : prefixes_v) {
+		if (view.starts_with(prefix)) {
+			view.remove_prefix(prefix.size());
+			break;
+		}
+	}
+	return std::string{view};
+#elif defined(__linux__)
+	auto status = int{};
+	auto const buf = std::unique_ptr<char, decltype(std::free)*>{
+		abi::__cxa_demangle(info.name(), nullptr, nullptr, &status),
+		std::free,
+	};
+	if (status == 0) { return buf.get(); }
+#endif
+	return info.name();
 }
 
 auto util::divide_into_tiles(int const rows, int const cols) -> std::vector<Tile> {
