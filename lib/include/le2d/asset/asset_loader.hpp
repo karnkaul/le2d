@@ -19,7 +19,7 @@ class AssetLoader {
 	/// \returns true if loader associated with AssetTypeT exists.
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto has_loader() const -> bool {
-		return m_map.contains(std::type_index{typeid(AssetTypeT)});
+		return m_map.contains(typeid(AssetTypeT));
 	}
 
 	/// \brief Load an asset given its URI.
@@ -28,14 +28,14 @@ class AssetLoader {
 	/// \returns Asset instance if loaded, otherwise null.
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto load(std::string_view const uri) const -> std::unique_ptr<AssetTypeT> {
-		auto ret = load_impl(std::type_index{typeid(AssetTypeT)}, uri);
+		auto ret = load_impl(typeid(AssetTypeT), uri);
 		if (!ret) { return {}; }
 		KLIB_ASSERT(dynamic_cast<AssetTypeT*>(ret.get()));
 		return std::unique_ptr<AssetTypeT>{dynamic_cast<AssetTypeT*>(ret.release())};
 	}
 
   private:
-	[[nodiscard]] auto load_impl(std::type_index type, std::string_view uri) const -> std::unique_ptr<IAsset>;
+	[[nodiscard]] auto load_impl(std::type_info const& type, std::string_view uri) const -> std::unique_ptr<IAsset>;
 
 	std::unordered_map<std::type_index, std::unique_ptr<detail::IAssetTypeLoaderBase>> m_map{};
 };
