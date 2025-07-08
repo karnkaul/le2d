@@ -23,13 +23,13 @@ void run() {
 	// create an AssetLoader instance to load shared resources.
 	auto const asset_loader = context.create_asset_loader(&data_loader);
 
-	auto font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
+	auto const font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
 	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
-	auto texture = asset_loader.load<le::ITexture>("images/awesomeface.png");
+	auto const texture = asset_loader.load<le::ITexture>("images/awesomeface.png");
 	if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
 
-	auto audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
+	auto const audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
 	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
 	// the waiter blocks on destruction until the context is idle,
