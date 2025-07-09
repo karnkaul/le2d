@@ -15,7 +15,7 @@ void AssetLoader::add_loader(std::unique_ptr<detail::IAssetTypeLoaderBase> loade
 auto AssetLoader::load_impl(std::type_info const& type, std::string_view const uri) const -> std::unique_ptr<IAsset> {
 	auto const it = m_map.find(type);
 	if (it == m_map.end()) {
-		log.error("'{}' Missing AssetTypeLoader for '{}'", uri, util::demangled_name(type));
+		log.error("'{}' Missing AssetTypeLoader for '{}'", uri, klib::demangled_name(type));
 		return {};
 	}
 
