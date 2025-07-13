@@ -82,6 +82,7 @@ class Context : public klib::Pinned {
 
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
+	void set_visible(bool const visible) { m_window->set_visible(visible); }
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.

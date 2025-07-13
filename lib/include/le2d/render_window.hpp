@@ -91,6 +91,7 @@ class IRenderWindow : public klib::Polymorphic {
 	[[nodiscard]] auto is_fullscreen() const -> bool;
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
 	void set_windowed(glm::ivec2 size = {1280, 720});
+	void set_visible(bool visible);
 
 	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
 	[[nodiscard]] auto get_render_device() -> kvf::RenderDevice&;
