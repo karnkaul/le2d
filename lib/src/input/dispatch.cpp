@@ -41,6 +41,22 @@ void Dispatch::on_scroll(event::Scroll const& scroll) { dispatch(&Listener::cons
 
 void Dispatch::on_drop(event::Drop const& drop) { dispatch(&Listener::consume_drop, drop, Type::None); }
 
+void Dispatch::handle_events(glm::ivec2 const framebuffer_size, std::span<le::Event const> events) {
+	auto const visitor = klib::SubVisitor{
+		[this, framebuffer_size](le::event::CursorPos const& e) { on_cursor_move(e.normalized.to_target(framebuffer_size)); },
+		[this](le::event::Codepoint const e) { on_codepoint(e); },
+		[this](le::event::Key const& e) { on_key(e); },
+		[this](le::event::MouseButton const& e) { on_mouse_button(e); },
+		[this](le::event::Scroll const& e) { on_scroll(e); },
+		[this](le::event::Drop const& e) { on_drop(e); },
+	};
+	for (auto const& event : events) { std::visit(visitor, event); }
+}
+
+void Dispatch::disengage_all() {
+	for (auto* listener : m_listeners) { listener->disengage_input(); }
+}
+
 void Dispatch::update_listeners(Dispatch* target) const {
 	for (auto* listener : m_listeners) { listener->m_dispatch = target; }
 }
