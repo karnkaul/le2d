@@ -32,17 +32,6 @@ void run() {
 	auto const audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
 	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
-	auto const musics = std::array{
-		asset_loader.load<le::IAudioBuffer>("music/Funked Up.mp3"),
-		asset_loader.load<le::IAudioBuffer>("music/jj2_labrat.mp3"),
-	};
-	auto music_idx = 0uz;
-	context.get_audio_mixer().loop_music(musics.at(music_idx).get());
-	auto const switch_track = [&] {
-		music_idx = (music_idx + 1) % musics.size();
-		context.get_audio_mixer().loop_music(musics.at(music_idx).get(), 5s);
-	};
-
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.
 	auto const waiter = context.create_waiter();
@@ -89,8 +78,6 @@ void run() {
 				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
 					context.shutdown(); // set the close flag.
 				}
-
-				if (key_event->key == GLFW_KEY_SPACE && key_event->action == GLFW_PRESS) { switch_track(); }
 			}
 		}
 
