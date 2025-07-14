@@ -84,6 +84,10 @@ class Context : public klib::Pinned {
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
 	void set_visible(bool const visible) { m_window->set_visible(visible); }
 
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits { return m_pass.get_samples(); }
+	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags;
+	auto set_samples(vk::SampleCountFlagBits samples) -> bool;
+
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
 	/// \returns Current virtual frame's Command Buffer.
@@ -116,6 +120,14 @@ class Context : public klib::Pinned {
 		kvf::Seconds elapsed{};
 	};
 
+	struct Requests {
+		[[nodiscard]] auto is_empty() const -> bool { return !set_samples; }
+
+		std::optional<vk::SampleCountFlagBits> set_samples{};
+	};
+
+	void process_requests();
+
 	void update_stats(kvf::Clock::time_point present_start);
 
 	template <typename... Ts>
@@ -128,6 +140,8 @@ class Context : public klib::Pinned {
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
+
+	Requests m_requests{};
 
 	Gamepad m_latest_gamepad{};
 

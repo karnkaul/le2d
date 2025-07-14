@@ -99,12 +99,27 @@ auto Context::get_vsync() const -> Vsync { return to_vsync(m_window->get_render_
 
 auto Context::set_vsync(Vsync const vsync) -> bool {
 	if (vsync == get_vsync()) { return true; }
-	return m_window->get_render_device().set_present_mode(to_mode(vsync));
+	auto const supported = get_supported_vsync();
+	if (std::ranges::find(supported, vsync) == supported.end()) { return false; }
+	m_pass.get_render_device().set_present_mode(to_mode(vsync));
+	return true;
+}
+
+auto Context::get_supported_samples() const -> vk::SampleCountFlags {
+	return m_pass.get_render_device().get_gpu().properties.limits.framebufferColorSampleCounts;
+}
+
+auto Context::set_samples(vk::SampleCountFlagBits const samples) -> bool {
+	if (samples == get_samples()) { return true; }
+	if ((get_supported_samples() & samples) != samples) { return false; }
+	m_requests.set_samples = samples;
+	return true;
 }
 
 auto Context::next_frame() -> vk::CommandBuffer {
 	m_cmd = m_window->next_frame();
 	++m_fps.counter;
+	process_requests();
 	m_frame_start = kvf::Clock::now();
 	return m_cmd;
 }
@@ -135,6 +150,16 @@ auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader)
 	auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
 	return builder
 		.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader, FlipbookAnimationLoader>();
+}
+
+void Context::process_requests() {
+	if (m_requests.is_empty()) { return; }
+
+	m_pass.get_render_device().get_device().waitIdle();
+	if (m_requests.set_samples) {
+		m_pass = RenderPass{&m_pass.get_render_device(), *m_requests.set_samples};
+		m_requests.set_samples.reset();
+	}
 }
 
 void Context::update_stats(kvf::Clock::time_point const present_start) {
