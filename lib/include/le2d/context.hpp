@@ -80,12 +80,24 @@ class Context : public klib::Pinned {
 	/// \returns true if desired mode is supported.
 	auto set_vsync(Vsync vsync) -> bool;
 
+	/// \brief Show window and set fullscreen.
+	/// \param target Target monitor (optional).
+	/// \returns true if successful.
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
+	/// \brief Show window and set windowed with given size.
+	/// \param size Window size. Must be positive.
+	/// \returns true if successful.
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
+	/// \brief Show/hide window.
 	void set_visible(bool const visible) { m_window->set_visible(visible); }
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits { return m_pass.get_samples(); }
+	/// \returns Current MSAA samples.
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits;
+	/// \returns Supported MSAA samples.
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags;
+	/// \brief Set desired MSAA samples.
+	/// RenderPass will be recreated on the next frame, not immediately.
+	/// \returns true unless not supported.
 	auto set_samples(vk::SampleCountFlagBits samples) -> bool;
 
 	/// \brief Begin the next frame.

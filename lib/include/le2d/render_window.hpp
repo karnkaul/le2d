@@ -88,9 +88,17 @@ class IRenderWindow : public klib::Polymorphic {
 
 	[[nodiscard]] auto get_refresh_rate() const -> std::int32_t;
 
+	/// \returns true if fullscreen.
 	[[nodiscard]] auto is_fullscreen() const -> bool;
+	/// \brief Show window and set fullscreen.
+	/// \param target Target monitor (optional).
+	/// \returns true if successful.
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
-	void set_windowed(glm::ivec2 size = {1280, 720});
+	/// \brief Show window and set windowed with given size.
+	/// \param size Window size. Must be positive.
+	/// \returns true if successful.
+	auto set_windowed(glm::ivec2 size = {1280, 720}) -> bool;
+	/// \brief Show/hide window.
 	void set_visible(bool visible);
 
 	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;

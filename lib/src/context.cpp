@@ -105,6 +105,8 @@ auto Context::set_vsync(Vsync const vsync) -> bool {
 	return true;
 }
 
+auto Context::get_samples() const -> vk::SampleCountFlagBits { return m_requests.set_samples.value_or(m_pass.get_samples()); }
+
 auto Context::get_supported_samples() const -> vk::SampleCountFlags {
 	return m_pass.get_render_device().get_gpu().properties.limits.framebufferColorSampleCounts;
 }

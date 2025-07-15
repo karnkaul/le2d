@@ -92,7 +92,6 @@ auto IRenderWindow::is_fullscreen() const -> bool { return glfwGetWindowMonitor(
 // NOLINTNEXTLINE(readability-make-member-function-const)
 auto IRenderWindow::set_fullscreen(GLFWmonitor* target) -> bool {
 	set_visible(true);
-	if (is_fullscreen()) { return true; }
 	auto const display = target_display(target);
 	if (!display) { return false; }
 	auto const* vm = display->video_mode.get();
@@ -101,11 +100,15 @@ auto IRenderWindow::set_fullscreen(GLFWmonitor* target) -> bool {
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void IRenderWindow::set_windowed(glm::ivec2 size) {
+auto IRenderWindow::set_windowed(glm::ivec2 const size) -> bool {
 	set_visible(true);
-	if (!is_fullscreen()) { return; }
-	if (!kvf::is_positive(size)) { size = {600, 600}; }
-	glfwSetWindowMonitor(get_window(), nullptr, 0, 0, size.x, size.y, 0);
+	if (!kvf::is_positive(size)) { return false; }
+	if (is_fullscreen()) {
+		glfwSetWindowMonitor(get_window(), nullptr, 0, 0, size.x, size.y, 0);
+	} else {
+		glfwSetWindowSize(get_window(), size.x, size.y);
+	}
+	return true;
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
