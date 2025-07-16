@@ -24,6 +24,9 @@ class Dispatch {
 	void on_scroll(event::Scroll const& scroll);
 	void on_drop(event::Drop const& drop);
 
+	void handle_events(glm::ivec2 framebuffer_size, std::span<le::Event const> events);
+	void disengage_all();
+
 	bool honor_imgui_want_capture{true};
 
   private:

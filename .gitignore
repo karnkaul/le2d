@@ -4,6 +4,7 @@ build/*
 out/*
 .cache
 .DS_Store
+.clangd
 
 CMakeSettings.json
 compile_commands.json

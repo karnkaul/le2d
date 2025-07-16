@@ -27,11 +27,7 @@ class IAssetTypeLoader : public detail::IAssetTypeLoaderBase {
 	[[nodiscard]] virtual auto load_asset(std::string_view uri) const -> std::unique_ptr<AssetTypeT> = 0;
 
   private:
-	[[nodiscard]] auto type_name() const -> std::string_view final {
-		static auto const ret = [] { return util::demangled_name(typeid(AssetTypeT)); }();
-		return ret;
-	}
-
+	[[nodiscard]] auto type_name() const -> std::string_view final { return util::demangled_name<AssetTypeT>(); }
 	[[nodiscard]] auto type_index() const -> std::type_index final { return std::type_index{typeid(AssetTypeT)}; }
 	[[nodiscard]] auto load_base(std::string_view uri) const -> std::unique_ptr<IAsset> final { return load_asset(uri); }
 };
