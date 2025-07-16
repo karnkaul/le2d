@@ -19,7 +19,7 @@ auto Dispatch::operator=(Dispatch&& rhs) noexcept -> Dispatch& {
 Dispatch::~Dispatch() { update_listeners(nullptr); }
 
 void Dispatch::attach(gsl::not_null<Listener*> listener) {
-	KLIB_ASSERT(std::ranges::find(m_listeners, listener.get()) == m_listeners.end());
+	KLIB_ASSERT_DEBUG(std::ranges::find(m_listeners, listener.get()) == m_listeners.end());
 	m_listeners.push_back(listener);
 	listener->m_dispatch = this;
 }
