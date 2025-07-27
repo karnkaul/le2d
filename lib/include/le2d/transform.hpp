@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/gtx/norm.hpp>
 #include <glm/mat4x4.hpp>
 
 namespace le {
