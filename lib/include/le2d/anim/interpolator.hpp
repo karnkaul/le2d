@@ -31,7 +31,7 @@ struct Interpolator<Transform> {
 	constexpr auto operator()(Transform const& a, Transform const& b, float const t) const {
 		return Transform{
 			.position = interpolate(a.position, b.position, t),
-			.orientation = interpolate(a.orientation, b.orientation, t),
+			.orientation = nvec2::from_radians(interpolate(a.orientation.to_radians(), b.orientation.to_radians(), t)),
 			.scale = interpolate(a.scale, b.scale, t),
 		};
 	}
