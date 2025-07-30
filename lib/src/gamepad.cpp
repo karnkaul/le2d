@@ -26,6 +26,22 @@ auto Gamepad::get_name() const -> klib::CString {
 	return glfwGetGamepadName(m_id);
 }
 
+auto Gamepad::update() -> bool {
+	*this = get_by_id(get_id());
+	return is_connected();
+}
+
+auto Gamepad::update_or_autoselect() -> bool {
+	auto ret = is_connected();
+	if (ret) {
+		*this = get_by_id(get_id());
+	} else {
+		*this = get_active();
+		ret = is_connected();
+	}
+	return ret;
+}
+
 auto Gamepad::any_button_pressed() const -> bool {
 	for (int button = GLFW_GAMEPAD_BUTTON_A; button <= GLFW_GAMEPAD_BUTTON_LAST; ++button) {
 		if (is_pressed(button)) { return true; }
@@ -39,10 +55,11 @@ auto Gamepad::is_pressed(int const button) const -> bool {
 	return m_state.buttons[button];
 }
 
-auto Gamepad::get_axis(int const axis) const -> float {
+auto Gamepad::get_axis(int const axis, float const dead_zone) const -> float {
 	KLIB_ASSERT(axis >= 0 && axis < int(std::size(m_state.axes)));
 	// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-	return m_state.axes[axis];
+	auto const ret = m_state.axes[axis];
+	return std::abs(ret) < dead_zone ? 0.0f : ret;
 }
 
 auto Gamepad::set_state(Gamepad& out_pad) -> bool {

@@ -78,15 +78,6 @@ Context::Context(CreateInfo const& create_info)
 	m_on_destroy.reset(this);
 }
 
-auto Context::get_latest_gamepad() -> Gamepad const& {
-	if (!m_latest_gamepad.is_connected()) {
-		m_latest_gamepad = Gamepad::get_active();
-	} else {
-		m_latest_gamepad = Gamepad::get_by_id(m_latest_gamepad.get_id());
-	}
-	return m_latest_gamepad;
-}
-
 auto Context::framebuffer_size() const -> glm::ivec2 { return glm::vec2{swapchain_size()} * m_render_scale; }
 
 auto Context::set_render_scale(float const scale) -> bool {

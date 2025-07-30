@@ -28,7 +28,7 @@ struct Interpolator<glm::vec<Length, Type>> {
 /// \brief Interpolator specialization for Transform.
 template <>
 struct Interpolator<Transform> {
-	constexpr auto operator()(Transform const& a, Transform const& b, float const t) const {
+	auto operator()(Transform const& a, Transform const& b, float const t) const {
 		return Transform{
 			.position = interpolate(a.position, b.position, t),
 			.orientation = nvec2::from_radians(interpolate(a.orientation.to_radians(), b.orientation.to_radians(), t)),

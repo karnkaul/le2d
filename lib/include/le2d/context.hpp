@@ -4,7 +4,6 @@
 #include <le2d/build_version.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/frame_stats.hpp>
-#include <le2d/gamepad.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
@@ -45,10 +44,6 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_resource_pool() const -> IResourcePool& { return *m_resource_pool; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
-
-	/// \brief Get the updated state of the last used Gamepad (if any).
-	/// \returns If unset or disconnected, le::Gamepad::get_active(), else updated Gamepad state.
-	[[nodiscard]] auto get_latest_gamepad() -> Gamepad const&;
 
 	/// \returns Current size of swapchain images.
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window->framebuffer_size(); }
@@ -154,8 +149,6 @@ class Context : public klib::Pinned {
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 
 	Requests m_requests{};
-
-	Gamepad m_latest_gamepad{};
 
 	float m_render_scale{1.0f};
 

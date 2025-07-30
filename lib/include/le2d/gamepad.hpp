@@ -24,15 +24,23 @@ class Gamepad {
 	/// \returns Name of this Gamepad, as reported by GLFW.
 	[[nodiscard]] auto get_name() const -> klib::CString;
 
+	/// \brief Update to current state.
+	/// \returns true if connected.
+	auto update() -> bool;
+	/// \brief Update state if already connected, else morph into active Gamepad.
+	/// \returns true if connected.
+	auto update_or_autoselect() -> bool;
+
 	/// \returns true if any button is pressed.
 	[[nodiscard]] auto any_button_pressed() const -> bool;
 	/// \param button GLFW_GAMEPAD_BUTTON_<ID>.
 	/// \returns true if button is pressed.
 	[[nodiscard]] auto is_pressed(int button) const -> bool;
 	/// \param axis GLFW_GAMEPAD_AXIS_<ID>.
-	/// Sticks: [-1, +1], triggers: [0, 1]. All 0 at rest.
+	/// \param dead_zone Magnitude floor.
 	/// \returns (corrected) current value of axis.
-	[[nodiscard]] auto get_axis(int axis) const -> float;
+	/// Sticks: [-1, +1], triggers: [0, 1]. All 0 at rest.
+	[[nodiscard]] auto get_axis(int axis, float dead_zone = 0.1f) const -> float;
 
   private:
 	static auto set_state(Gamepad& out_pad) -> bool;
