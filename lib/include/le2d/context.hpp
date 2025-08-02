@@ -81,7 +81,6 @@ class Context : public klib::Pinned {
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
 	/// \brief Show window and set windowed with given size.
 	/// \param size Window size. Must be positive.
-	/// \returns true if successful.
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
 	/// \brief Show/hide window.
 	void set_visible(bool const visible) { m_window->set_visible(visible); }
