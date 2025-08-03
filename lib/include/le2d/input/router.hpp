@@ -28,10 +28,12 @@ class Router {
 	void disengage();
 
 	/// \returns Last used input device, if any.
-	/// Gamepad axes are not considered, a button must be pressed.
 	[[nodiscard]] auto last_used_device() const -> std::optional<Device> { return m_last_used_device; }
 
 	[[nodiscard]] auto gamepad_manager() const -> Gamepad::Manager const& { return m_gamepad_manager; }
+
+	/// \brief Dead zone for setting first/last used Gamepad.
+	float nonzero_dead_zone{Gamepad::nonzero_dead_zone_v};
 
   private:
 	template <typename F>

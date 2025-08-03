@@ -13,7 +13,7 @@ void Router::pop_mapping() {
 }
 
 void Router::dispatch(std::span<le::Event const> events) {
-	if (m_gamepad_manager.update()) {
+	if (m_gamepad_manager.update(nonzero_dead_zone)) {
 		m_last_used_device = Device::Gamepad;
 	} else if (std::ranges::any_of(events, [](Event const& e) { return std::holds_alternative<event::Key>(e); })) {
 		m_last_used_device = Device::Keyboard;

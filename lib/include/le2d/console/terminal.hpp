@@ -5,6 +5,7 @@
 #include <le2d/drawable/drawable.hpp>
 #include <le2d/event.hpp>
 #include <le2d/resource/font.hpp>
+#include <cstdint>
 #include <gsl/pointers>
 #include <memory>
 #include <string_view>
@@ -14,6 +15,8 @@ class Font;
 } // namespace le
 
 namespace le::console {
+enum class StateChange : std::int8_t { None, Activated, Deactivated };
+
 class Terminal : public IDrawable, public IPrinter {
   public:
 	using CreateInfo = TerminalCreateInfo;
@@ -31,7 +34,7 @@ class Terminal : public IDrawable, public IPrinter {
 	[[nodiscard]] auto get_background() const -> kvf::Color;
 	void set_background(kvf::Color color);
 
-	void handle_events(glm::vec2 framebuffer_size, std::span<Event const> events, bool* activated = nullptr);
+	auto handle_events(glm::vec2 framebuffer_size, std::span<Event const> events) -> StateChange;
 
 	void tick(kvf::Seconds dt);
 	void draw(Renderer& renderer) const final;
