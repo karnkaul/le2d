@@ -4,7 +4,6 @@
 #include <le2d/build_version.hpp>
 #include <le2d/data_loader.hpp>
 #include <le2d/frame_stats.hpp>
-#include <le2d/gamepad.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
@@ -46,10 +45,6 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
 
-	/// \brief Get the updated state of the last used Gamepad (if any).
-	/// \returns If unset or disconnected, le::Gamepad::get_active(), else updated Gamepad state.
-	[[nodiscard]] auto get_latest_gamepad() -> Gamepad const&;
-
 	/// \returns Current size of swapchain images.
 	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window->framebuffer_size(); }
 	/// \returns Scaled render framebuffer size.
@@ -80,8 +75,24 @@ class Context : public klib::Pinned {
 	/// \returns true if desired mode is supported.
 	auto set_vsync(Vsync vsync) -> bool;
 
+	/// \brief Show window and set fullscreen.
+	/// \param target Target monitor (optional).
+	/// \returns true if successful.
 	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
+	/// \brief Show window and set windowed with given size.
+	/// \param size Window size. Must be positive.
 	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
+	/// \brief Show/hide window.
+	void set_visible(bool const visible) { m_window->set_visible(visible); }
+
+	/// \returns Current MSAA samples.
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits;
+	/// \returns Supported MSAA samples.
+	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags;
+	/// \brief Set desired MSAA samples.
+	/// RenderPass will be recreated on the next frame, not immediately.
+	/// \returns true unless not supported.
+	auto set_samples(vk::SampleCountFlagBits samples) -> bool;
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
@@ -115,6 +126,14 @@ class Context : public klib::Pinned {
 		kvf::Seconds elapsed{};
 	};
 
+	struct Requests {
+		[[nodiscard]] auto is_empty() const -> bool { return !set_samples; }
+
+		std::optional<vk::SampleCountFlagBits> set_samples{};
+	};
+
+	void process_requests();
+
 	void update_stats(kvf::Clock::time_point present_start);
 
 	template <typename... Ts>
@@ -128,7 +147,7 @@ class Context : public klib::Pinned {
 	std::unique_ptr<IResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 
-	Gamepad m_latest_gamepad{};
+	Requests m_requests{};
 
 	float m_render_scale{1.0f};
 

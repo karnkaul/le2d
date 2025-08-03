@@ -31,9 +31,9 @@ class Terminal : public IDrawable, public IPrinter {
 	[[nodiscard]] auto get_background() const -> kvf::Color;
 	void set_background(kvf::Color color);
 
-	void handle_events(std::span<Event const> events, bool* activated = nullptr);
+	void handle_events(glm::vec2 framebuffer_size, std::span<Event const> events, bool* activated = nullptr);
 
-	void tick(glm::vec2 framebuffer_size, kvf::Seconds dt);
+	void tick(kvf::Seconds dt);
 	void draw(Renderer& renderer) const final;
 
   private:

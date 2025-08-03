@@ -1,15 +1,17 @@
 #pragma once
+#include <klib/demangle.hpp>
 #include <le2d/anim/timeline.hpp>
 #include <le2d/tile/tile.hpp>
 #include <span>
-#include <string>
-#include <typeinfo>
 #include <vector>
 
 namespace le::util {
-[[nodiscard]] auto exe_path() -> std::string;
+[[nodiscard]] auto exe_path() -> std::string const&;
 
-[[nodiscard]] auto demangled_name(std::type_info const& info) -> std::string;
+template <typename Type>
+[[nodiscard]] auto demangled_name() -> std::string const& {
+	return klib::demangled_name<Type>();
+}
 
 [[nodiscard]] auto divide_into_tiles(int rows, int cols) -> std::vector<Tile>;
 

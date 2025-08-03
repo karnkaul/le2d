@@ -15,6 +15,8 @@ inline constexpr auto json_type_name_v<IShader> = std::string_view{"Shader"};
 template <>
 inline constexpr auto json_type_name_v<TileSet> = std::string_view{"TileSet"};
 template <>
+inline constexpr auto json_type_name_v<ITexture> = std::string_view{"Texture"};
+template <>
 inline constexpr auto json_type_name_v<ITileSheet> = std::string_view{"TileSheet"};
 template <>
 inline constexpr auto json_type_name_v<anim::Timeline<Transform>> = std::string_view{"anim::Timeline<Transform>"};

@@ -11,6 +11,31 @@ template <std::derived_from<IAsset> Type>
 	from_json(json, *ret);
 	return ret;
 }
+
+constexpr auto to_address_mode(std::string_view const in) {
+	if (in == "repeat") { return vk::SamplerAddressMode::eRepeat; }
+	if (in == "clamp_border") { return vk::SamplerAddressMode::eClampToBorder; }
+	return vk::SamplerAddressMode::eClampToEdge;
+}
+
+constexpr auto to_filter(std::string_view const in) {
+	if (in == "nearest") { return vk::Filter::eNearest; }
+	return vk::Filter::eLinear;
+}
+
+constexpr auto to_border_color(std::string_view const in) {
+	if (in == "black") { return vk::BorderColor::eFloatOpaqueBlack; }
+	if (in == "white") { return vk::BorderColor::eFloatOpaqueWhite; }
+	return vk::BorderColor::eFloatTransparentBlack;
+}
+
+auto to_texture_sampler(dj::Json const& json) -> TextureSampler {
+	auto ret = TextureSampler{};
+	if (auto const& wrap = json["wrap"]) { ret.wrap = to_address_mode(wrap.as_string_view()); }
+	if (auto const& filter = json["filter"]) { ret.filter = to_filter(filter.as_string_view()); }
+	if (auto const& border = json["border"]) { ret.border = to_border_color(border.as_string_view()); }
+	return ret;
+}
 } // namespace
 
 auto ShaderLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<IShader> {
@@ -33,9 +58,17 @@ auto FontLoader::load_asset(std::string_view const uri) const -> std::unique_ptr
 }
 
 auto TextureLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<ITexture> {
-	auto const bytes = m_data_loader->load_bytes(uri);
+	auto sampler = TextureSampler{};
+	auto bytes = std::vector<std::byte>{};
+	auto const json = m_data_loader->load_json(uri);
+	if (is_json_type<ITexture>(json)) {
+		bytes = m_data_loader->load_bytes(json["image"].as_string_view());
+		sampler = to_texture_sampler(json);
+	} else {
+		bytes = m_data_loader->load_bytes(uri);
+	}
 	if (bytes.empty()) { return {}; }
-	auto ret = m_resource_factory->create_texture();
+	auto ret = m_resource_factory->create_texture(sampler);
 	if (!ret->load_and_write(bytes)) { return {}; }
 	return ret;
 }

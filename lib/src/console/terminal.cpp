@@ -151,7 +151,7 @@ struct Terminal::Impl : IPrinter {
 		log.error("{}", text);
 	}
 
-	void handle_events(std::span<Event const> events, bool* activated) {
+	void handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events, bool* activated) {
 		auto const was_active = is_active();
 		auto const visitor = klib::SubVisitor{
 			[this](event::Key const& key) { on_key(key); },
@@ -161,16 +161,14 @@ struct Terminal::Impl : IPrinter {
 		};
 		for (auto const& event : events) { std::visit(visitor, event); }
 		if (activated != nullptr) { *activated = !was_active && is_active(); }
+
+		if (kvf::is_positive(framebuffer_size) && m_framebuffer_size != framebuffer_size) {
+			m_framebuffer_size = framebuffer_size;
+			resize();
+		}
 	}
 
-	void tick(glm::vec2 const framebuffer_size, kvf::Seconds const dt) {
-		if (kvf::is_positive(framebuffer_size)) {
-			if (m_framebuffer_size != framebuffer_size) {
-				m_framebuffer_size = framebuffer_size;
-				resize();
-			}
-		}
-
+	void tick(kvf::Seconds const dt) {
 		if (m_active) {
 			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::min(m_render_view.position.y, m_show_y);
@@ -508,9 +506,11 @@ auto Terminal::get_background() const -> kvf::Color { return m_impl->get_backgro
 
 void Terminal::set_background(kvf::Color const color) { m_impl->set_background(color); }
 
-void Terminal::handle_events(std::span<Event const> events, bool* activated) { m_impl->handle_events(events, activated); }
+void Terminal::handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events, bool* activated) {
+	m_impl->handle_events(framebuffer_size, events, activated);
+}
 
-void Terminal::tick(glm::vec2 framebuffer_size, kvf::Seconds const dt) { m_impl->tick(framebuffer_size, dt); }
+void Terminal::tick(kvf::Seconds const dt) { m_impl->tick(dt); }
 
 void Terminal::draw(Renderer& renderer) const { m_impl->draw(renderer); }
 } // namespace le::console

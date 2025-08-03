@@ -1,5 +1,7 @@
 #pragma once
+#include <glm/gtx/norm.hpp>
 #include <glm/mat4x4.hpp>
+#include <le2d/nvec2.hpp>
 
 namespace le {
 /// \brief 2D transformation.
@@ -14,16 +16,10 @@ struct Transform {
 	[[nodiscard]] auto to_inverse_view() const -> glm::mat4;
 
 	/// \returns Transform with positions and orientations added and scales multiplied together.
-	[[nodiscard]] static constexpr auto accumulate(Transform const& a, Transform const& b) -> Transform {
-		return Transform{
-			.position = a.position + b.position,
-			.orientation = a.orientation + b.orientation,
-			.scale = a.scale * b.scale,
-		};
-	}
+	[[nodiscard]] static auto accumulate(Transform const& a, Transform const& b) -> Transform;
 
 	glm::vec2 position{};
-	float orientation{};
+	nvec2 orientation{right_v};
 	glm::vec2 scale{1.0f};
 };
 } // namespace le
