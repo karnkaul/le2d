@@ -69,15 +69,15 @@ class GamepadButton : public IDigital {
 
 	explicit GamepadButton(int const trigger) : IDigital(trigger) {}
 
-	/// \brief Gamepad ID to listen at.
-	GamepadId id{GamepadId::Primary};
+	/// \brief Gamepad binding.
+	Gamepad::Binding binding{Gamepad::FirstUsed{}};
 
   private:
 	void on_key(event::Key const& /*mb*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
 	void update_gamepad(Gamepad const& gamepad) final;
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return id; }
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return binding; }
 };
 
 /// \brief 1D gamepad axis action.
@@ -93,13 +93,9 @@ class GamepadAxis1D : public IGamepadAxis {
 	/// \brief Matching axis.
 	int axis{};
 
-	/// \brief Gamepad ID to listen at.
-	GamepadId id{GamepadId::Primary};
-
   private:
 	void update_gamepad(Gamepad const& gamepad) final;
 	void disengage() final { m_value = {}; }
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return id; }
 	[[nodiscard]] auto get_value() const -> action::Value final { return m_value; }
 
 	float m_value{};
@@ -120,13 +116,9 @@ class GamepadAxis2D : public IGamepadAxis {
 	/// \brief Matching y axis.
 	int y{};
 
-	/// \brief Gamepad ID to listen at.
-	GamepadId id{GamepadId::Primary};
-
   private:
 	void update_gamepad(Gamepad const& gamepad) final;
 	void disengage() final { m_value = {}; }
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return id; }
 	[[nodiscard]] auto get_value() const -> action::Value final { return m_value; }
 
 	glm::vec2 m_value{};

@@ -13,14 +13,14 @@ void Router::pop_mapping() {
 }
 
 void Router::dispatch(std::span<le::Event const> events) {
-	if (m_primary_gamepad.update_or_autoselect()) {
-		m_last_used_device = Device::PrimaryGamepad;
+	if (m_gamepad_manager.update()) {
+		m_last_used_device = Device::Gamepad;
 	} else if (std::ranges::any_of(events, [](Event const& e) { return std::holds_alternative<event::Key>(e); })) {
 		m_last_used_device = Device::Keyboard;
 	} else if (std::ranges::any_of(events, [](Event const& e) { return std::holds_alternative<event::MouseButton>(e); })) {
 		m_last_used_device = Device::Mouse;
 	}
-	do_dispatch([&](IMapping& mapping) { mapping.dispatch(events, m_primary_gamepad); });
+	do_dispatch([&](IMapping& mapping) { mapping.dispatch(events, m_gamepad_manager); });
 }
 
 void Router::disengage() {

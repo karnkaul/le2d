@@ -4,7 +4,7 @@
 
 namespace le::input {
 /// \brief Input Device enumeration.
-enum class Device : std::int8_t { Keyboard, Mouse, PrimaryGamepad };
+enum class Device : std::int8_t { Keyboard, Mouse, Gamepad };
 
 /// \brief Stack of mappings, routes events to the topmost one.
 class Router {
@@ -30,9 +30,10 @@ class Router {
 	void disengage();
 
 	/// \returns Last used input device, if any.
+	/// Gamepad axes are not considered, a button must be pressed.
 	[[nodiscard]] auto last_used_device() const -> std::optional<Device> { return m_last_used_device; }
-	/// \returns Primary gamepad, ie first one that was active, if any.
-	[[nodiscard]] auto primary_gamepad() const -> Gamepad const& { return m_primary_gamepad; }
+
+	[[nodiscard]] auto gamepad_manager() const -> Gamepad::Manager const& { return m_gamepad_manager; }
 
   private:
 	template <typename F>
@@ -40,7 +41,7 @@ class Router {
 
 	std::vector<gsl::not_null<IMapping*>> m_mappings{};
 
-	Gamepad m_primary_gamepad{};
+	Gamepad::Manager m_gamepad_manager{};
 	std::optional<Device> m_last_used_device{};
 };
 } // namespace le::input

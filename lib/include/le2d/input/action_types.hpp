@@ -3,15 +3,11 @@
 #include <glm/vec2.hpp>
 #include <klib/base_types.hpp>
 #include <le2d/event.hpp>
-#include <le2d/gamepad.hpp>
+#include <le2d/input/gamepad.hpp>
 #include <bitset>
 #include <optional>
 
 namespace le::input {
-/// \brief Strong type wrapper for Gamepad ID.
-/// Primary auto-selects the primary Gamepad, ie first Gamepad on which a button was pressed.
-enum struct GamepadId : std::int8_t { Primary = -1 };
-
 namespace action {
 class Value;
 } // namespace action
@@ -25,7 +21,7 @@ class IAction : public klib::Polymorphic {
 	virtual void update_gamepad(Gamepad const& gamepad) = 0;
 	virtual void disengage() = 0;
 	[[nodiscard]] virtual auto should_dispatch() const -> bool = 0;
-	[[nodiscard]] virtual auto get_gamepad_id() const -> std::optional<GamepadId> = 0;
+	[[nodiscard]] virtual auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> = 0;
 	[[nodiscard]] virtual auto get_value() const -> action::Value = 0;
 };
 
@@ -149,12 +145,15 @@ class IGamepadAxis : public IAction {
 	/// \brief Values with magnitude below this are floored to 0.
 	float dead_zone{dead_zone_v};
 
+	/// \brief Gamepad binding.
+	Gamepad::Binding binding{Gamepad::FirstUsed{}};
+
   private:
 	void on_key(event::Key const& /*key*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
-
 	[[nodiscard]] auto should_dispatch() const -> bool final { return true; }
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return binding; }
 };
 
 /// \brief Class template for actions using key matches.
@@ -168,7 +167,7 @@ class KeyBase : public BaseT {
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return {}; }
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
 };
 
 /// \brief Class template for actions using mouse button matches.
@@ -182,7 +181,7 @@ class MouseButtonBase : public BaseT {
 	void on_mouse_button(event::MouseButton const& mb) final { this->on_input(mb.button, mb.action); }
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return {}; }
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
 };
 
 /// \brief Base class for mouse scroll actions.
@@ -199,7 +198,7 @@ class MouseScrollBase : public IAction {
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
 	void disengage() final { m_value = {}; }
 	[[nodiscard]] auto should_dispatch() const -> bool final;
-	[[nodiscard]] auto get_gamepad_id() const -> std::optional<GamepadId> final { return {}; }
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
 	[[nodiscard]] auto get_value() const -> action::Value final;
 
 	Dim m_dim;

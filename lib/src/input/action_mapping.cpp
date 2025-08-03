@@ -17,7 +17,7 @@ void ActionMapping::unbind_action(gsl::not_null<IAction const*> action) {
 	std::erase_if(m_bindings, [action](Binding const& b) { return b.action == action; });
 }
 
-void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad const& primary) {
+void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) {
 	auto const visitor = klib::SubVisitor{
 		[this](le::event::Key const& key) { iterate([key](IAction& action) { action.on_key(key); }); },
 		[this](le::event::MouseButton const& mb) { iterate([mb](IAction& action) { action.on_mouse_button(mb); }); },
@@ -25,7 +25,7 @@ void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad const& p
 	};
 	for (auto const& event : events) { std::visit(visitor, event); }
 	for (auto& binding : m_bindings) {
-		binding.update_gamepad(primary);
+		binding.update_gamepad(gamepads);
 		binding.dispatch();
 	}
 }
@@ -42,19 +42,12 @@ void ActionMapping::iterate(F func) const {
 	for (auto const& binding : m_bindings) { func(*binding.action); }
 }
 
-void ActionMapping::Binding::update_gamepad(Gamepad const& primary) const {
-	auto const id = action->get_gamepad_id();
-	if (!id) { return; }
-	auto const update = [this](Gamepad const& gamepad) {
-		if (!gamepad.is_connected()) { return; }
-		action->update_gamepad(gamepad);
-	};
-	if (*id == GamepadId::Primary) {
-		update(primary);
-	} else {
-		auto gamepad = Gamepad::get_by_id(static_cast<int>(*id));
-		update(gamepad);
-	}
+void ActionMapping::Binding::update_gamepad(Gamepad::Manager const& gamepads) const {
+	auto const binding = action->get_gamepad_binding();
+	if (!binding) { return; }
+	auto const& gamepad = gamepads.get(*binding);
+	if (!gamepad.is_connected()) { return; }
+	action->update_gamepad(gamepad);
 }
 
 void ActionMapping::Binding::dispatch() {

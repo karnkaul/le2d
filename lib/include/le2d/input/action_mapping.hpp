@@ -29,7 +29,7 @@ class ActionMapping : public IMapping {
 	/// \brief Process events and dispatch callbacks.
 	/// \param events List of events for this frame.
 	/// \param primary Primary gamepad, if any.
-	void dispatch(std::span<le::Event const> events, Gamepad const& primary) override;
+	void dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) override;
 
 	/// \brief Disengage all bindings.
 	void disengage() override;
@@ -42,7 +42,7 @@ class ActionMapping : public IMapping {
 		gsl::not_null<IAction*> action;
 		std::vector<OnAction> callbacks{};
 
-		void update_gamepad(Gamepad const& primary) const;
+		void update_gamepad(Gamepad::Manager const& gamepads) const;
 		void dispatch();
 	};
 
