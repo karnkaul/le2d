@@ -151,7 +151,7 @@ struct Terminal::Impl : IPrinter {
 		log.error("{}", text);
 	}
 
-	void handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events, bool* activated) {
+	auto handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events) -> StateChange {
 		auto const was_active = is_active();
 		auto const visitor = klib::SubVisitor{
 			[this](event::Key const& key) { on_key(key); },
@@ -160,12 +160,15 @@ struct Terminal::Impl : IPrinter {
 			[this](event::Scroll const& scroll) { on_scroll(scroll); },
 		};
 		for (auto const& event : events) { std::visit(visitor, event); }
-		if (activated != nullptr) { *activated = !was_active && is_active(); }
 
 		if (kvf::is_positive(framebuffer_size) && m_framebuffer_size != framebuffer_size) {
 			m_framebuffer_size = framebuffer_size;
 			resize();
 		}
+
+		if (!was_active && is_active()) { return StateChange::Activated; }
+		if (was_active && !is_active()) { return StateChange::Deactivated; }
+		return StateChange::None;
 	}
 
 	void tick(kvf::Seconds const dt) {
@@ -506,8 +509,8 @@ auto Terminal::get_background() const -> kvf::Color { return m_impl->get_backgro
 
 void Terminal::set_background(kvf::Color const color) { m_impl->set_background(color); }
 
-void Terminal::handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events, bool* activated) {
-	m_impl->handle_events(framebuffer_size, events, activated);
+auto Terminal::handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events) -> StateChange {
+	return m_impl->handle_events(framebuffer_size, events);
 }
 
 void Terminal::tick(kvf::Seconds const dt) { m_impl->tick(dt); }

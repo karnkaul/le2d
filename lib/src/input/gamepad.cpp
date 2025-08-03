@@ -20,6 +20,10 @@ auto Gamepad::any_button_pressed() const -> bool {
 	return false;
 }
 
+auto Gamepad::any_axis_nonzero(float const dead_zone) const -> bool {
+	return std::ranges::any_of(m_state.axes, [dead_zone](float const f) { return std::abs(f) >= dead_zone; });
+}
+
 auto Gamepad::is_pressed(int const button) const -> bool {
 	KLIB_ASSERT(button >= 0 && button < int(std::size(m_state.buttons)));
 	// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -68,7 +72,7 @@ auto Gamepad::Manager::get(Binding const binding) const -> Gamepad const& {
 	return std::visit(visitor, binding);
 }
 
-auto Gamepad::Manager::update() -> bool {
+auto Gamepad::Manager::update(float const nonzero_dead_zone) -> bool {
 	static auto const fix_axis_y = [](float& in) { in = -in; };
 	static auto const fix_trigger = [](float& in) { in = (1.0f + in) * 0.5f; };
 	auto ret = false;
@@ -84,7 +88,7 @@ auto Gamepad::Manager::update() -> bool {
 		fix_axis_y(gamepad.m_state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y]);
 		fix_trigger(gamepad.m_state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER]);
 		fix_trigger(gamepad.m_state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER]);
-		if (gamepad.any_button_pressed()) {
+		if (gamepad.any_button_pressed() || gamepad.any_axis_nonzero(nonzero_dead_zone)) {
 			m_last_used = gamepad.m_id;
 			if (!m_first_used) { m_first_used = m_last_used; }
 			ret = true;

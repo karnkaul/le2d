@@ -13,6 +13,9 @@ inline constexpr std::size_t max_gamepads_v = GLFW_JOYSTICK_16;
 /// to get the latest snapshot.
 class Gamepad {
   public:
+	static constexpr float dead_zone_v = 0.08f;
+	static constexpr float nonzero_dead_zone_v = 0.2f;
+
 	class Manager;
 
 	/// \brief Strong type wrapper for Gamepad ID.
@@ -33,6 +36,9 @@ class Gamepad {
 
 	/// \returns true if any button is pressed.
 	[[nodiscard]] auto any_button_pressed() const -> bool;
+	/// \param dead_zone Magnitude floor.
+	/// \returns true if any axis value is above dead_zone.
+	[[nodiscard]] auto any_axis_nonzero(float dead_zone = nonzero_dead_zone_v) const -> bool;
 	/// \param button GLFW_GAMEPAD_BUTTON_<ID>.
 	/// \returns true if button is pressed.
 	[[nodiscard]] auto is_pressed(int button) const -> bool;
@@ -40,7 +46,7 @@ class Gamepad {
 	/// \param dead_zone Magnitude floor.
 	/// \returns (corrected) current value of axis.
 	/// Sticks: [-1, +1], triggers: [0, 1]. All 0 at rest.
-	[[nodiscard]] auto get_axis(int axis, float dead_zone = 0.1f) const -> float;
+	[[nodiscard]] auto get_axis(int axis, float dead_zone = dead_zone_v) const -> float;
 
   private:
 	GLFWgamepadstate m_state{};
@@ -59,8 +65,9 @@ class Gamepad::Manager {
 	[[nodiscard]] auto get(Binding binding) const -> Gamepad const&;
 
 	/// \brief Update all Gamepad states.
+	/// \param nonzero_dead_zone Dead zone for setting first/last used Gamepad.
 	/// \returns true if a Gamepad button was pressed.
-	auto update() -> bool;
+	auto update(float nonzero_dead_zone = nonzero_dead_zone_v) -> bool;
 
   private:
 	std::array<Gamepad, max_gamepads_v> m_gamepads{};
