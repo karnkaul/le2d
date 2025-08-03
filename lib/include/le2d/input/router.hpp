@@ -1,11 +1,9 @@
 #pragma once
+#include <le2d/input/device.hpp>
 #include <le2d/input/mapping.hpp>
 #include <optional>
 
 namespace le::input {
-/// \brief Input Device enumeration.
-enum class Device : std::int8_t { Keyboard, Mouse, Gamepad };
-
 /// \brief Stack of mappings, routes events to the topmost one.
 class Router {
   public:
