@@ -62,6 +62,21 @@ class MouseScroll2D : public MouseScrollBase {
 	explicit MouseScroll2D() : MouseScrollBase(Dim::Two) {}
 };
 
+class Cursor : public IAction {
+	void on_key(event::Key const& /*mb*/) final {}
+	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
+	void on_scroll(event::Scroll const& /*scroll*/) final {}
+	void on_cursor_pos(event::CursorPos const& cursor_pos) final;
+	void update_gamepad(Gamepad const& /*gamepad*/) final {}
+	void disengage() final {}
+	[[nodiscard]] auto should_dispatch() const -> bool final;
+	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
+	[[nodiscard]] auto get_value() const -> action::Value final { return m_value; }
+
+	glm::vec2 m_value{};
+	mutable bool m_changed{};
+};
+
 /// \brief Digital action for a primary gamepad button match.
 class GamepadButton : public IDigital {
   public:
@@ -76,6 +91,7 @@ class GamepadButton : public IDigital {
 	void on_key(event::Key const& /*mb*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
+	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
 	void update_gamepad(Gamepad const& gamepad) final;
 	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return binding; }
 };

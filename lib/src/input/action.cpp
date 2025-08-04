@@ -79,6 +79,13 @@ auto MouseScrollBase::get_value() const -> action::Value {
 	}
 }
 
+void Cursor::on_cursor_pos(event::CursorPos const& cursor_pos) {
+	m_value = cursor_pos.normalized;
+	m_changed = true;
+}
+
+auto Cursor::should_dispatch() const -> bool { return std::exchange(m_changed, false); }
+
 void GamepadButton::update_gamepad(Gamepad const& gamepad) {
 	auto const is_pressed = gamepad.is_pressed(match);
 	on_input(match, is_pressed ? GLFW_PRESS : GLFW_RELEASE);

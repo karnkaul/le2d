@@ -22,6 +22,7 @@ void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad::Manager
 		[this](le::event::Key const& key) { iterate([key](IAction& action) { action.on_key(key); }); },
 		[this](le::event::MouseButton const& mb) { iterate([mb](IAction& action) { action.on_mouse_button(mb); }); },
 		[this](le::event::Scroll const& scroll) { iterate([scroll](IAction& action) { action.on_scroll(scroll); }); },
+		[this](le::event::CursorPos const& pos) { iterate([pos](IAction& action) { action.on_cursor_pos(pos); }); },
 	};
 	for (auto const& event : events) { std::visit(visitor, event); }
 	for (auto& binding : m_bindings) {
