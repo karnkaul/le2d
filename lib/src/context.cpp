@@ -73,7 +73,7 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 }
 
 Context::Context(CreateInfo const& create_info)
-	: m_window(std::make_unique<detail::RenderWindow>(create_info.window, create_info.render_device)),
+	: m_window(std::make_unique<detail::RenderWindow>(create_info.platform_flags, create_info.window, create_info.render_device)),
 	  m_pass(&m_window->get_render_device(), create_info.framebuffer_samples),
 	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())) {
 

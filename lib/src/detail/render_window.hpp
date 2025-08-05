@@ -2,13 +2,14 @@
 #include <klib/assert.hpp>
 #include <klib/visitor.hpp>
 #include <le2d/render_window.hpp>
+#include <log.hpp>
 #include <array>
 
 namespace le::detail {
 class RenderWindow : public IRenderWindow {
   public:
-	explicit RenderWindow(WindowCreateInfo const& wci, kvf::RenderDeviceCreateInfo const& rdci = {})
-		: m_window(create_window(wci)), m_render_device(m_window.get(), rdci) {}
+	explicit RenderWindow(PlatformFlag const platform_flags, WindowCreateInfo const& wci, kvf::RenderDeviceCreateInfo const& rdci = {})
+		: m_window(create_window(platform_flags, wci)), m_render_device(m_window.get(), rdci) {}
 
   private:
 	template <klib::EnumT E>
@@ -31,7 +32,8 @@ class RenderWindow : public IRenderWindow {
 
 	[[nodiscard]] static auto self(GLFWwindow* window) -> RenderWindow& { return *static_cast<RenderWindow*>(glfwGetWindowUserPointer(window)); }
 
-	[[nodiscard]] auto create_window(WindowCreateInfo const& wci) -> kvf::UniqueWindow {
+	[[nodiscard]] auto create_window(PlatformFlag const platform_flags, WindowCreateInfo const& wci) -> kvf::UniqueWindow {
+		set_platform_flags(platform_flags);
 		auto const visitor = klib::Visitor{
 			[](WindowInfo const& wi) {
 				using Hint = kvf::WindowHint;
@@ -56,6 +58,19 @@ class RenderWindow : public IRenderWindow {
 		set_glfw_callbacks(ret.get());
 		if (glfwRawMouseMotionSupported() == GLFW_TRUE) { glfwSetInputMode(m_window.get(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); }
 		return ret;
+	}
+
+	static void set_platform_flags(PlatformFlag const flags) {
+		auto forcing_x11 = false;
+		if ((flags & PlatformFlag::ForceX11) == PlatformFlag::ForceX11 && glfwPlatformSupported(GLFW_PLATFORM_X11)) {
+			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+			forcing_x11 = true;
+			log.info("-- Forcing X11");
+		}
+		if (!forcing_x11 && (flags & PlatformFlag::NoLibdecor) == PlatformFlag::NoLibdecor && glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
+			glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+			log.info("-- Disabling libdecor");
+		}
 	}
 
 	static void set_glfw_callbacks(GLFWwindow* window) {
