@@ -62,6 +62,7 @@ class MouseScroll2D : public MouseScrollBase {
 	explicit MouseScroll2D() : MouseScrollBase(Dim::Two) {}
 };
 
+/// \brief Mouse cursor.
 class Cursor : public IAction {
 	void on_key(event::Key const& /*mb*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
