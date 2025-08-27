@@ -15,6 +15,9 @@ class Router {
 	/// \brief Pop the topmost mapping, if any.
 	void pop_mapping();
 
+	/// \brief Remove a particular mapping, if mapped.
+	void remove_mapping(gsl::not_null<IMapping const*> mapping);
+
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
 	/// \returns true if there are no mappings pushed.

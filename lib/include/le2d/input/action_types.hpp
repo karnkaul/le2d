@@ -18,6 +18,7 @@ class IAction : public klib::Polymorphic {
 	virtual void on_key(event::Key const& key) = 0;
 	virtual void on_mouse_button(event::MouseButton const& mb) = 0;
 	virtual void on_scroll(event::Scroll const& scroll) = 0;
+	virtual void on_cursor_pos(event::CursorPos const& cursor_pos) = 0;
 	virtual void update_gamepad(Gamepad const& gamepad) = 0;
 	virtual void disengage() = 0;
 	[[nodiscard]] virtual auto should_dispatch() const -> bool = 0;
@@ -152,6 +153,7 @@ class IGamepadAxis : public IAction {
 	void on_key(event::Key const& /*key*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
+	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
 	[[nodiscard]] auto should_dispatch() const -> bool final { return true; }
 	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return binding; }
 };
@@ -166,6 +168,7 @@ class KeyBase : public BaseT {
 	void on_key(event::Key const& key) final { this->on_input(key.key, key.action); }
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
+	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
 	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
 };
@@ -180,6 +183,7 @@ class MouseButtonBase : public BaseT {
 	void on_key(event::Key const& /*mb*/) final {}
 	void on_mouse_button(event::MouseButton const& mb) final { this->on_input(mb.button, mb.action); }
 	void on_scroll(event::Scroll const& /*scroll*/) final {}
+	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
 	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return {}; }
 };
@@ -195,6 +199,7 @@ class MouseScrollBase : public IAction {
 	void on_key(event::Key const& /*mb*/) final {}
 	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
 	void on_scroll(event::Scroll const& scroll) final;
+	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
 	void disengage() final { m_value = {}; }
 	[[nodiscard]] auto should_dispatch() const -> bool final;

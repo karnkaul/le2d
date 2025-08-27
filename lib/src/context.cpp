@@ -14,7 +14,7 @@
 
 namespace le {
 namespace {
-constexpr auto to_vsync(vk::PresentModeKHR const mode) {
+[[nodiscard]] constexpr auto to_vsync(vk::PresentModeKHR const mode) {
 	switch (mode) {
 	case vk::PresentModeKHR::eFifoRelaxed: return Vsync::Adaptive;
 	case vk::PresentModeKHR::eMailbox: return Vsync::MultiBuffer;
@@ -24,13 +24,24 @@ constexpr auto to_vsync(vk::PresentModeKHR const mode) {
 	}
 }
 
-constexpr auto to_mode(Vsync const vsync) {
+[[nodiscard]] constexpr auto to_mode(Vsync const vsync) {
 	switch (vsync) {
 	case Vsync::Adaptive: return vk::PresentModeKHR::eFifoRelaxed;
 	case Vsync::MultiBuffer: return vk::PresentModeKHR::eMailbox;
 	case Vsync::Off: return vk::PresentModeKHR::eImmediate;
 	default:
 	case Vsync::Strict: return vk::PresentModeKHR::eFifo;
+	}
+}
+
+[[nodiscard]] constexpr auto glfw_platform_str(int const platform) -> std::string_view {
+	switch (platform) {
+	case GLFW_PLATFORM_NULL: return "Null";
+	case GLFW_PLATFORM_WIN32: return "Win32";
+	case GLFW_PLATFORM_X11: return "X11";
+	case GLFW_PLATFORM_WAYLAND: return "Wayland";
+	case GLFW_PLATFORM_COCOA: return "Cocoa";
+	default: return "[unknown]";
 	}
 }
 
@@ -62,7 +73,7 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 }
 
 Context::Context(CreateInfo const& create_info)
-	: m_window(std::make_unique<detail::RenderWindow>(create_info.window, create_info.render_device)),
+	: m_window(std::make_unique<detail::RenderWindow>(create_info.platform_flags, create_info.window, create_info.render_device)),
 	  m_pass(&m_window->get_render_device(), create_info.framebuffer_samples),
 	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())) {
 
@@ -74,7 +85,7 @@ Context::Context(CreateInfo const& create_info)
 	m_supported_vsync.reserve(supported_modes.size());
 	for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
 
-	log.info("[{}] Context initialized", build_version_v);
+	log.info("[{}] Context initialized, platform: {}", build_version_v, glfw_platform_str(glfwGetPlatform()));
 	m_on_destroy.reset(this);
 }
 

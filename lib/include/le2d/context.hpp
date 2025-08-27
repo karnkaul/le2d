@@ -13,6 +13,8 @@
 namespace le {
 /// \brief Context creation parameters.
 struct ContextCreateInfo {
+	/// \brief Platform flags.
+	PlatformFlag platform_flags{PlatformFlag::None};
 	/// \brief Window creation parameters.
 	WindowCreateInfo window{WindowInfo{}};
 	/// \brief Render Device creation parameters.

@@ -12,6 +12,10 @@ void Router::pop_mapping() {
 	m_mappings.pop_back();
 }
 
+void Router::remove_mapping(gsl::not_null<IMapping const*> mapping) {
+	std::erase_if(m_mappings, [mapping](gsl::not_null<IMapping*> m) { return m == mapping; });
+}
+
 void Router::dispatch(std::span<le::Event const> events) {
 	if (m_gamepad_manager.update(nonzero_dead_zone)) {
 		m_last_used_device = Device::Gamepad;

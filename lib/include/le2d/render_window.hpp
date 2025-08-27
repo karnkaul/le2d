@@ -8,14 +8,26 @@
 #include <variant>
 
 namespace le {
+enum class PlatformFlag : std::uint8_t;
 enum class WindowFlag : std::uint8_t;
-}
+} // namespace le
 
 template <>
 inline constexpr auto klib::enable_enum_ops_v<le::WindowFlag> = true;
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::PlatformFlag> = true;
 
 namespace le {
-/// \brief Window creation flags.
+/// \brief Platform flags (GLFW init hints).
+enum class PlatformFlag : std::uint8_t {
+	None = 0,
+	/// \brief Force X11 backend instead of Wayland (only relevant on Linux).
+	ForceX11,
+	/// \brief Disable libdecor (only relevant on Wayland).
+	NoLibdecor,
+};
+
+/// \brief Window creation flags (GLFW window hints).
 enum class WindowFlag : std::uint8_t {
 	None = 0,
 	/// \brief Window is decorated (has title bar, close button, etc).
