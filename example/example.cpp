@@ -8,11 +8,11 @@ namespace example {
 namespace {
 void run() {
 	// all members are constexpr-friendly.
-	static constexpr auto context_create_info_v = le::ContextCreateInfo{
+	static constexpr auto context_create_info_v = le::Context::CreateInfo{
 		.window = le::WindowInfo{.size = {800, 600}, .title = "My Window"},
 	};
 	// create a Context instance.
-	auto context = le::IContext::create(context_create_info_v);
+	auto context = le::Context::create(context_create_info_v);
 
 	// create a DeltaTime instance.
 	auto delta_time = kvf::DeltaTime{};
@@ -76,7 +76,7 @@ void run() {
 			// for example, if you want to close the window on Escape key press:
 			if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
 				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
-					context->shutdown(); // set the close flag.
+					context->set_window_close(); // set the close flag.
 				}
 			}
 		}

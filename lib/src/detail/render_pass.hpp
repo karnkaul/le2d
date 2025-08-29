@@ -33,6 +33,8 @@ class RenderPass : public IRenderPass {
 
 	void set_clear_color(kvf::Color const color) final { m_render_pass.clear_color = color.to_linear(); }
 
+	void recreate(vk::SampleCountFlagBits const samples) final { m_render_pass.recreate(samples); }
+
 	[[nodiscard]] auto create_renderer() -> std::unique_ptr<IRenderer> final { return std::make_unique<Renderer>(&m_render_pass, m_resource_pool); }
 
   private:

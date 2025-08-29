@@ -2,7 +2,7 @@
 #include <le2d/context.hpp>
 
 namespace le::console {
-CmdVsync::CmdVsync(le::IContext& context) : m_context(context) {
+CmdVsync::CmdVsync(le::Context& context) : m_context(context) {
 	m_args.push_back(klib::args::named_flag(m_list, "l,list", "list supported vsync modes"));
 	m_args.push_back(klib::args::named_flag(m_all, "a,all", "print all vsync modes"));
 	m_args.push_back(klib::args::positional_optional(m_input, "MODE", "desired mode", &m_input_passed));

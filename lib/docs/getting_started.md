@@ -6,19 +6,19 @@ The most basic use of `le2d` is to create a window and use Dear ImGui in a game(
 
 ```cpp
 // create a Context instance.
-auto context = le::Context{};
+auto context = le::Context::create();
 
 // loop while context is running (ie, window is open).
-while (context.is_running()) {
+while (context->is_running()) {
   // start the next frame. This polls events and waits for any
   // previous renders on the virtual frame to complete.
-  context.next_frame();
+  context->next_frame();
 
   // this is the 'tick' / 'update' section.
   ImGui::ShowDemoWindow(); // or draw your own ImGui widgets.
 
   // submit the frame for presentation.
-  context.present();
+  context->present();
 }
 ```
 
@@ -31,7 +31,7 @@ while (context.is_running()) {
 static constexpr auto context_create_info_v = le::Context::CreateInfo{
   .window = le::WindowInfo{.size = {400, 300}, .title = "My Window"},
 };
-auto context = le::Context{context_create_info_v};
+auto context = le::IContext::create(context_create_info_v);
 // ...
 ```
 
@@ -46,20 +46,19 @@ auto quad = le::drawable::Quad{};
 quad.create({100.0f, 100.0f});
 
 // loop while context is running (ie, window is open).
-while (context.is_running()) {
+while (context->is_running()) {
   // start the next frame. This polls events and waits for any
   // previous renders on the virtual frame to complete.
-  context.next_frame();
+  context->next_frame();
 
   // begin the primary render pass.
-  if (auto renderer = context.begin_render()) {
+  if (auto& renderer = context->begin_render()) {
     // draw quad.
     quad.draw(renderer);
-  } // Renderer's destructor will call end_render().
-  // It can also be explicitly/redundantly called inside the if block.
+  }
 
   // submit the frame for presentation.
-  context.present();
+  context->present();
 }
 ```
 
@@ -67,18 +66,18 @@ while (context.is_running()) {
 
 ## Handling Events
 
-Events are encoded as a variant in `le::Event`. `le::Context` (and its underlying `le::RenderWindow`) maintain an event queue which should be iterated every frame.
+Events are encoded as a variant in `le::Event`. `le::Context` maintains an event queue which should be iterated over every frame.
 
 ```cpp
 // ...
-context.next_frame();
+context->next_frame();
 
-for (auto const& event : context.event_queue()) {
+for (auto const& event : context->event_queue()) {
   // handle events here.
   // for example, if you want to close the window on Escape key press:
   if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
     if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
-      context.shutdown(); // set the close flag.
+      context->set_window_close(); // set the close flag.
     }
   }
 }
@@ -86,19 +85,19 @@ for (auto const& event : context.event_queue()) {
 // ...
 ```
 
-Note that `le::Context::shutdown()` doesn't immediately close the window, it just sets the close flag so that `le::Context::is_running()` returns `false` in the next game loop iteration. The same flag is set when the user clicks X / requests the window to be closed, and can thus be unset, eg for quit confirmation.
+Note that `le::Context::set_window_close()` doesn't immediately close the window, it just sets the close flag so that `le::Context::is_running()` returns `false` in the next game loop iteration. The same flag is set when the user clicks X / requests the window to be closed, and can thus be unset, eg for quit confirmation.
 
 ### Delta Time
 
 `kvf::DeltaTime` can be used to track frame time in a central place:
 
 ```cpp
-auto context = le::Context{context_create_info_v};
+auto context = le::IContext::create(context_create_info_v);
 
 // create a DeltaTime instance.
 auto delta_time = kvf::DeltaTime{};
 // ...
-while (context.is_running()) {
+while (context->is_running()) {
   // ...
   // compute the delta time (in float seconds).
   auto const dt = delta_time.tick();
@@ -127,13 +126,13 @@ A `le::FileDataLoader` instance can be used to load binary data from files in `a
 auto const data_loader = le::FileDataLoader{"assets"};
 
 // create an AssetLoader instance to load shared resources.
-auto const asset_loader = context.create_asset_loader(&data_loader);
+auto const asset_loader = context->create_asset_loader(&data_loader);
 
 // TODO: load assets/resources here.
 
 // the waiter blocks on destruction until the context is idle,
 // after which the loaded resources can be safely destroyed.
-auto const waiter = context.create_waiter();
+auto const waiter = context->create_waiter();
 ```
 
 ### Drawing a Textured Quad
@@ -208,7 +207,7 @@ auto audio_played = false;
 audio_wait -= dt;
 if (audio_wait < 0s && !audio_played) {
   // play the loaded audio buffer.
-  context.get_audio_mixer().play_sfx(audio_buffer.get());
+  context->get_audio_mixer().play_sfx(audio_buffer.get());
   audio_played = true;
 }
 ```

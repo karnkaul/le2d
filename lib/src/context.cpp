@@ -123,7 +123,7 @@ struct AssetLoaderBuilder {
 	IResourceFactory const& resource_factory;
 };
 
-class ContextImpl : public IContext {
+class ContextImpl : public Context {
   public:
 	class Waiter;
 
@@ -153,123 +153,8 @@ class ContextImpl : public IContext {
 	}
 
   private:
-	static constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size) -> glm::vec2 {
-		if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
-		return fb_size / w_size;
-	}
-
-	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
-	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& final { return *m_render_device; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resource_factory; }
-	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resource_pool->get_default_shader(); }
-
-	[[nodiscard]] auto get_title() const -> klib::CString final { return glfwGetWindowTitle(get_window()); }
-
-	void set_title(klib::CString const title) const final { glfwSetWindowTitle(get_window(), title.c_str()); }
-
-	[[nodiscard]] auto get_refresh_rate() const -> std::int32_t final {
-		if (auto const display = window_display(get_window())) { return display->video_mode->refreshRate; }
-		if (auto const display = fastest_display()) { return display->video_mode->refreshRate; }
-		return 0;
-	}
-
-	[[nodiscard]] auto event_queue() const -> std::span<Event const> final { return m_event_queue; }
-
-	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
-	auto set_render_scale(float scale) -> bool final {
-		if (scale < min_render_scale_v || scale > max_render_scale_v) { return false; }
-		m_render_scale = scale;
-		return true;
-	}
-
-	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> final { return m_supported_vsync; }
-	[[nodiscard]] auto get_vsync() const -> Vsync final { return to_vsync(m_render_device->get_present_mode()); }
-	auto set_vsync(Vsync vsync) -> bool final {
-		if (vsync == get_vsync()) { return true; }
-		auto const supported = get_supported_vsync();
-		if (std::ranges::find(supported, vsync) == supported.end()) { return false; }
-		m_render_device->set_present_mode(to_mode(vsync));
-		return true;
-	}
-
-	auto set_fullscreen(GLFWmonitor* target) -> bool final {
-		set_visible(true);
-		auto const display = target_display(target);
-		if (!display) { return false; }
-		auto const* vm = display->video_mode.get();
-		glfwSetWindowMonitor(get_window(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
-		return true;
-	}
-	void set_windowed(glm::ivec2 const size = {1280, 720}) final {
-		set_visible(true);
-		if (!kvf::is_positive(size)) { return; }
-		if (is_fullscreen()) {
-			glfwSetWindowMonitor(get_window(), nullptr, 0, 0, size.x, size.y, 0);
-		} else {
-			glfwSetWindowSize(get_window(), size.x, size.y);
-		}
-	}
-	void set_visible(bool const visible) final {
-		if (visible) {
-			glfwShowWindow(get_window());
-		} else {
-			glfwHideWindow(get_window());
-		}
-	}
-
-	/// \returns Current MSAA samples.
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_pass->get_samples()); }
-	/// \returns Supported MSAA samples.
-	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
-		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
-	}
-	auto set_samples(vk::SampleCountFlagBits samples) -> bool final {
-		if (samples == get_samples()) { return true; }
-		if ((get_supported_samples() & samples) != samples) { return false; }
-		m_requests.set_samples = samples;
-		return true;
-	}
-
-	auto next_frame() -> vk::CommandBuffer final {
-		m_event_queue.clear();
-		m_drops.clear();
-		m_cmd = m_render_device->next_frame();
-		++m_fps.counter;
-		process_requests();
-		m_frame_start = kvf::Clock::now();
-		return m_cmd;
-	}
-	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& final {
-		m_renderer->begin_render(m_cmd, main_pass_size(), clear);
-		return *m_renderer;
-	}
-	void present() final {
-		m_renderer->end_render();
-		auto const present_start = kvf::Clock::now();
-		m_render_device->render(m_pass->get_render_target());
-		m_cmd = vk::CommandBuffer{};
-		update_stats(present_start);
-	}
-
-	void wait_idle() final {
-		m_render_device->get_device().waitIdle();
-		m_audio_mixer->stop_all();
-	}
-
-	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
-
-	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> final {
-		return std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), samples);
-	}
-	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader final {
-		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
-		return builder.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader,
-							 FlipbookAnimationLoader>();
-	}
-
 	struct OnDestroy {
-		void operator()(IContext* ptr) const noexcept {
+		void operator()(Context* ptr) const noexcept {
 			if (!ptr) { return; }
 			log.info("Context shutting down");
 			ptr->wait_idle();
@@ -288,12 +173,84 @@ class ContextImpl : public IContext {
 		std::optional<vk::SampleCountFlagBits> set_samples{};
 	};
 
+	static constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size) -> glm::vec2 {
+		if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
+		return fb_size / w_size;
+	}
+
+	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
+	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& final { return *m_render_device; }
+	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resource_factory; }
+	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_audio_mixer; }
+	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resource_pool->get_default_shader(); }
+
+	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
+	auto set_render_scale(float scale) -> bool final {
+		if (scale < min_render_scale_v || scale > max_render_scale_v) { return false; }
+		m_render_scale = scale;
+		return true;
+	}
+
+	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> final { return m_supported_vsync; }
+	[[nodiscard]] auto get_vsync() const -> Vsync final { return to_vsync(m_render_device->get_present_mode()); }
+	auto set_vsync(Vsync vsync) -> bool final {
+		if (vsync == get_vsync()) { return true; }
+		auto const supported = get_supported_vsync();
+		if (std::ranges::find(supported, vsync) == supported.end()) { return false; }
+		m_render_device->set_present_mode(to_mode(vsync));
+		return true;
+	}
+
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_pass->get_samples()); }
+	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
+		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
+	}
+	auto set_samples(vk::SampleCountFlagBits const samples) -> bool final {
+		if (samples == get_samples()) { return true; }
+		if ((get_supported_samples() & samples) != samples) { return false; }
+		m_requests.set_samples = samples;
+		return true;
+	}
+
+	auto next_frame() -> vk::CommandBuffer final {
+		m_event_queue.clear();
+		m_drops.clear();
+		m_cmd = m_render_device->next_frame();
+		++m_fps.counter;
+		process_requests();
+		m_frame_start = kvf::Clock::now();
+		return m_cmd;
+	}
+	[[nodiscard]] auto event_queue() const -> std::span<Event const> final { return m_event_queue; }
+	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& final {
+		m_renderer->begin_render(m_cmd, main_pass_size(), clear);
+		return *m_renderer;
+	}
+	void present() final {
+		m_renderer->end_render();
+		auto const present_start = kvf::Clock::now();
+		m_render_device->render(m_pass->get_render_target());
+		m_cmd = vk::CommandBuffer{};
+		update_stats(present_start);
+	}
+
+	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
+
+	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> final {
+		return std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), samples);
+	}
+	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader final {
+		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
+		return builder.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader,
+							 FlipbookAnimationLoader>();
+	}
+
 	void process_requests() {
 		if (m_requests.is_empty()) { return; }
 
 		m_render_device->get_device().waitIdle();
 		if (m_requests.set_samples) {
-			m_pass = create_render_pass(*m_requests.set_samples);
+			m_pass->recreate(*m_requests.set_samples);
 			m_requests.set_samples.reset();
 		}
 	}
@@ -414,25 +371,70 @@ class ContextImpl : public IContext {
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
 
-	std::unique_ptr<IContext, OnDestroy> m_on_destroy{};
+	std::unique_ptr<Context, OnDestroy> m_on_destroy{};
 };
 } // namespace
 
-auto IContext::create(CreateInfo const& create_info) -> std::unique_ptr<IContext> { return std::make_unique<ContextImpl>(create_info); }
+auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> { return std::make_unique<ContextImpl>(create_info); }
 
-auto IContext::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
-auto IContext::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
-auto IContext::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_framebuffer_extent(); }
-auto IContext::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
-auto IContext::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
+auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
+auto Context::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
+auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_framebuffer_extent(); }
+auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
+auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 
-auto IContext::is_running() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
+auto Context::get_title() const -> klib::CString { return glfwGetWindowTitle(get_window()); }
+
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void IContext::shutdown() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
+void Context::set_title(klib::CString const title) { glfwSetWindowTitle(get_window(), title.c_str()); }
+
+auto Context::get_refresh_rate() const -> std::int32_t {
+	if (auto const display = window_display(get_window())) { return display->video_mode->refreshRate; }
+	if (auto const display = fastest_display()) { return display->video_mode->refreshRate; }
+	return 0;
+}
+
+auto Context::is_fullscreen() const -> bool { return glfwGetWindowMonitor(get_window()) != nullptr; }
+
+auto Context::set_fullscreen(GLFWmonitor* target) -> bool {
+	set_visible(true);
+	auto const display = target_display(target);
+	if (!display) { return false; }
+	auto const* vm = display->video_mode.get();
+	glfwSetWindowMonitor(get_window(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
+	return true;
+}
+
+void Context::set_windowed(glm::ivec2 const size) {
+	set_visible(true);
+	if (!kvf::is_positive(size)) { return; }
+	if (is_fullscreen()) {
+		glfwSetWindowMonitor(get_window(), nullptr, 0, 0, size.x, size.y, 0);
+	} else {
+		glfwSetWindowSize(get_window(), size.x, size.y);
+	}
+}
+
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void IContext::cancel_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_FALSE); }
+void Context::set_visible(bool const visible) {
+	if (visible) {
+		glfwShowWindow(get_window());
+	} else {
+		glfwHideWindow(get_window());
+	}
+}
 
-auto IContext::is_fullscreen() const -> bool { return glfwGetWindowMonitor(get_window()) != nullptr; }
+auto Context::is_running() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void Context::set_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void Context::cancel_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_FALSE); }
 
-auto IContext::create_waiter() -> Waiter { return Waiter{this}; }
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void Context::wait_idle() {
+	get_render_device().get_device().waitIdle();
+	get_audio_mixer().stop_all();
+}
+
+auto Context::create_waiter() -> Waiter { return Waiter{this}; }
 } // namespace le

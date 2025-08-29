@@ -84,7 +84,7 @@ void Applet::do_tick(kvf::Seconds const dt) {
 		ImGui::OpenPopup(ConfirmExitDialog::label_v.c_str());
 	}
 	auto const result = m_confirm_exit();
-	if (result == ConfirmExitDialog::Result::Quit) { get_context().shutdown(); }
+	if (result == ConfirmExitDialog::Result::Quit) { get_context().set_window_close(); }
 }
 
 auto Applet::try_exit() -> bool {

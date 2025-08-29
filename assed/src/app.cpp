@@ -20,7 +20,7 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 }
 } // namespace
 
-App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(IContext::create(context_create_info_v)) {}
+App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(Context::create(context_create_info_v)) {}
 
 void App::run() {
 	m_waiter = m_context->create_waiter();
@@ -133,7 +133,7 @@ void App::try_exit() {
 	if (!m_applet->try_exit()) {
 		m_context->cancel_window_close();
 	} else {
-		m_context->shutdown();
+		m_context->set_window_close();
 	}
 }
 } // namespace le::assed
