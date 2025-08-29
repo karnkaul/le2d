@@ -4,12 +4,12 @@
 #include <vector>
 
 namespace le {
-class Context;
+class IContext;
 
 namespace console {
 class CmdVsync : public le::console::ICommand {
   public:
-	explicit CmdVsync(le::Context& context);
+	explicit CmdVsync(le::IContext& context);
 
   private:
 	[[nodiscard]] auto get_args() const -> std::span<klib::args::Arg const> final { return m_args; }
@@ -17,7 +17,7 @@ class CmdVsync : public le::console::ICommand {
 
 	void list(le::console::IPrinter& printer, bool all) const;
 
-	le::Context& m_context;
+	le::IContext& m_context;
 
 	std::string_view m_input{};
 	bool m_input_passed{};

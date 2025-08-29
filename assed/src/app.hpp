@@ -39,7 +39,7 @@ class App : public klib::Pinned {
 
 	FileDataLoader m_data_loader;
 
-	Context m_context;
+	std::unique_ptr<IContext> m_context{};
 	input::Dispatch m_input_dispatch{};
 	AssetLoader m_asset_loader{};
 
@@ -50,6 +50,6 @@ class App : public klib::Pinned {
 	std::string_view m_next_applet{};
 	kvf::DeltaTime m_delta_time{};
 
-	Context::Waiter m_waiter{};
+	IContext::Waiter m_waiter{};
 };
 } // namespace le::assed

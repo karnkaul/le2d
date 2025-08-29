@@ -5,7 +5,7 @@
 
 namespace le::assed {
 FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_tile_sheet(services->get<Context>().get_resource_factory().create_tilesheet()) {
+	: Applet(services), m_tile_sheet(get_context().get_resource_factory().create_tilesheet()) {
 	m_drawer.quad.create();
 	m_drawer.quad.texture = m_tile_sheet.get();
 	m_sprite.set_base_size(glm::vec2{200.0f});

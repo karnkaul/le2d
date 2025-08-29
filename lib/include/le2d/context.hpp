@@ -27,7 +27,7 @@ struct ContextCreateInfo {
 
 /// \brief Central API for most of the engine / framework.
 /// Encapsulates RenderWindow, primary RenderPass, Audio Engine.
-class Context : public klib::Pinned {
+class IContext : public klib::Polymorphic {
   public:
 	/// \brief RAII wrapper over wait_idle().
 	class Waiter;
@@ -38,150 +38,103 @@ class Context : public klib::Pinned {
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
 
-	/// \param create_info Creation parameters.
-	explicit Context(CreateInfo const& create_info = {});
+	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<IContext>;
 
-	[[nodiscard]] auto get_render_window() const -> IRenderWindow const& { return *m_window; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
-	[[nodiscard]] auto get_resource_pool() const -> IResourcePool& { return *m_resource_pool; }
-	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] virtual auto get_render_window() const -> IRenderWindow const& = 0;
+	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
+	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
+	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
 
 	/// \returns Current size of swapchain images.
-	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window->framebuffer_size(); }
+	[[nodiscard]] virtual auto swapchain_size() const -> glm::ivec2 = 0;
 	/// \returns Scaled render framebuffer size.
-	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
+	[[nodiscard]] virtual auto framebuffer_size() const -> glm::ivec2 = 0;
 	/// \returns Events that occurred since the last frame.
-	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window->event_queue(); }
+	[[nodiscard]] virtual auto event_queue() const -> std::span<Event const> = 0;
 
 	/// \brief Check if Window is (and should remain) open.
 	/// \returns true unless the close flag has been set.
-	[[nodiscard]] auto is_running() const -> bool { return m_window->is_open(); }
+	[[nodiscard]] virtual auto is_running() const -> bool = 0;
 	/// \brief Set the Window close flag.
 	/// Note: the window will remain visible until this object is destroyed by owning code.
-	void shutdown() { m_window->set_closing(); }
+	virtual void shutdown() = 0;
 	/// \brief Reset the Window close flag.
-	void cancel_window_close() { m_window->cancel_close(); }
+	virtual void cancel_window_close() = 0;
 
 	/// \returns Current render scale.
-	[[nodiscard]] auto get_render_scale() const -> float { return m_render_scale; }
+	[[nodiscard]] virtual auto get_render_scale() const -> float = 0;
 	/// \param scale Desired render scale.
 	/// \returns true if desired scale is within limits.
-	auto set_render_scale(float scale) -> bool;
+	virtual auto set_render_scale(float scale) -> bool = 0;
 
 	/// \returns List of supported Vsync modes.
-	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> { return m_supported_vsync; }
+	[[nodiscard]] virtual auto get_supported_vsync() const -> std::span<Vsync const> = 0;
 	/// \returns Current Vsync mode.
-	[[nodiscard]] auto get_vsync() const -> Vsync;
+	[[nodiscard]] virtual auto get_vsync() const -> Vsync = 0;
 	/// \param vsync Desired Vsync mode.
 	/// \returns true if desired mode is supported.
-	auto set_vsync(Vsync vsync) -> bool;
+	virtual auto set_vsync(Vsync vsync) -> bool = 0;
 
 	/// \brief Show window and set fullscreen.
 	/// \param target Target monitor (optional).
 	/// \returns true if successful.
-	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
+	virtual auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool = 0;
 	/// \brief Show window and set windowed with given size.
 	/// \param size Window size. Must be positive.
-	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
+	virtual void set_windowed(glm::ivec2 size = {1280, 720}) = 0;
 	/// \brief Show/hide window.
-	void set_visible(bool const visible) { m_window->set_visible(visible); }
+	virtual void set_visible(bool visible) = 0;
 
 	/// \returns Current MSAA samples.
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits;
+	[[nodiscard]] virtual auto get_samples() const -> vk::SampleCountFlagBits = 0;
 	/// \returns Supported MSAA samples.
-	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags;
+	[[nodiscard]] virtual auto get_supported_samples() const -> vk::SampleCountFlags = 0;
 	/// \brief Set desired MSAA samples.
 	/// RenderPass will be recreated on the next frame, not immediately.
 	/// \returns true unless not supported.
-	auto set_samples(vk::SampleCountFlagBits samples) -> bool;
+	virtual auto set_samples(vk::SampleCountFlagBits samples) -> bool = 0;
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
 	/// \returns Current virtual frame's Command Buffer.
-	auto next_frame() -> vk::CommandBuffer;
+	virtual auto next_frame() -> vk::CommandBuffer = 0;
 	/// \brief Begin rendering the primary RenderPass.
 	/// \param clear Clear color.
 	/// \returns Renderer instance.
-	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer&;
+	[[nodiscard]] virtual auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& = 0;
 	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
-	void present();
+	virtual void present() = 0;
 
 	/// \brief Wait for the graphics and audio devices to become idle.
 	/// Does not account for user owned audio sources.
-	void wait_idle();
+	virtual void wait_idle() = 0;
 
-	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
+	[[nodiscard]] virtual auto get_frame_stats() const -> FrameStats const& = 0;
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
-	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass>;
-	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
-
-  private:
-	struct OnDestroy {
-		void operator()(Context* ptr) const noexcept;
-	};
-
-	struct Fps {
-		std::int32_t counter{};
-		std::int32_t value{};
-		kvf::Seconds elapsed{};
-	};
-
-	struct Requests {
-		[[nodiscard]] auto is_empty() const -> bool { return !set_samples; }
-
-		std::optional<vk::SampleCountFlagBits> set_samples{};
-	};
-
-	void process_requests();
-
-	void update_stats(kvf::Clock::time_point present_start);
-
-	template <typename... Ts>
-	void add_loaders(AssetLoader& out, IDataLoader const& data_loader) const;
-
-	std::unique_ptr<IRenderWindow> m_window{};
-	std::unique_ptr<IRenderPass> m_pass{};
-	std::unique_ptr<IRenderer> m_renderer{};
-	std::vector<Vsync> m_supported_vsync{};
-
-	std::unique_ptr<IResourceFactory> m_resource_factory{};
-	std::unique_ptr<IResourcePool> m_resource_pool{};
-	std::unique_ptr<IAudioMixer> m_audio_mixer{};
-
-	Requests m_requests{};
-
-	float m_render_scale{1.0f};
-
-	vk::CommandBuffer m_cmd{};
-
-	kvf::Clock::time_point m_frame_start{};
-	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
-	Fps m_fps{};
-	FrameStats m_frame_stats{};
-
-	std::unique_ptr<Context, OnDestroy> m_on_destroy{};
+	[[nodiscard]] virtual auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> = 0;
+	[[nodiscard]] virtual auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader = 0;
 };
 
 /// \brief Calls Context::wait_idle() in its destructor.
-class Context::Waiter {
+class IContext::Waiter {
   public:
 	Waiter() = default;
 
-	Waiter(std::nullptr_t) = delete;
-
-	explicit(false) Waiter(Context* context) : m_context(context) {}
+	explicit(false) Waiter(gsl::not_null<IContext*> context) : m_context(context) {}
 
 	[[nodiscard]] auto is_active() const -> bool { return m_context != nullptr; }
 
-	[[nodiscard]] auto get_context() const -> Context* { return m_context.get(); }
+	[[nodiscard]] auto get_context() const -> IContext* { return m_context.get(); }
 
   private:
 	struct Deleter {
-		void operator()(Context* ptr) const;
+		void operator()(IContext* ptr) const {
+			if (!ptr) { return; }
+			ptr->wait_idle();
+		}
 	};
 
-	std::unique_ptr<Context, Deleter> m_context{};
+	std::unique_ptr<IContext, Deleter> m_context{};
 };
 } // namespace le

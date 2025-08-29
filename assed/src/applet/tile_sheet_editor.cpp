@@ -8,7 +8,7 @@
 
 namespace le::assed {
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_texture(services->get<Context>().get_resource_factory().create_texture()) {
+	: Applet(services), m_texture(get_context().get_resource_factory().create_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};

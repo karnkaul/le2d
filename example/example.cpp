@@ -8,11 +8,11 @@ namespace example {
 namespace {
 void run() {
 	// all members are constexpr-friendly.
-	static constexpr auto context_create_info_v = le::Context::CreateInfo{
-		.window = le::WindowInfo{.size = {400, 300}, .title = "My Window"},
+	static constexpr auto context_create_info_v = le::ContextCreateInfo{
+		.window = le::WindowInfo{.size = {800, 600}, .title = "My Window"},
 	};
 	// create a Context instance.
-	auto context = le::Context{context_create_info_v};
+	auto context = le::IContext::create(context_create_info_v);
 
 	// create a DeltaTime instance.
 	auto delta_time = kvf::DeltaTime{};
@@ -21,7 +21,7 @@ void run() {
 	auto const data_loader = le::FileDataLoader{"assets"};
 
 	// create an AssetLoader instance to load shared resources.
-	auto const asset_loader = context.create_asset_loader(&data_loader);
+	auto const asset_loader = context->create_asset_loader(&data_loader);
 
 	auto const font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
 	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
@@ -34,7 +34,7 @@ void run() {
 
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.
-	auto const waiter = context.create_waiter();
+	auto const waiter = context->create_waiter();
 
 	// store playback trigger data.
 	auto audio_wait = kvf::Seconds{2.0f};
@@ -55,10 +55,10 @@ void run() {
 	text.tint = kvf::yellow_v;
 
 	// loop while context is running (ie, window is open).
-	while (context.is_running()) {
+	while (context->is_running()) {
 		// start the next frame. This polls events and waits for any
 		// previous renders on the virtual frame to complete.
-		context.next_frame();
+		context->next_frame();
 
 		// compute the delta time (in float seconds).
 		auto const dt = delta_time.tick();
@@ -67,31 +67,30 @@ void run() {
 		audio_wait -= dt;
 		if (audio_wait < 0s && !audio_played) {
 			// play the loaded audio buffer.
-			context.get_audio_mixer().play_sfx(audio_buffer.get());
+			context->get_audio_mixer().play_sfx(audio_buffer.get());
 			audio_played = true;
 		}
 
-		for (auto const& event : context.event_queue()) {
+		for (auto const& event : context->event_queue()) {
 			// handle events here.
 			// for example, if you want to close the window on Escape key press:
 			if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
 				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
-					context.shutdown(); // set the close flag.
+					context->shutdown(); // set the close flag.
 				}
 			}
 		}
 
 		// begin the primary render pass.
-		if (auto& renderer = context.begin_render()) {
+		if (auto& renderer = context->begin_render()) {
 			// draw quad.
 			quad.draw(renderer);
 			// draw text.
 			text.draw(renderer);
-		} // Renderer's destructor will call end_render().
-		// It can also be explicitly/redundantly called inside the if block.
+		}
 
 		// submit the frame for presentation.
-		context.present();
+		context->present();
 	}
 }
 } // namespace
