@@ -32,7 +32,7 @@ struct Caret {
 		texture = &atlas.get_texture();
 	}
 
-	void draw(Renderer& renderer) const {
+	void draw(IRenderer& renderer) const {
 		auto const primitive = geometry.to_primitive(*texture);
 		renderer.draw(primitive, {&instance, 1});
 	}
@@ -53,7 +53,7 @@ struct Buffer {
 
 	[[nodiscard]] auto get_height() const -> float { return m_text_buffer.get_size().y; }
 
-	void draw(Renderer& renderer) const {
+	void draw(IRenderer& renderer) const {
 		auto const primitive = m_text_buffer.to_primitive();
 		auto const instance = RenderInstance{.transform = {.position = position}};
 		renderer.draw(primitive, {&instance, 1});
@@ -182,7 +182,7 @@ struct Terminal::Impl : IPrinter {
 		m_input.tick(dt);
 	}
 
-	void draw(Renderer& renderer) const {
+	void draw(IRenderer& renderer) const {
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
 		renderer.set_render_area(kvf::uv_rect_v);
 		auto const old_view = std::exchange(renderer.view, m_render_view);
@@ -266,7 +266,7 @@ struct Terminal::Impl : IPrinter {
 		set_buffer_y(m_buffer.position.y);
 	}
 
-	void draw_buffer(Renderer& renderer) const {
+	void draw_buffer(IRenderer& renderer) const {
 		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.transform.position.y) / m_framebuffer_size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.set_scissor_rect(rect);
@@ -515,5 +515,5 @@ auto Terminal::handle_events(glm::vec2 const framebuffer_size, std::span<Event c
 
 void Terminal::tick(kvf::Seconds const dt) { m_impl->tick(dt); }
 
-void Terminal::draw(Renderer& renderer) const { m_impl->draw(renderer); }
+void Terminal::draw(IRenderer& renderer) const { m_impl->draw(renderer); }
 } // namespace le::console

@@ -25,10 +25,7 @@ class IRenderPass : public klib::Polymorphic {
 	/// \param color Clear color.
 	virtual void set_clear_color(kvf::Color color) = 0;
 
-	/// \brief Begin rendering.
-	/// \param command_buffer Recording Command Buffer.
-	/// \param size Desired framebuffer size. Must be positive.
-	/// \returns Renderer instance.
-	virtual auto begin_render(vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer = 0;
+	/// \returns Concrete Renderer for this Render Pass instance.
+	[[nodiscard]] virtual auto create_renderer() -> std::unique_ptr<IRenderer> = 0;
 };
 } // namespace le

@@ -9,7 +9,7 @@ class IDrawPrimitive : public IDrawable {
 	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
 	[[nodiscard]] virtual auto to_primitive() const -> Primitive = 0;
 
-	void draw(Renderer& renderer) const final { renderer.draw(to_primitive(), get_instances()); }
+	void draw(IRenderer& renderer) const final { renderer.draw(to_primitive(), get_instances()); }
 };
 
 /// \brief Base class for Draw Primitives using a single Render Instance.

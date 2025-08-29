@@ -80,6 +80,7 @@ Context::Context(CreateInfo const& create_info)
 	auto default_shader = create_default_shader(get_resource_factory());
 	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window->get_render_device(), std::move(default_shader));
 	m_pass = create_render_pass(create_info.framebuffer_samples);
+	m_renderer = m_pass->create_renderer();
 	m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
 
 	auto const supported_modes = m_window->get_render_device().get_supported_present_modes();
@@ -129,13 +130,13 @@ auto Context::next_frame() -> vk::CommandBuffer {
 	return m_cmd;
 }
 
-auto Context::begin_render(kvf::Color const clear) -> Renderer {
-	if (!m_cmd) { return {}; }
-	m_pass->set_clear_color(clear);
-	return m_pass->begin_render(m_cmd, framebuffer_size());
+auto Context::begin_render(kvf::Color const clear) -> IRenderer& {
+	m_renderer->begin_render(m_cmd, framebuffer_size(), clear);
+	return *m_renderer;
 }
 
 void Context::present() {
+	m_renderer->end_render();
 	auto const present_start = kvf::Clock::now();
 	m_window->present(m_pass->get_render_target());
 	m_cmd = vk::CommandBuffer{};

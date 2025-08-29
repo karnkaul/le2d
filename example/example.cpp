@@ -82,7 +82,7 @@ void run() {
 		}
 
 		// begin the primary render pass.
-		if (auto renderer = context.begin_render()) {
+		if (auto& renderer = context.begin_render()) {
 			// draw quad.
 			quad.draw(renderer);
 			// draw text.

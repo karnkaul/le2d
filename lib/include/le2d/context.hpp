@@ -103,7 +103,7 @@ class Context : public klib::Pinned {
 	/// \brief Begin rendering the primary RenderPass.
 	/// \param clear Clear color.
 	/// \returns Renderer instance.
-	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
+	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer&;
 	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
 	void present();
 
@@ -143,6 +143,7 @@ class Context : public klib::Pinned {
 
 	std::unique_ptr<IRenderWindow> m_window{};
 	std::unique_ptr<IRenderPass> m_pass{};
+	std::unique_ptr<IRenderer> m_renderer{};
 	std::vector<Vsync> m_supported_vsync{};
 
 	std::unique_ptr<IResourceFactory> m_resource_factory{};

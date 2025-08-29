@@ -43,7 +43,7 @@ void TileDrawer::update() {
 	}
 }
 
-void TileDrawer::draw(Renderer& renderer) const {
+void TileDrawer::draw(IRenderer& renderer) const {
 	quad.draw(renderer);
 
 	renderer.set_line_width(style.frame_width);

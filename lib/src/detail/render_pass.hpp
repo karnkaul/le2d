@@ -1,4 +1,5 @@
 #pragma once
+#include <detail/renderer.hpp>
 #include <kvf/device_waiter.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/render_pass.hpp>
@@ -32,11 +33,7 @@ class RenderPass : public IRenderPass {
 
 	void set_clear_color(kvf::Color const color) final { m_render_pass.clear_color = color.to_linear(); }
 
-	auto begin_render(vk::CommandBuffer command_buffer, glm::ivec2 size) -> Renderer final {
-		size = clamp_size(size);
-		m_render_pass.begin_render(command_buffer, kvf::util::to_vk_extent(size));
-		return Renderer{m_render_pass, *m_resource_pool};
-	}
+	[[nodiscard]] auto create_renderer() -> std::unique_ptr<IRenderer> final { return std::make_unique<Renderer>(&m_render_pass, m_resource_pool); }
 
   private:
 	gsl::not_null<kvf::RenderDevice*> m_render_device;

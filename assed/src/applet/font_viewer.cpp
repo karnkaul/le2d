@@ -29,7 +29,7 @@ void FontViewer::tick(kvf::Seconds const dt) {
 	inspect();
 }
 
-void FontViewer::render(Renderer& renderer) const {
+void FontViewer::render(IRenderer& renderer) const {
 	renderer.view = m_render_view;
 	if (m_display == Display::InputText && m_input_text) {
 		m_input_text->draw(renderer);

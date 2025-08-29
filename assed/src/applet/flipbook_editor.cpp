@@ -39,7 +39,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 	}
 }
 
-void FlipbookEditor::render(Renderer& renderer) const {
+void FlipbookEditor::render(IRenderer& renderer) const {
 	renderer.view = m_render_view;
 	switch (m_display) {
 	case Display::TileSheet: m_drawer.draw(renderer); break;

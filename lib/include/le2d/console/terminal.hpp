@@ -37,7 +37,7 @@ class Terminal : public IDrawable, public IPrinter {
 	auto handle_events(glm::vec2 framebuffer_size, std::span<Event const> events) -> StateChange;
 
 	void tick(kvf::Seconds dt);
-	void draw(Renderer& renderer) const final;
+	void draw(IRenderer& renderer) const final;
 
   private:
 	struct Impl;

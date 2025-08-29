@@ -49,7 +49,7 @@ class InputText : public RenderInstance, public IDrawable {
 	void on_codepoint(event::Codepoint codepoint);
 
 	void tick(kvf::Seconds dt);
-	void draw(Renderer& renderer) const override;
+	void draw(IRenderer& renderer) const override;
 
   private:
 	void update();

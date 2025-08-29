@@ -24,7 +24,7 @@ class Applet : public input::Listener {
 
 	virtual void setup() {}
 	virtual void tick(kvf::Seconds dt) = 0;
-	virtual void render(Renderer& renderer) const = 0;
+	virtual void render(IRenderer& renderer) const = 0;
 
 	virtual void on_drop(FileDrop const& /*drop*/) {}
 

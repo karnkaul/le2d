@@ -34,7 +34,7 @@ void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {
 	}
 }
 
-void TileSheetEditor::render(Renderer& renderer) const {
+void TileSheetEditor::render(IRenderer& renderer) const {
 	renderer.view = m_render_view;
 	m_drawer.draw(renderer);
 	renderer.view = {};
