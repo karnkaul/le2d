@@ -1,15 +1,76 @@
 #pragma once
+#include <GLFW/glfw3.h>
+#include <klib/enum_ops.hpp>
+#include <kvf/render_device.hpp>
+#include <kvf/window.hpp>
 #include <le2d/asset/asset_loader.hpp>
 #include <le2d/audio_mixer.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/data_loader.hpp>
+#include <le2d/event.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/render_pass.hpp>
-#include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
 #include <le2d/vsync.hpp>
+#include <variant>
 
 namespace le {
+enum class PlatformFlag : std::uint8_t;
+enum class WindowFlag : std::uint8_t;
+} // namespace le
+
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::WindowFlag> = true;
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::PlatformFlag> = true;
+
+namespace le {
+/// \brief Platform flags (GLFW init hints).
+enum class PlatformFlag : std::uint8_t {
+	None = 0,
+	/// \brief Force X11 backend instead of Wayland (only relevant on Linux).
+	ForceX11,
+	/// \brief Disable libdecor (only relevant on Wayland).
+	NoLibdecor,
+};
+
+/// \brief Window creation flags (GLFW window hints).
+enum class WindowFlag : std::uint8_t {
+	None = 0,
+	/// \brief Window is decorated (has title bar, close button, etc).
+	Decorated = 1 << 0,
+	/// \brief Window is resizable.
+	Resizeable = 1 << 1,
+	/// \brief Window is visible on creation.
+	Visible = 1 << 2,
+	/// \brief Window is maximized on creation.
+	Maximized = 1 << 3,
+	/// \brief Window is given input focus when shown.
+	FocusOnShow = 1 << 4,
+	/// \brief Content area is resized based on content scale changes.
+	ScaleToMonitor = 1 << 5,
+	/// \brief Framebuffer is resized based on content scale changes.
+	ScaleFramebuffer = 1 << 6,
+};
+
+/// \brief Default Window creation flags.
+inline constexpr auto default_window_flags_v = WindowFlag::Decorated | WindowFlag::Resizeable | WindowFlag::Visible;
+
+/// \brief Windowed RenderWindow parameters.
+struct WindowInfo {
+	glm::ivec2 size{600};
+	klib::CString title;
+	WindowFlag flags{default_window_flags_v};
+};
+
+/// \brief Fullscreen RenderWindow parameters.
+struct FullscreenInfo {
+	klib::CString title;
+};
+
+/// \brief RenderWindow creation parameters.
+using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
+
 /// \brief Context creation parameters.
 struct ContextCreateInfo {
 	/// \brief Platform flags.
@@ -39,26 +100,30 @@ class IContext : public klib::Polymorphic {
 
 	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<IContext>;
 
-	[[nodiscard]] virtual auto get_render_window() const -> IRenderWindow const& = 0;
+	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
 	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
 	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
 
-	/// \returns Current size of swapchain images.
-	[[nodiscard]] virtual auto swapchain_size() const -> glm::ivec2 = 0;
-	/// \returns Scaled render framebuffer size.
-	[[nodiscard]] virtual auto framebuffer_size() const -> glm::ivec2 = 0;
+	/// \returns Window size as reported by GLFW.
+	[[nodiscard]] auto window_size() const -> glm::ivec2;
+	/// \returns Framebuffer size as reported by GLFW.
+	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
+	/// \returns Current Swapchain extent.
+	[[nodiscard]] auto swapchain_extent() const -> vk::Extent2D;
+	/// \returns Main Render Pass framebuffer size (scaled).
+	[[nodiscard]] auto main_pass_size() const -> glm::ivec2;
+	/// \returns Ratio of framebuffer to window sizes.
+	[[nodiscard]] auto display_ratio() const -> glm::vec2;
+
+	[[nodiscard]] virtual auto get_title() const -> klib::CString = 0;
+	virtual void set_title(klib::CString title) const = 0;
+
+	[[nodiscard]] virtual auto get_refresh_rate() const -> std::int32_t = 0;
+
 	/// \returns Events that occurred since the last frame.
 	[[nodiscard]] virtual auto event_queue() const -> std::span<Event const> = 0;
-
-	/// \brief Check if Window is (and should remain) open.
-	/// \returns true unless the close flag has been set.
-	[[nodiscard]] virtual auto is_running() const -> bool = 0;
-	/// \brief Set the Window close flag.
-	/// Note: the window will remain visible until this object is destroyed by owning code.
-	virtual void shutdown() = 0;
-	/// \brief Reset the Window close flag.
-	virtual void cancel_window_close() = 0;
 
 	/// \returns Current render scale.
 	[[nodiscard]] virtual auto get_render_scale() const -> float = 0;
@@ -74,6 +139,7 @@ class IContext : public klib::Polymorphic {
 	/// \returns true if desired mode is supported.
 	virtual auto set_vsync(Vsync vsync) -> bool = 0;
 
+	[[nodiscard]] auto is_fullscreen() const -> bool;
 	/// \brief Show window and set fullscreen.
 	/// \param target Target monitor (optional).
 	/// \returns true if successful.
@@ -92,6 +158,15 @@ class IContext : public klib::Polymorphic {
 	/// RenderPass will be recreated on the next frame, not immediately.
 	/// \returns true unless not supported.
 	virtual auto set_samples(vk::SampleCountFlagBits samples) -> bool = 0;
+
+	/// \brief Check if Window is (and should remain) open.
+	/// \returns true unless the close flag has been set.
+	[[nodiscard]] auto is_running() const -> bool;
+	/// \brief Set the Window close flag.
+	/// Note: the window will remain visible until this object is destroyed by owning code.
+	void shutdown();
+	/// \brief Reset the Window close flag.
+	void cancel_window_close();
 
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.

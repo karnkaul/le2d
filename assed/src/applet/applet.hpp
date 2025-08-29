@@ -38,13 +38,13 @@ class Applet : public input::Listener {
 	[[nodiscard]] auto get_context() const -> IContext& { return get_services().get<IContext>(); }
 	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
 	[[nodiscard]] auto get_asset_loader() const -> AssetLoader const& { return get_services().get<AssetLoader>(); }
-	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().framebuffer_size(); }
+	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().main_pass_size(); }
 
 	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;
 	[[nodiscard]] auto load_json(Uri const& uri) const -> dj::Json;
 
-	void wait_idle() const { get_context().get_render_window().get_render_device().get_device().waitIdle(); }
+	void wait_idle() const { get_context().wait_idle(); }
 
 	void raise_dialog(std::string message, std::string title);
 	void raise_error(std::string message) { raise_dialog(std::move(message), "Error!"); }

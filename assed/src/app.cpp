@@ -68,7 +68,7 @@ void App::swap_applet() {
 
 void App::handle_events() {
 	auto& dispatch = m_input_dispatch;
-	auto const fb_size = m_context->framebuffer_size();
+	auto const fb_size = m_context->main_pass_size();
 	auto const visitor = klib::SubVisitor{
 		[this](event::WindowClose) { try_exit(); },
 		[&dispatch, fb_size](event::CursorPos const& cursor) { dispatch.on_cursor_move(cursor.normalized.to_target(fb_size)); },

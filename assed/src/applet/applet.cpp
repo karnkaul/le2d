@@ -62,12 +62,12 @@ void Applet::raise_dialog(std::string message, std::string title) {
 void Applet::set_title(std::string_view const uri) const {
 	auto const name = get_name();
 	if (uri.empty()) {
-		get_context().get_render_window().set_title(name);
+		get_context().set_title(name);
 		return;
 	}
 	auto const suffix = m_unsaved ? std::string_view{"*"} : std::string_view{};
 	auto const title = std::format("{} - {}{}", name.as_view(), uri, suffix);
-	get_context().get_render_window().set_title(title.c_str());
+	get_context().set_title(title.c_str());
 }
 
 void Applet::do_setup() {
