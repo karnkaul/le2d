@@ -1,6 +1,7 @@
 #include <capo/engine.hpp>
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
+#include <detail/render_pass.hpp>
 #include <detail/render_window.hpp>
 #include <detail/resource/resource_factory.hpp>
 #include <detail/resource/resource_pool.hpp>
@@ -74,11 +75,11 @@ void Context::OnDestroy::operator()(Context* ptr) const noexcept {
 
 Context::Context(CreateInfo const& create_info)
 	: m_window(std::make_unique<detail::RenderWindow>(create_info.platform_flags, create_info.window, create_info.render_device)),
-	  m_pass(&m_window->get_render_device(), create_info.framebuffer_samples),
 	  m_resource_factory(std::make_unique<detail::ResourceFactory>(&m_window->get_render_device())) {
 
 	auto default_shader = create_default_shader(get_resource_factory());
 	m_resource_pool = std::make_unique<detail::ResourcePool>(&m_window->get_render_device(), std::move(default_shader));
+	m_pass = create_render_pass(create_info.framebuffer_samples);
 	m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
 
 	auto const supported_modes = m_window->get_render_device().get_supported_present_modes();
@@ -103,14 +104,14 @@ auto Context::set_vsync(Vsync const vsync) -> bool {
 	if (vsync == get_vsync()) { return true; }
 	auto const supported = get_supported_vsync();
 	if (std::ranges::find(supported, vsync) == supported.end()) { return false; }
-	m_pass.get_render_device().set_present_mode(to_mode(vsync));
+	m_window->get_render_device().set_present_mode(to_mode(vsync));
 	return true;
 }
 
-auto Context::get_samples() const -> vk::SampleCountFlagBits { return m_requests.set_samples.value_or(m_pass.get_samples()); }
+auto Context::get_samples() const -> vk::SampleCountFlagBits { return m_requests.set_samples.value_or(m_pass->get_samples()); }
 
 auto Context::get_supported_samples() const -> vk::SampleCountFlags {
-	return m_pass.get_render_device().get_gpu().properties.limits.framebufferColorSampleCounts;
+	return m_window->get_render_device().get_gpu().properties.limits.framebufferColorSampleCounts;
 }
 
 auto Context::set_samples(vk::SampleCountFlagBits const samples) -> bool {
@@ -130,13 +131,13 @@ auto Context::next_frame() -> vk::CommandBuffer {
 
 auto Context::begin_render(kvf::Color const clear) -> Renderer {
 	if (!m_cmd) { return {}; }
-	m_pass.set_clear_color(clear);
-	return m_pass.begin_render(*m_resource_pool, m_cmd, framebuffer_size());
+	m_pass->set_clear_color(clear);
+	return m_pass->begin_render(m_cmd, framebuffer_size());
 }
 
 void Context::present() {
 	auto const present_start = kvf::Clock::now();
-	m_window->present(m_pass.get_render_target());
+	m_window->present(m_pass->get_render_target());
 	m_cmd = vk::CommandBuffer{};
 	update_stats(present_start);
 }
@@ -148,7 +149,9 @@ void Context::wait_idle() {
 
 auto Context::create_waiter() -> Waiter { return this; }
 
-auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> RenderPass { return RenderPass{&m_pass.get_render_device(), samples}; }
+auto Context::create_render_pass(vk::SampleCountFlagBits const samples) const -> std::unique_ptr<IRenderPass> {
+	return std::make_unique<detail::RenderPass>(&m_window->get_render_device(), m_resource_pool.get(), samples);
+}
 
 auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader {
 	auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
@@ -159,9 +162,9 @@ auto Context::create_asset_loader(gsl::not_null<IDataLoader const*> data_loader)
 void Context::process_requests() {
 	if (m_requests.is_empty()) { return; }
 
-	m_pass.get_render_device().get_device().waitIdle();
+	m_window->get_render_device().get_device().waitIdle();
 	if (m_requests.set_samples) {
-		m_pass = RenderPass{&m_pass.get_render_device(), *m_requests.set_samples};
+		m_pass = create_render_pass(*m_requests.set_samples);
 		m_requests.set_samples.reset();
 	}
 }

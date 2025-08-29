@@ -67,6 +67,8 @@ auto IRenderWindow::framebuffer_size() const -> glm::ivec2 {
 	return ret;
 }
 
+auto IRenderWindow::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
+
 auto IRenderWindow::is_open() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
@@ -74,8 +76,6 @@ void IRenderWindow::set_closing() { glfwSetWindowShouldClose(get_window(), GLFW_
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
 void IRenderWindow::cancel_close() { glfwSetWindowShouldClose(get_window(), GLFW_FALSE); }
-
-auto IRenderWindow::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 
 auto IRenderWindow::get_title() const -> klib::CString { return glfwGetWindowTitle(get_window()); }
 

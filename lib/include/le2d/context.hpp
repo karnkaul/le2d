@@ -114,7 +114,7 @@ class Context : public klib::Pinned {
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
-	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
+	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass>;
 	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
 
   private:
@@ -142,7 +142,7 @@ class Context : public klib::Pinned {
 	void add_loaders(AssetLoader& out, IDataLoader const& data_loader) const;
 
 	std::unique_ptr<IRenderWindow> m_window{};
-	RenderPass m_pass;
+	std::unique_ptr<IRenderPass> m_pass{};
 	std::vector<Vsync> m_supported_vsync{};
 
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
