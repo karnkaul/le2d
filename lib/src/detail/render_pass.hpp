@@ -18,7 +18,7 @@ class RenderPass : public IRenderPass {
 		return in;
 	}
 
-	explicit RenderPass(gsl::not_null<kvf::RenderDevice*> render_device, gsl::not_null<IResourcePool*> resource_pool, vk::SampleCountFlagBits samples)
+	explicit RenderPass(gsl::not_null<kvf::RenderDevice*> render_device, gsl::not_null<detail::ResourcePool*> resource_pool, vk::SampleCountFlagBits samples)
 		: m_render_device(render_device), m_resource_pool(resource_pool), m_render_pass(render_device, samples), m_waiter(render_device->get_device()) {
 		m_render_pass.set_color_target(color_format_v);
 	}
@@ -37,7 +37,7 @@ class RenderPass : public IRenderPass {
 
   private:
 	gsl::not_null<kvf::RenderDevice*> m_render_device;
-	gsl::not_null<IResourcePool*> m_resource_pool;
+	gsl::not_null<detail::ResourcePool*> m_resource_pool;
 	kvf::RenderPass m_render_pass;
 
 	kvf::DeviceWaiter m_waiter;

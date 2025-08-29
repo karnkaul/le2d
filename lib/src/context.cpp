@@ -227,7 +227,7 @@ class ContextImpl : public IContext {
 	std::vector<Vsync> m_supported_vsync{};
 
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
-	std::unique_ptr<IResourcePool> m_resource_pool{};
+	std::unique_ptr<detail::ResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 
 	Requests m_requests{};

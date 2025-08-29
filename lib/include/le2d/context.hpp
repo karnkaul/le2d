@@ -7,7 +7,6 @@
 #include <le2d/render_pass.hpp>
 #include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
-#include <le2d/resource/resource_pool.hpp>
 #include <le2d/vsync.hpp>
 
 namespace le {
