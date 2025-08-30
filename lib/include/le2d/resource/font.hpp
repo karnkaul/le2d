@@ -4,6 +4,7 @@
 #include <le2d/text_height.hpp>
 
 namespace le {
+/// \brief Opaque interface for a Font Atlas.
 class IFontAtlas : public IResource {
   public:
 	using Glyph = kvf::ttf::Glyph;
@@ -18,6 +19,7 @@ class IFontAtlas : public IResource {
 	virtual auto push_layouts(std::vector<GlyphLayout>& out, std::string_view text, float n_line_height = 1.5f, bool use_tofu = true) const -> glm::vec2 = 0;
 };
 
+/// \brief Opaque interface for a Font.
 class IFont : public IResource {
   public:
 	virtual auto load_face(std::vector<std::byte> font_bytes) -> bool = 0;

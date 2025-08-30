@@ -1,7 +1,13 @@
 #pragma once
 #include <kvf/color.hpp>
 #include <kvf/time.hpp>
+#include <le2d/console/terminal.hpp>
 #include <le2d/text_height.hpp>
+#include <gsl/pointers>
+
+namespace le {
+class IFont;
+} // namespace le
 
 namespace le::console {
 struct TerminalCreateInfo {
@@ -32,5 +38,17 @@ struct TerminalCreateInfo {
 		kvf::Color output{0xccccccff};
 		kvf::Color error{kvf::red_v};
 	} colors{};
+};
+
+class TerminalBuilder {
+  public:
+	using CreateInfo = TerminalCreateInfo;
+
+	[[nodiscard]] auto build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal>;
+
+	[[nodiscard]] auto operator()(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> { return build(font); }
+
+	CreateInfo create_info{};
+	bool add_builtin_tweaks{true};
 };
 } // namespace le::console
