@@ -1,7 +1,13 @@
 #include <le2d/input/router.hpp>
-#include <algorithm>
 
 namespace le::input {
+namespace {
+template <typename... Ts>
+constexpr auto holds_any_of(Event const& e) {
+	return (... || std::holds_alternative<Ts>(e));
+}
+} // namespace
+
 void Router::push_mapping(gsl::not_null<IMapping*> mapping) {
 	disengage();
 	m_mappings.push_back(mapping);
@@ -16,16 +22,21 @@ void Router::remove_mapping(gsl::not_null<IMapping const*> mapping) {
 	std::erase_if(m_mappings, [mapping](gsl::not_null<IMapping*> m) { return m == mapping; });
 }
 
-void Router::dispatch(std::span<le::Event const> events) {
-	if (m_gamepad_manager.update(nonzero_dead_zone)) {
-		m_last_used_device = Device::Gamepad;
-	} else if (std::ranges::any_of(events, [](Event const& e) { return std::holds_alternative<event::Key>(e); })) {
-		m_last_used_device = Device::Keyboard;
-	} else if (std::ranges::any_of(events, [](Event const& e) { return std::holds_alternative<event::MouseButton>(e); })) {
-		m_last_used_device = Device::Mouse;
+void Router::dispatch(std::span<Event const> events) {
+	auto should_disengage = false;
+	for (auto const& event : events) {
+		if (std::holds_alternative<event::Key>(event)) {
+			m_last_used_device = Device::Keyboard;
+		} else if (std::holds_alternative<event::MouseButton>(event)) {
+			m_last_used_device = Device::Mouse;
+		} else if (!should_disengage && holds_any_of<event::WindowFocus, event::WindowResize>(event)) {
+			should_disengage = true;
+		}
 	}
-	auto const focus_changed = std::ranges::any_of(events, [](le::Event const& e) { return std::holds_alternative<le::event::WindowFocus>(e); });
-	if (focus_changed) {
+
+	if (m_gamepad_manager.update(nonzero_dead_zone)) { m_last_used_device = Device::Gamepad; }
+
+	if (should_disengage) {
 		disengage();
 	} else {
 		do_dispatch([&](IMapping& mapping) { mapping.dispatch(events, m_gamepad_manager); });

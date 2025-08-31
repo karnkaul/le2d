@@ -15,6 +15,8 @@ enum class WindowFocus : bool { False, True };
 
 enum class CursorFocus : bool { False, True };
 
+enum class WindowIconify : bool { False, True };
+
 struct FramebufferResize : glm::ivec2 {
 	using glm::ivec2::ivec2;
 };
@@ -58,8 +60,8 @@ struct Drop {
 	std::span<std::string const> paths{};
 };
 
-using Event =
-	std::variant<WindowClose, WindowFocus, CursorFocus, FramebufferResize, WindowResize, WindowPos, CursorPos, Codepoint, Key, MouseButton, Scroll, Drop>;
+using Event = std::variant<WindowClose, WindowFocus, CursorFocus, FramebufferResize, WindowResize, WindowPos, WindowIconify, CursorPos, Codepoint, Key,
+						   MouseButton, Scroll, Drop>;
 } // namespace event
 
 using Event = event::Event;

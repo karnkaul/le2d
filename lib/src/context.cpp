@@ -324,6 +324,7 @@ class ContextImpl : public Context {
 		glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowResize{x, y}); });
 		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::FramebufferResize{x, y}); });
 		glfwSetWindowPosCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowPos{x, y}); });
+		glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int i) { push_event(window, to_focus<event::WindowIconify>(i)); });
 		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) { self(window).on_cursor_pos({x, y}); });
 		glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
 			push_event(window, event::MouseButton{.button = button, .action = action, .mods = mods});
