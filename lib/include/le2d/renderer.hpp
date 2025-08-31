@@ -8,6 +8,7 @@
 #include <le2d/render_stats.hpp>
 #include <le2d/resource/shader.hpp>
 #include <le2d/user_draw_data.hpp>
+#include <le2d/viewport.hpp>
 
 namespace le {
 class IRenderer : public klib::Polymorphic {
@@ -34,8 +35,6 @@ class IRenderer : public klib::Polymorphic {
 
 	virtual void set_line_width(float width) = 0;
 	virtual void set_shader(IShader const& shader) = 0;
-	virtual void set_render_area(kvf::UvRect const& n_rect) = 0;
-	virtual void set_scissor_rect(kvf::UvRect const& n_rect) = 0;
 	virtual void set_user_data(UserDrawData const& user_data) = 0;
 
 	/// \brief Draw given instances of a Primitive.
@@ -49,5 +48,9 @@ class IRenderer : public klib::Polymorphic {
 	Transform view{};
 	/// \brief Fill mode.
 	vk::PolygonMode polygon_mode{vk::PolygonMode::eFill};
+	/// \brief Viewport type.
+	Viewport viewport{viewport::Dynamic{}};
+	/// \brief Scissor rect.
+	kvf::UvRect scissor_rect{kvf::uv_rect_v};
 };
 } // namespace le

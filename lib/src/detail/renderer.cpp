@@ -1,5 +1,6 @@
 #include <detail/renderer.hpp>
 #include <klib/assert.hpp>
+#include <klib/visitor.hpp>
 #include <kvf/util.hpp>
 
 namespace le::detail {
@@ -47,6 +48,14 @@ constexpr auto triangle_count(std::size_t const vertices, std::size_t const indi
 	default: return 0;
 	}
 }
+
+constexpr auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size) {
+	auto const scaled_size = v.scaled_size(framebuffer_size);
+	auto const half_excess = 0.5f * (framebuffer_size - scaled_size);
+	auto const rect = kvf::Rect<>{.lt = half_excess, .rb = framebuffer_size - half_excess};
+	auto const vp_size = rect.size();
+	return vk::Viewport{rect.lt.x, rect.rb.y, vp_size.x, -vp_size.y};
+}
 } // namespace
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
@@ -56,9 +65,6 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 
 	m_pass->clear_color = clear.to_linear();
 	m_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
-
-	m_viewport = m_pass->to_viewport(kvf::uv_rect_v);
-	m_scissor = m_pass->to_scissor(kvf::uv_rect_v);
 
 	return true;
 }
@@ -79,6 +85,13 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
 	if (!allocate_sets(descriptor_sets)) { return; }
+
+	auto const visitor = klib::Visitor{
+		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
+		[this](viewport::Letterbox const& v) { return to_viewport(v, kvf::util::to_glm_vec(m_pass->get_extent())); },
+	};
+	m_viewport = std::visit(visitor, viewport);
+	m_scissor = m_pass->to_scissor(scissor_rect);
 
 	auto& render_device = m_pass->get_render_device();
 
@@ -131,7 +144,11 @@ auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> boo
 }
 
 auto Renderer::write_view() const -> vk::DescriptorBufferInfo {
-	auto const render_area = glm::vec2{m_viewport.width, -m_viewport.height};
+	auto const visitor = klib::Visitor{
+		[](viewport::Letterbox const& v) { return v.world_size; },
+		[this](viewport::Dynamic const& /*v*/) { return glm::vec2{m_viewport.width, -m_viewport.height}; },
+	};
+	auto const render_area = std::visit(visitor, viewport);
 	auto const half_extent = 0.5f * render_area;
 	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
 	auto const mat_v = view.to_view();

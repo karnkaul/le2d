@@ -33,8 +33,6 @@ class Renderer : public IRenderer {
 	}
 
 	void set_shader(IShader const& shader) final { m_shader = &shader; }
-	void set_render_area(kvf::UvRect const& n_rect) final { m_viewport = m_pass->to_viewport(n_rect); }
-	void set_scissor_rect(kvf::UvRect const& n_rect) final { m_scissor = m_pass->to_scissor(n_rect); }
 	void set_user_data(UserDrawData const& user_data) final { m_user_data = user_data; }
 
 	void draw(Primitive const& primitive, std::span<RenderInstance const> instances) final;

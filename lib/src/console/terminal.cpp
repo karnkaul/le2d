@@ -174,14 +174,15 @@ class Terminal : public ITerminal {
 
 	void draw(IRenderer& renderer) const final {
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
-		renderer.set_render_area(kvf::uv_rect_v);
 		auto const old_view = std::exchange(renderer.view, m_render_view);
+		auto const old_viewport = std::exchange(renderer.viewport, viewport::Dynamic{});
 		m_background.draw(renderer);
 		draw_buffer(renderer);
 		m_separator.draw(renderer);
 		m_caret.draw(renderer);
 		m_input.draw(renderer);
 		renderer.view = old_view;
+		renderer.viewport = old_viewport;
 	}
 
   private:
@@ -252,9 +253,9 @@ class Terminal : public ITerminal {
 	void draw_buffer(IRenderer& renderer) const {
 		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.transform.position.y) / m_framebuffer_size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
-		renderer.set_scissor_rect(rect);
+		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);
-		renderer.set_scissor_rect(kvf::uv_rect_v);
+		renderer.scissor_rect = kvf::uv_rect_v;
 	}
 
 	void print_input(std::string line) {
