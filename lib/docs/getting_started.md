@@ -52,12 +52,11 @@ while (context->is_running()) {
   context->next_frame();
 
   // begin the primary render pass.
-  if (auto& renderer = context->begin_render()) {
+  auto& renderer = context->begin_render();
     // draw quad.
-    quad.draw(renderer);
-  }
+  quad.draw(renderer);
 
-  // submit the frame for presentation.
+  // end pass and submit the frame for presentation.
   context->present();
 }
 ```

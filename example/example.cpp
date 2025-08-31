@@ -82,14 +82,13 @@ void run() {
 		}
 
 		// begin the primary render pass.
-		if (auto& renderer = context->begin_render()) {
+		auto& renderer = context->begin_render();
 			// draw quad.
 			quad.draw(renderer);
 			// draw text.
 			text.draw(renderer);
-		}
 
-		// submit the frame for presentation.
+		// end pass and submit the frame for presentation.
 		context->present();
 	}
 }

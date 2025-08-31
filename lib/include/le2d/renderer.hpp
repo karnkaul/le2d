@@ -42,8 +42,6 @@ class IRenderer : public klib::Polymorphic {
 	/// \param instances Render Instances to draw.
 	virtual void draw(Primitive const& primitive, std::span<RenderInstance const> instances) = 0;
 
-	explicit operator bool() const { return is_rendering(); }
-
 	/// \brief Render view (generates view matrix).
 	Transform view{};
 	/// \brief Fill mode.

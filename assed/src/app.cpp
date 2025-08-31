@@ -89,10 +89,9 @@ void App::tick() {
 }
 
 void App::render() {
-	if (auto& renderer = m_context->begin_render(m_applet->clear_color)) {
-		m_applet->render(renderer);
-		renderer.end_render();
-	}
+	auto& renderer = m_context->begin_render(m_applet->clear_color);
+	m_applet->render(renderer);
+	renderer.end_render();
 }
 
 void App::main_menu() {
