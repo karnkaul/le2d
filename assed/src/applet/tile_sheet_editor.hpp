@@ -16,7 +16,7 @@ class TileSheetEditor : public Applet {
 	auto consume_mouse_button(event::MouseButton const& button) -> bool final;
 
 	void tick(kvf::Seconds dt) final;
-	void render(Renderer& renderer) const final;
+	void render(IRenderer& renderer) const final;
 
 	void on_drop(FileDrop const& drop) final;
 

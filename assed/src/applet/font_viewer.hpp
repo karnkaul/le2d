@@ -21,7 +21,7 @@ class FontViewer : public Applet {
 	auto consume_codepoint(event::Codepoint codepoint) -> bool final;
 
 	void tick(kvf::Seconds dt) final;
-	void render(Renderer& renderer) const final;
+	void render(IRenderer& renderer) const final;
 
 	void on_drop(FileDrop const& drop) final;
 

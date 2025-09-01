@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace le {
+/// \brief Opaque interface for a Shader program.
 class IShader : public IResource {
   public:
 	using SpirV = std::span<std::uint32_t const>;

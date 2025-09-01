@@ -6,7 +6,7 @@ Vulkan is loaded dynamically at runtime, it is not linked to during a build. Thi
 
 ### Validation Layers
 
-There is no validation layer code in the library or its dependencies. Users are expected to use Vulkan Configurator during development, and ensure that the layers are being loaded correctly. `le2d` is **NOT** designed to "evade" / wrap validation errors, it is **highly recommended** to always have the layers turned on during development. Even basic use of the engine warrants order-correct destruction of resources like `le::Texture` vs `le::RenderWindow`, where errors can slip by unless validation layers are enabled.
+There is no validation layer code in the library or its dependencies. Users are expected to use Vulkan Configurator during development, and ensure that the layers are being loaded correctly. `le2d` is **NOT** designed to "evade" / wrap validation errors, it is **highly recommended** to always have the layers turned on during development. Even basic use of the engine warrants order-correct destruction of resources like `le::Texture`, where errors can slip by unless validation layers are enabled.
 
 ## Object Ownership
 

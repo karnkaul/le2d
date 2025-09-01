@@ -13,7 +13,7 @@ class TileDrawer {
 	void clear();
 
 	void update();
-	void draw(Renderer& renderer) const;
+	void draw(IRenderer& renderer) const;
 
 	void inspect_style();
 

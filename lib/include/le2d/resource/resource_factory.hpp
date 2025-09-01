@@ -6,6 +6,7 @@
 #include <memory>
 
 namespace le {
+/// \brief Factory for IResource derived types.
 class IResourceFactory : public klib::Polymorphic {
   public:
 	[[nodiscard]] virtual auto create_shader() const -> std::unique_ptr<IShader> = 0;

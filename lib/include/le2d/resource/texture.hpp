@@ -20,6 +20,7 @@ class ITextureBase : public IResource {
 	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
 };
 
+/// \brief Texture Sampler metadata.
 struct TextureSampler {
 	vk::SamplerAddressMode wrap{vk::SamplerAddressMode::eClampToEdge};
 	vk::Filter filter{vk::Filter::eLinear};

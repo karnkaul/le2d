@@ -1,51 +1,34 @@
 #pragma once
 #include <klib/concepts.hpp>
-#include <le2d/console/command.hpp>
-#include <le2d/console/terminal_create_info.hpp>
+#include <kvf/time.hpp>
 #include <le2d/drawable/drawable.hpp>
 #include <le2d/event.hpp>
 #include <le2d/resource/font.hpp>
+#include <le2d/tweak/tweakable.hpp>
 #include <cstdint>
-#include <gsl/pointers>
 #include <memory>
 #include <string_view>
-
-namespace le {
-class Font;
-} // namespace le
 
 namespace le::console {
 enum class StateChange : std::int8_t { None, Activated, Deactivated };
 
-class Terminal : public IDrawable, public IPrinter {
+class ITerminal : public IDrawable {
   public:
-	using CreateInfo = TerminalCreateInfo;
+	[[nodiscard]] virtual auto is_active() const -> bool = 0;
+	virtual void toggle_active() = 0;
 
-	explicit Terminal(gsl::not_null<IFont*> font, glm::vec2 framebuffer_size, CreateInfo const& info = {});
+	virtual void add_tweakable(std::string_view id, std::shared_ptr<ITweakable> const& tweakable) = 0;
+	virtual void remove_tweakable(std::string_view id) = 0;
+	virtual void remove_expired_tweakables() = 0;
 
-	[[nodiscard]] auto is_active() const -> bool;
+	virtual void println(std::string_view text) = 0;
+	virtual void printerr(std::string_view text) = 0;
 
-	void add_command(std::string_view name, std::unique_ptr<ICommand> command);
-	void remove_command(std::string_view name);
+	[[nodiscard]] virtual auto get_background() const -> kvf::Color = 0;
+	virtual void set_background(kvf::Color color) = 0;
 
-	void println(std::string_view text) final;
-	void printerr(std::string_view text) final;
+	virtual auto handle_events(glm::vec2 framebuffer_size, std::span<Event const> events) -> StateChange = 0;
 
-	[[nodiscard]] auto get_background() const -> kvf::Color;
-	void set_background(kvf::Color color);
-
-	auto handle_events(glm::vec2 framebuffer_size, std::span<Event const> events) -> StateChange;
-
-	void tick(kvf::Seconds dt);
-	void draw(Renderer& renderer) const final;
-
-  private:
-	struct Impl;
-	struct Deleter {
-		void operator()(Impl* ptr) const noexcept;
-	};
-	std::unique_ptr<Impl, Deleter> m_impl{};
-
-	friend class Stream;
+	virtual void tick(kvf::Seconds dt) = 0;
 };
 } // namespace le::console

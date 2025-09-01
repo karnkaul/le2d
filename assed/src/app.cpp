@@ -20,27 +20,27 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 }
 } // namespace
 
-App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(context_create_info_v) {}
+App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(Context::create(context_create_info_v)) {}
 
 void App::run() {
-	m_waiter = m_context.create_waiter();
-	m_asset_loader = m_context.create_asset_loader(&m_data_loader);
+	m_waiter = m_context->create_waiter();
+	m_asset_loader = m_context->create_asset_loader(&m_data_loader);
 
 	m_service_locator.bind(&m_data_loader);
-	m_service_locator.bind(&m_context);
+	m_service_locator.bind(m_context.get());
 	m_service_locator.bind(&m_input_dispatch);
 	m_service_locator.bind(&m_asset_loader);
 	create_factories();
 
 	set_applet(m_factories.front());
 
-	while (m_context.is_running()) {
-		m_context.next_frame();
+	while (m_context->is_running()) {
+		m_context->next_frame();
 		swap_applet();
 		handle_events();
 		tick();
 		render();
-		m_context.present();
+		m_context->present();
 	}
 }
 
@@ -68,7 +68,7 @@ void App::swap_applet() {
 
 void App::handle_events() {
 	auto& dispatch = m_input_dispatch;
-	auto const fb_size = m_context.framebuffer_size();
+	auto const fb_size = m_context->main_pass_size();
 	auto const visitor = klib::SubVisitor{
 		[this](event::WindowClose) { try_exit(); },
 		[&dispatch, fb_size](event::CursorPos const& cursor) { dispatch.on_cursor_move(cursor.normalized.to_target(fb_size)); },
@@ -78,7 +78,7 @@ void App::handle_events() {
 		[&dispatch](event::Scroll const& scroll) { dispatch.on_scroll(scroll); },
 		[&dispatch](event::Drop const& drop) { dispatch.on_drop(drop); },
 	};
-	for (auto const& event : m_context.event_queue()) { std::visit(visitor, event); }
+	for (auto const& event : m_context->event_queue()) { std::visit(visitor, event); }
 }
 
 void App::tick() {
@@ -89,7 +89,9 @@ void App::tick() {
 }
 
 void App::render() {
-	if (auto renderer = m_context.begin_render(m_applet->clear_color)) { m_applet->render(renderer); }
+	auto& renderer = m_context->begin_render(m_applet->clear_color);
+	m_applet->render(renderer);
+	renderer.end_render();
 }
 
 void App::main_menu() {
@@ -120,7 +122,7 @@ void App::applet_menu() {
 }
 
 void App::set_applet(Factory const& factory) {
-	m_context.wait_idle();
+	m_context->wait_idle();
 	m_applet = factory.create(&m_service_locator);
 	m_applet->do_setup();
 	log.info("loaded '{}'", factory.name.as_view());
@@ -128,9 +130,9 @@ void App::set_applet(Factory const& factory) {
 
 void App::try_exit() {
 	if (!m_applet->try_exit()) {
-		m_context.cancel_window_close();
+		m_context->cancel_window_close();
 	} else {
-		m_context.shutdown();
+		m_context->set_window_close();
 	}
 }
 } // namespace le::assed

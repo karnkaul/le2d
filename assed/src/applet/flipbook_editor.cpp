@@ -5,7 +5,7 @@
 
 namespace le::assed {
 FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_tile_sheet(services->get<Context>().get_resource_factory().create_tilesheet()) {
+	: Applet(services), m_tile_sheet(get_context().get_resource_factory().create_tilesheet()) {
 	m_drawer.quad.create();
 	m_drawer.quad.texture = m_tile_sheet.get();
 	m_sprite.set_base_size(glm::vec2{200.0f});
@@ -39,7 +39,7 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 	}
 }
 
-void FlipbookEditor::render(Renderer& renderer) const {
+void FlipbookEditor::render(IRenderer& renderer) const {
 	renderer.view = m_render_view;
 	switch (m_display) {
 	case Display::TileSheet: m_drawer.draw(renderer); break;

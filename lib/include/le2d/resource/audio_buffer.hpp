@@ -4,6 +4,7 @@
 #include <le2d/resource/resource.hpp>
 
 namespace le {
+/// \brief Opaque interface for an Audio Buffer.
 class IAudioBuffer : public IResource {
   public:
 	/// \param bytes Bytes to load.

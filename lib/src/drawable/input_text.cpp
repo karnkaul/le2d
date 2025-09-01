@@ -88,7 +88,7 @@ void InputText::tick(kvf::Seconds const dt) {
 	m_cursor_alpha = 0.5f * (std::cos(angle) + 1.0f);
 }
 
-void InputText::draw(Renderer& renderer) const {
+void InputText::draw(IRenderer& renderer) const {
 	auto const line_primitive = m_line_input.to_primitive();
 	renderer.draw(line_primitive, {static_cast<RenderInstance const*>(this), 1});
 	if (!is_interactive()) { return; }

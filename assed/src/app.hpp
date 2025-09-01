@@ -39,7 +39,7 @@ class App : public klib::Pinned {
 
 	FileDataLoader m_data_loader;
 
-	Context m_context;
+	std::unique_ptr<Context> m_context{};
 	input::Dispatch m_input_dispatch{};
 	AssetLoader m_asset_loader{};
 

@@ -1,16 +1,76 @@
 #pragma once
+#include <GLFW/glfw3.h>
+#include <klib/enum_ops.hpp>
+#include <kvf/render_device.hpp>
+#include <kvf/window.hpp>
 #include <le2d/asset/asset_loader.hpp>
 #include <le2d/audio_mixer.hpp>
 #include <le2d/build_version.hpp>
 #include <le2d/data_loader.hpp>
+#include <le2d/event.hpp>
 #include <le2d/frame_stats.hpp>
 #include <le2d/render_pass.hpp>
-#include <le2d/render_window.hpp>
 #include <le2d/resource/resource_factory.hpp>
-#include <le2d/resource/resource_pool.hpp>
 #include <le2d/vsync.hpp>
+#include <variant>
 
 namespace le {
+enum class PlatformFlag : std::uint8_t;
+enum class WindowFlag : std::uint8_t;
+} // namespace le
+
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::WindowFlag> = true;
+template <>
+inline constexpr auto klib::enable_enum_ops_v<le::PlatformFlag> = true;
+
+namespace le {
+/// \brief Platform flags (GLFW init hints).
+enum class PlatformFlag : std::uint8_t {
+	None = 0,
+	/// \brief Force X11 backend instead of Wayland (only relevant on Linux).
+	ForceX11,
+	/// \brief Disable libdecor (only relevant on Wayland).
+	NoLibdecor,
+};
+
+/// \brief Window creation flags (GLFW window hints).
+enum class WindowFlag : std::uint8_t {
+	None = 0,
+	/// \brief Window is decorated (has title bar, close button, etc).
+	Decorated = 1 << 0,
+	/// \brief Window is resizable.
+	Resizeable = 1 << 1,
+	/// \brief Window is visible on creation.
+	Visible = 1 << 2,
+	/// \brief Window is maximized on creation.
+	Maximized = 1 << 3,
+	/// \brief Window is given input focus when shown.
+	FocusOnShow = 1 << 4,
+	/// \brief Content area is resized based on content scale changes.
+	ScaleToMonitor = 1 << 5,
+	/// \brief Framebuffer is resized based on content scale changes.
+	ScaleFramebuffer = 1 << 6,
+};
+
+/// \brief Default Window creation flags.
+inline constexpr auto default_window_flags_v = WindowFlag::Decorated | WindowFlag::Resizeable | WindowFlag::Visible;
+
+/// \brief Windowed window parameters.
+struct WindowInfo {
+	glm::ivec2 size{600};
+	klib::CString title;
+	WindowFlag flags{default_window_flags_v};
+};
+
+/// \brief Fullscreen window parameters.
+struct FullscreenInfo {
+	klib::CString title;
+};
+
+/// \brief Window creation parameters.
+using WindowCreateInfo = std::variant<WindowInfo, FullscreenInfo>;
+
 /// \brief Context creation parameters.
 struct ContextCreateInfo {
 	/// \brief Platform flags.
@@ -26,8 +86,7 @@ struct ContextCreateInfo {
 };
 
 /// \brief Central API for most of the engine / framework.
-/// Encapsulates RenderWindow, primary RenderPass, Audio Engine.
-class Context : public klib::Pinned {
+class Context : public klib::Polymorphic {
   public:
 	/// \brief RAII wrapper over wait_idle().
 	class Waiter;
@@ -38,129 +97,96 @@ class Context : public klib::Pinned {
 	static constexpr auto min_render_scale_v{0.2f};
 	static constexpr auto max_render_scale_v{8.0f};
 
-	/// \param create_info Creation parameters.
-	explicit Context(CreateInfo const& create_info = {});
+	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<Context>;
 
-	[[nodiscard]] auto get_render_window() const -> IRenderWindow const& { return *m_window; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& { return *m_resource_factory; }
-	[[nodiscard]] auto get_resource_pool() const -> IResourcePool& { return *m_resource_pool; }
-	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
+	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
+	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
+	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
+	[[nodiscard]] virtual auto get_renderer() const -> IRenderer const& = 0;
 
-	/// \returns Current size of swapchain images.
-	[[nodiscard]] auto swapchain_size() const -> glm::ivec2 { return m_window->framebuffer_size(); }
-	/// \returns Scaled render framebuffer size.
+	/// \returns Window size as reported by GLFW.
+	[[nodiscard]] auto window_size() const -> glm::ivec2;
+	/// \returns Framebuffer size as reported by GLFW.
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
-	/// \returns Events that occurred since the last frame.
-	[[nodiscard]] auto event_queue() const -> std::span<Event const> { return m_window->event_queue(); }
+	/// \returns Current Swapchain extent.
+	[[nodiscard]] auto swapchain_extent() const -> vk::Extent2D;
+	/// \returns Main Render Pass framebuffer size (scaled).
+	[[nodiscard]] auto main_pass_size() const -> glm::ivec2;
+	/// \returns Ratio of framebuffer to window sizes.
+	[[nodiscard]] auto display_ratio() const -> glm::vec2;
 
-	/// \brief Check if Window is (and should remain) open.
-	/// \returns true unless the close flag has been set.
-	[[nodiscard]] auto is_running() const -> bool { return m_window->is_open(); }
-	/// \brief Set the Window close flag.
-	/// Note: the window will remain visible until this object is destroyed by owning code.
-	void shutdown() { m_window->set_closing(); }
-	/// \brief Reset the Window close flag.
-	void cancel_window_close() { m_window->cancel_close(); }
+	[[nodiscard]] auto get_title() const -> klib::CString;
+	void set_title(klib::CString title);
 
-	/// \returns Current render scale.
-	[[nodiscard]] auto get_render_scale() const -> float { return m_render_scale; }
-	/// \param scale Desired render scale.
-	/// \returns true if desired scale is within limits.
-	auto set_render_scale(float scale) -> bool;
+	[[nodiscard]] auto get_refresh_rate() const -> std::int32_t;
 
-	/// \returns List of supported Vsync modes.
-	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> { return m_supported_vsync; }
-	/// \returns Current Vsync mode.
-	[[nodiscard]] auto get_vsync() const -> Vsync;
-	/// \param vsync Desired Vsync mode.
-	/// \returns true if desired mode is supported.
-	auto set_vsync(Vsync vsync) -> bool;
-
+	[[nodiscard]] auto is_fullscreen() const -> bool;
 	/// \brief Show window and set fullscreen.
 	/// \param target Target monitor (optional).
 	/// \returns true if successful.
-	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool { return m_window->set_fullscreen(target); }
+	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
 	/// \brief Show window and set windowed with given size.
 	/// \param size Window size. Must be positive.
-	void set_windowed(glm::ivec2 const size = {1280, 720}) { m_window->set_windowed(size); }
+	void set_windowed(glm::ivec2 size = {1280, 720});
 	/// \brief Show/hide window.
-	void set_visible(bool const visible) { m_window->set_visible(visible); }
+	void set_visible(bool visible);
 
-	/// \returns Current MSAA samples.
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits;
-	/// \returns Supported MSAA samples.
-	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags;
-	/// \brief Set desired MSAA samples.
-	/// RenderPass will be recreated on the next frame, not immediately.
-	/// \returns true unless not supported.
-	auto set_samples(vk::SampleCountFlagBits samples) -> bool;
-
-	/// \brief Begin the next frame.
-	/// Resets render resources and polls events.
-	/// \returns Current virtual frame's Command Buffer.
-	auto next_frame() -> vk::CommandBuffer;
-	/// \brief Begin rendering the primary RenderPass.
-	/// \param clear Clear color.
-	/// \returns Renderer instance.
-	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> Renderer;
-	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
-	void present();
+	/// \brief Check if Window is (and should remain) open.
+	/// \returns true unless the close flag has been set.
+	[[nodiscard]] auto is_running() const -> bool;
+	/// \brief Set the Window close flag.
+	/// Note: the window will remain visible until this object is destroyed by owning code.
+	void set_window_close();
+	/// \brief Reset the Window close flag.
+	void cancel_window_close();
 
 	/// \brief Wait for the graphics and audio devices to become idle.
 	/// Does not account for user owned audio sources.
 	void wait_idle();
 
-	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& { return m_frame_stats; }
+	/// \returns Current render scale.
+	[[nodiscard]] virtual auto get_render_scale() const -> float = 0;
+	/// \param scale Desired render scale.
+	/// \returns true if desired scale is within limits.
+	virtual auto set_render_scale(float scale) -> bool = 0;
+
+	/// \returns List of supported Vsync modes.
+	[[nodiscard]] virtual auto get_supported_vsync() const -> std::span<Vsync const> = 0;
+	/// \returns Current Vsync mode.
+	[[nodiscard]] virtual auto get_vsync() const -> Vsync = 0;
+	/// \param vsync Desired Vsync mode.
+	/// \returns true if desired mode is supported.
+	virtual auto set_vsync(Vsync vsync) -> bool = 0;
+
+	/// \returns Current MSAA samples.
+	[[nodiscard]] virtual auto get_samples() const -> vk::SampleCountFlagBits = 0;
+	/// \returns Supported MSAA samples.
+	[[nodiscard]] virtual auto get_supported_samples() const -> vk::SampleCountFlags = 0;
+	/// \brief Set desired MSAA samples.
+	/// RenderPass will be recreated on the next frame, not immediately.
+	/// \returns true unless not supported.
+	virtual auto set_samples(vk::SampleCountFlagBits samples) -> bool = 0;
+
+	/// \brief Begin the next frame.
+	/// Resets render resources and polls events.
+	/// \returns Current virtual frame's Command Buffer.
+	virtual auto next_frame() -> vk::CommandBuffer = 0;
+	/// \returns Events that occurred since the last frame.
+	[[nodiscard]] virtual auto event_queue() const -> std::span<Event const> = 0;
+	/// \brief Begin rendering the primary RenderPass.
+	/// \param clear Clear color.
+	/// \returns Renderer instance.
+	[[nodiscard]] virtual auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& = 0;
+	/// \brief Submit recorded commands and present RenderTarget of primary RenderPass.
+	virtual void present() = 0;
+
+	[[nodiscard]] virtual auto get_frame_stats() const -> FrameStats const& = 0;
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
-	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> RenderPass;
-	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader;
-
-  private:
-	struct OnDestroy {
-		void operator()(Context* ptr) const noexcept;
-	};
-
-	struct Fps {
-		std::int32_t counter{};
-		std::int32_t value{};
-		kvf::Seconds elapsed{};
-	};
-
-	struct Requests {
-		[[nodiscard]] auto is_empty() const -> bool { return !set_samples; }
-
-		std::optional<vk::SampleCountFlagBits> set_samples{};
-	};
-
-	void process_requests();
-
-	void update_stats(kvf::Clock::time_point present_start);
-
-	template <typename... Ts>
-	void add_loaders(AssetLoader& out, IDataLoader const& data_loader) const;
-
-	std::unique_ptr<IRenderWindow> m_window{};
-	RenderPass m_pass;
-	std::vector<Vsync> m_supported_vsync{};
-
-	std::unique_ptr<IResourceFactory> m_resource_factory{};
-	std::unique_ptr<IResourcePool> m_resource_pool{};
-	std::unique_ptr<IAudioMixer> m_audio_mixer{};
-
-	Requests m_requests{};
-
-	float m_render_scale{1.0f};
-
-	vk::CommandBuffer m_cmd{};
-
-	kvf::Clock::time_point m_frame_start{};
-	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
-	Fps m_fps{};
-	FrameStats m_frame_stats{};
-
-	std::unique_ptr<Context, OnDestroy> m_on_destroy{};
+	[[nodiscard]] virtual auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> = 0;
+	[[nodiscard]] virtual auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader = 0;
 };
 
 /// \brief Calls Context::wait_idle() in its destructor.
@@ -168,9 +194,7 @@ class Context::Waiter {
   public:
 	Waiter() = default;
 
-	Waiter(std::nullptr_t) = delete;
-
-	explicit(false) Waiter(Context* context) : m_context(context) {}
+	explicit(false) Waiter(gsl::not_null<Context*> context) : m_context(context) {}
 
 	[[nodiscard]] auto is_active() const -> bool { return m_context != nullptr; }
 
@@ -178,7 +202,10 @@ class Context::Waiter {
 
   private:
 	struct Deleter {
-		void operator()(Context* ptr) const;
+		void operator()(Context* ptr) const {
+			if (!ptr) { return; }
+			ptr->wait_idle();
+		}
 	};
 
 	std::unique_ptr<Context, Deleter> m_context{};
