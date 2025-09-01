@@ -49,7 +49,7 @@ constexpr auto triangle_count(std::size_t const vertices, std::size_t const indi
 	}
 }
 
-constexpr auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size) {
+auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size) {
 	auto const world_in_fb_space = v.fill_target_space(framebuffer_size);
 	auto const half_excess = 0.5f * (framebuffer_size - world_in_fb_space);
 	auto const rect = kvf::Rect<>{.lt = half_excess, .rb = framebuffer_size - half_excess};
