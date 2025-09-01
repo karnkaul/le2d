@@ -35,7 +35,11 @@ class Renderer : public IRenderer {
 	void set_shader(IShader const& shader) final { m_shader = &shader; }
 	void set_user_data(UserDrawData const& user_data) final { m_user_data = user_data; }
 
+	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec<int>(m_pass->get_extent()); }
+
 	void draw(Primitive const& primitive, std::span<RenderInstance const> instances) final;
+
+	[[nodiscard]] auto unprojector() const -> Unprojector final;
 
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 

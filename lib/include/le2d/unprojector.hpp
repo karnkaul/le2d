@@ -5,19 +5,20 @@
 namespace le {
 class Unprojector {
   public:
-	explicit Unprojector(Transform const& view, glm::vec2 const framebuffer_size)
-		: m_inverse_view(view.to_inverse_view()), m_framebuffer_size(framebuffer_size) {}
+	Unprojector() = default;
 
-	[[nodiscard]] auto framebuffer_size() const -> glm::vec2 { return m_framebuffer_size; }
+	explicit Unprojector(Transform const& view, glm::vec2 const target_size) : m_inverse_view(view.to_inverse_view()), m_target_size(target_size) {}
 
-	[[nodiscard]] auto to_framebuffer(ndc::vec2 const point) const -> glm::vec2 { return point.to_target(framebuffer_size()); }
+	[[nodiscard]] auto target_size() const -> glm::vec2 { return m_target_size; }
 
-	[[nodiscard]] auto unproject(ndc::vec2 const point) const -> glm::vec2 { return unproject(to_framebuffer(point)); }
+	[[nodiscard]] auto to_target(ndc::vec2 const point) const -> glm::vec2 { return point.to_target(target_size()); }
+
+	[[nodiscard]] auto unproject(ndc::vec2 const point) const -> glm::vec2 { return unproject(to_target(point)); }
 
 	[[nodiscard]] auto unproject(glm::vec2 const point) const -> glm::vec2 { return m_inverse_view * glm::vec4{point, 0.0f, 1.0f}; }
 
   private:
-	glm::mat4 m_inverse_view{};
-	glm::vec2 m_framebuffer_size{};
+	glm::mat4 m_inverse_view{1.0f};
+	glm::vec2 m_target_size{};
 };
 } // namespace le

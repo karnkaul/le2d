@@ -7,6 +7,7 @@
 #include <le2d/render_instance.hpp>
 #include <le2d/render_stats.hpp>
 #include <le2d/resource/shader.hpp>
+#include <le2d/unprojector.hpp>
 #include <le2d/user_draw_data.hpp>
 #include <le2d/viewport.hpp>
 
@@ -33,6 +34,8 @@ class IRenderer : public klib::Polymorphic {
 	/// \brief End rendering.
 	virtual auto end_render() -> kvf::RenderTarget const& = 0;
 
+	[[nodiscard]] virtual auto framebuffer_size() const -> glm::ivec2 = 0;
+
 	virtual void set_line_width(float width) = 0;
 	virtual void set_shader(IShader const& shader) = 0;
 	virtual void set_user_data(UserDrawData const& user_data) = 0;
@@ -41,6 +44,9 @@ class IRenderer : public klib::Polymorphic {
 	/// \param primitive Primitive to draw.
 	/// \param instances Render Instances to draw.
 	virtual void draw(Primitive const& primitive, std::span<RenderInstance const> instances) = 0;
+
+	/// \returns Unprojector for current view and viewport.
+	[[nodiscard]] virtual auto unprojector() const -> Unprojector = 0;
 
 	/// \brief Render view (generates view matrix).
 	Transform view{};

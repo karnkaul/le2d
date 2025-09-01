@@ -9,7 +9,8 @@ struct Dynamic {
 };
 
 struct Letterbox {
-	[[nodiscard]] auto scaled_size(glm::vec2 target_size) const -> glm::vec2;
+	[[nodiscard]] auto fill_target_space(glm::vec2 target_size) const -> glm::vec2;
+	[[nodiscard]] auto unproject_target_space(glm::vec2 target_size) const -> glm::vec2;
 
 	glm::vec2 world_size{800.0f, 600.0f};
 };

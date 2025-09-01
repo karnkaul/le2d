@@ -50,8 +50,8 @@ constexpr auto triangle_count(std::size_t const vertices, std::size_t const indi
 }
 
 constexpr auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size) {
-	auto const scaled_size = v.scaled_size(framebuffer_size);
-	auto const half_excess = 0.5f * (framebuffer_size - scaled_size);
+	auto const world_in_fb_space = v.fill_target_space(framebuffer_size);
+	auto const half_excess = 0.5f * (framebuffer_size - world_in_fb_space);
 	auto const rect = kvf::Rect<>{.lt = half_excess, .rb = framebuffer_size - half_excess};
 	auto const vp_size = rect.size();
 	return vk::Viewport{rect.lt.x, rect.rb.y, vp_size.x, -vp_size.y};
@@ -88,7 +88,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	auto const visitor = klib::Visitor{
 		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
-		[this](viewport::Letterbox const& v) { return to_viewport(v, kvf::util::to_glm_vec(m_pass->get_extent())); },
+		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
 	};
 	m_viewport = std::visit(visitor, viewport);
 	m_scissor = m_pass->to_scissor(scissor_rect);
@@ -118,6 +118,17 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	vbo.draw(cmd, std::uint32_t(instances.size()));
 	++m_stats.draw_calls;
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
+}
+
+auto Renderer::unprojector() const -> Unprojector {
+	auto const visitor = klib::Visitor{
+		[this](viewport::Dynamic const&) { return Unprojector{view, framebuffer_size()}; },
+		[this](viewport::Letterbox const& v) {
+			auto const actual_world_size = v.unproject_target_space(framebuffer_size());
+			return Unprojector{le::Transform{}, actual_world_size};
+		},
+	};
+	return std::visit(visitor, viewport);
 }
 
 auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
