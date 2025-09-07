@@ -1,28 +1,25 @@
 #pragma once
-#include <le2d/tweak/tweakable.hpp>
+#include <le2d/tweak/store.hpp>
 #include <map>
-#include <memory>
-#include <vector>
 
 namespace le::tweak {
 /// \brief Tweakable registry.
-class Registry {
+class Registry : public IStore {
   public:
 	struct Entry {
 		std::string_view id{};
-		std::shared_ptr<ITweakable> tweakable{};
+		gsl::not_null<ITweakable*> tweakable;
 	};
 
-	void add(std::string_view id, std::shared_ptr<ITweakable> const& tweakable);
-	void remove(std::string_view id);
-	void remove_expired();
+	void add_tweakable(std::string_view id, gsl::not_null<ITweakable*> tweakable) override;
+	void remove_tweakable(std::string_view id) override;
 
-	[[nodiscard]] auto find(std::string_view id) const -> std::shared_ptr<ITweakable>;
+	[[nodiscard]] auto find_tweakable(std::string_view id) const -> ITweakable*;
 
 	void fill_entries(std::vector<Entry>& out) const;
 	[[nodiscard]] auto get_entries() const -> std::vector<Entry>;
 
   private:
-	std::map<std::string_view, std::weak_ptr<ITweakable>> m_tweakables{};
+	std::map<std::string_view, gsl::not_null<ITweakable*>> m_tweakables{};
 };
 } // namespace le::tweak

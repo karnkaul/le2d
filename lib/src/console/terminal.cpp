@@ -13,7 +13,8 @@
 #include <algorithm>
 #include <ranges>
 
-namespace le::console {
+namespace le {
+namespace console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
@@ -107,6 +108,31 @@ class Terminal : public ITerminal {
 		if (add_builtin_tweaks) { add_builtins(); }
 	}
 
+  private:
+	struct Params {
+		std::string_view id{};
+		std::string_view value{};
+
+		[[nodiscard]] static constexpr auto create(std::string_view const text) -> Params {
+			auto i = text.find_first_of(" =");
+			if (i == std::string_view::npos) { return Params{.id = text}; }
+			auto value = text.substr(i + 1);
+			while (!value.empty() && value.front() == ' ') { value = value.substr(1); }
+			return Params{.id = text.substr(0, i), .value = value};
+		}
+	};
+
+	static constexpr auto to_input_text_params(TerminalCreateInfo const& in) -> InputTextParams {
+		return InputTextParams{
+			.height = in.style.text_height,
+			.cursor_symbol = in.style.cursor,
+			.cursor_color = in.colors.cursor,
+			.blink_period = in.motion.blink_period,
+		};
+	}
+
+	[[nodiscard]] auto is_null() const -> bool final { return false; }
+
 	[[nodiscard]] auto is_active() const -> bool final { return m_active; }
 
 	void toggle_active() final {
@@ -114,16 +140,12 @@ class Terminal : public ITerminal {
 		m_input.set_interactive(m_active);
 	}
 
-	void add_tweakable(std::string_view const id, std::shared_ptr<ITweakable> const& tweakable) final {
-		m_tweak_registry.add(id, tweakable);
+	void add_tweakable(std::string_view const id, gsl::not_null<ITweakable*> tweakable) final {
+		m_tweak_registry.add_tweakable(id, tweakable);
 		refresh_tweak_entries();
 	}
 	void remove_tweakable(std::string_view const id) final {
-		m_tweak_registry.remove(id);
-		refresh_tweak_entries();
-	}
-	void remove_expired_tweakables() final {
-		m_tweak_registry.remove_expired();
+		m_tweak_registry.remove_tweakable(id);
 		refresh_tweak_entries();
 	}
 
@@ -185,29 +207,6 @@ class Terminal : public ITerminal {
 		renderer.viewport = old_viewport;
 	}
 
-  private:
-	struct Params {
-		std::string_view id{};
-		std::string_view value{};
-
-		[[nodiscard]] static constexpr auto create(std::string_view const text) -> Params {
-			auto i = text.find_first_of(" =");
-			if (i == std::string_view::npos) { return Params{.id = text}; }
-			auto value = text.substr(i + 1);
-			while (!value.empty() && value.front() == ' ') { value = value.substr(1); }
-			return Params{.id = text.substr(0, i), .value = value};
-		}
-	};
-
-	static constexpr auto to_input_text_params(TerminalCreateInfo const& in) -> InputTextParams {
-		return InputTextParams{
-			.height = in.style.text_height,
-			.cursor_symbol = in.style.cursor,
-			.cursor_color = in.colors.cursor,
-			.blink_period = in.motion.blink_period,
-		};
-	}
-
 	void setup(IFont& font) {
 		m_input.set_interactive(false);
 
@@ -225,13 +224,12 @@ class Terminal : public ITerminal {
 	}
 
 	void add_builtins() {
-		m_opacity = std::make_shared<Tweakable<float>>(kvf::Color::to_f32(m_background.tint.w));
-		m_opacity->on_set([this](float const value) {
+		m_opacity.on_set([this](float const value) {
 			if (value < 0.0f || value > 1.0f) { return false; }
 			m_background.tint.w = kvf::Color::to_u8(value);
 			return true;
 		});
-		add_tweakable("console.opacity", m_opacity);
+		add_tweakable("console.opacity", &m_opacity);
 	}
 
 	void resize() {
@@ -328,7 +326,7 @@ class Terminal : public ITerminal {
 	void try_run(std::string_view const text) {
 		auto const params = Params::create(text);
 		if (params.id.empty()) { return; }
-		auto tweakable = m_tweak_registry.find(params.id);
+		auto tweakable = m_tweak_registry.find_tweakable(params.id);
 		if (!tweakable) {
 			printerr(std::format("unrecognized identifier: {}", params.id));
 			return;
@@ -436,7 +434,7 @@ class Terminal : public ITerminal {
 	tweak::Registry m_tweak_registry{};
 	std::vector<tweak::Registry::Entry> m_tweak_entries{};
 	std::vector<std::string_view> m_candidates_buffer{};
-	std::shared_ptr<Tweakable<float>> m_opacity{};
+	Tweakable<float> m_opacity{};
 
 	std::deque<std::string> m_history{};
 	drawable::Quad m_background{};
@@ -453,9 +451,33 @@ class Terminal : public ITerminal {
 
 	std::optional<std::size_t> m_history_index{};
 };
+
+struct NullTerminal : ITerminal {
+	[[nodiscard]] auto is_null() const -> bool final { return true; }
+
+	[[nodiscard]] auto is_active() const -> bool final { return false; }
+	void toggle_active() final {}
+
+	void add_tweakable(std::string_view /*id*/, gsl::not_null<ITweakable*> /*tweakable*/) final {}
+	void remove_tweakable(std::string_view /*id*/) final {}
+
+	void println(std::string_view /*text*/) final {}
+	void printerr(std::string_view /*text*/) final {}
+
+	[[nodiscard]] auto get_background() const -> kvf::Color final { return {}; }
+	void set_background(kvf::Color /*color*/) final {}
+
+	auto handle_events(glm::vec2 /*framebuffer_size*/, std::span<Event const> /*events*/) -> StateChange final { return StateChange::None; }
+
+	void tick(kvf::Seconds /*dt*/) final {}
+	void draw(IRenderer& /*renderer*/) const final {}
+};
 } // namespace
 
 auto TerminalBuilder::build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> {
 	return std::make_unique<Terminal>(font, create_info, add_builtin_tweaks);
 }
-} // namespace le::console
+} // namespace console
+
+auto console::build_null_terminal() -> std::unique_ptr<ITerminal> { return std::make_unique<NullTerminal>(); }
+} // namespace le
