@@ -11,6 +11,7 @@
 #include <le2d/frame_stats.hpp>
 #include <le2d/render_pass.hpp>
 #include <le2d/resource/resource_factory.hpp>
+#include <le2d/unprojector.hpp>
 #include <le2d/vsync.hpp>
 #include <variant>
 
@@ -116,6 +117,13 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] auto main_pass_size() const -> glm::ivec2;
 	/// \returns Ratio of framebuffer to window sizes.
 	[[nodiscard]] auto display_ratio() const -> glm::vec2;
+
+	/// \param viewport Render viewport to unproject.
+	/// \param view Render view to unproject.
+	/// \returns Unprojector for main render pass.
+	[[nodiscard]] auto unprojector(Viewport const& viewport, Transform const& view) const -> Unprojector {
+		return Unprojector{viewport, view, main_pass_size()};
+	}
 
 	[[nodiscard]] auto get_title() const -> klib::CString;
 	void set_title(klib::CString title);
