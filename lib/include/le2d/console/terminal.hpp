@@ -4,22 +4,19 @@
 #include <le2d/drawable/drawable.hpp>
 #include <le2d/event.hpp>
 #include <le2d/resource/font.hpp>
-#include <le2d/tweak/tweakable.hpp>
+#include <le2d/tweak/store.hpp>
 #include <cstdint>
-#include <memory>
 #include <string_view>
 
 namespace le::console {
 enum class StateChange : std::int8_t { None, Activated, Deactivated };
 
-class ITerminal : public IDrawable {
+class ITerminal : public IDrawable, public tweak::IStore {
   public:
+	[[nodiscard]] virtual auto is_null() const -> bool = 0;
+
 	[[nodiscard]] virtual auto is_active() const -> bool = 0;
 	virtual void toggle_active() = 0;
-
-	virtual void add_tweakable(std::string_view id, std::shared_ptr<ITweakable> const& tweakable) = 0;
-	virtual void remove_tweakable(std::string_view id) = 0;
-	virtual void remove_expired_tweakables() = 0;
 
 	virtual void println(std::string_view text) = 0;
 	virtual void printerr(std::string_view text) = 0;

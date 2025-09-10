@@ -1,6 +1,7 @@
 #pragma once
 #include <le2d/transform.hpp>
 #include <le2d/vector_space.hpp>
+#include <le2d/viewport.hpp>
 
 namespace le {
 class Unprojector {
@@ -8,6 +9,8 @@ class Unprojector {
 	Unprojector() = default;
 
 	explicit Unprojector(Transform const& view, glm::vec2 const target_size) : m_inverse_view(view.to_inverse_view()), m_target_size(target_size) {}
+
+	explicit Unprojector(Viewport const& viewport, Transform const& view, glm::vec2 framebuffer_size);
 
 	[[nodiscard]] auto target_size() const -> glm::vec2 { return m_target_size; }
 

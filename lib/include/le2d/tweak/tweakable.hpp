@@ -34,6 +34,11 @@ class Tweakable : public ITweakable {
 		set_value(std::move(t));
 	}
 
+	auto operator=(Type t) -> Tweakable& {
+		set_value(std::move(t));
+		return *this;
+	}
+
 	[[nodiscard]] auto type_name() const -> std::string_view final { return Parser::type_name(); }
 
 	[[nodiscard]] auto as_string() const -> std::string_view final { return m_as_string; }

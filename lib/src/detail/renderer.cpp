@@ -120,16 +120,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
 }
 
-auto Renderer::unprojector() const -> Unprojector {
-	auto const visitor = klib::Visitor{
-		[this](viewport::Dynamic const&) { return Unprojector{view, framebuffer_size()}; },
-		[this](viewport::Letterbox const& v) {
-			auto const actual_world_size = v.unproject_target_space(framebuffer_size());
-			return Unprojector{le::Transform{}, actual_world_size};
-		},
-	};
-	return std::visit(visitor, viewport);
-}
+auto Renderer::unprojector() const -> Unprojector { return Unprojector{viewport, view, framebuffer_size()}; }
 
 auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 	auto const fixed_state = PipelineFixedState{
