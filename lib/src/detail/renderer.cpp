@@ -59,6 +59,7 @@ auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size)
 } // namespace
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
+	m_stats = {};
 	if (!command_buffer || is_rendering() || !m_shader->is_ready()) { return false; }
 
 	size = clamp_size(size);
