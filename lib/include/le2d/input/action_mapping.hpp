@@ -28,7 +28,7 @@ class ActionMapping : public IMapping {
 
 	/// \brief Process events and dispatch callbacks.
 	/// \param events List of events for this frame.
-	/// \param primary Primary gamepad, if any.
+	/// \param gamepads Gamepad manager instance.
 	void dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) override;
 
 	/// \brief Disengage all bindings.
