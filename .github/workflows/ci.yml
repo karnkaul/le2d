@@ -5,6 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: init
+        run: |
+            sudo apt update -yqq
+            sudo apt install -yqq clang-format-20
+            sudo update-alternatives --remove-all clang-format
+            sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-20 10
       - name: format code
         run: scripts/format_code.sh
       - name: check diff
@@ -14,9 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: |
+            uname -m
+            sudo apt update -yqq
+            sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 10
+            sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 10
       - name: configure
-        run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
+        run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug -- -v
       - name: build release
@@ -30,9 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: |
+            uname -m
+            sudo apt update -yqq
+            sudo apt install -yqq clang-20 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+            sudo update-alternatives --remove-all clang++
+            sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 10
+            sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 10
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug -- -v
       - name: build release
@@ -46,9 +63,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: |
+            uname -m
+            sudo apt update -yqq
+            sudo apt install -yqq mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 10
+            sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 10
       - name: configure
-        run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
+        run: cmake -S . --preset=ninja-gcc -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug -- -v
       - name: build release
@@ -62,9 +84,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: init
-        run: uname -m; sudo apt update -yqq && sudo apt install -yqq clang-19 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        run: |
+            uname -m
+            sudo apt update -yqq
+            sudo apt install -yqq clang-20 mesa-common-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+            sudo update-alternatives --remove-all clang++
+            sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 10
+            sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 10
       - name: configure
-        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
+        run: cmake -S . --preset=ninja-clang -B build -DKVF_USE_FREETYPE=OFF -DGLFW_BUILD_X11=OFF
       - name: build debug
         run: cmake --build build --config=Debug -- -v
       - name: build release
