@@ -136,9 +136,9 @@ jobs:
       - name: configure
         run: cmake -S . --preset=ninja-gcc -B build
       - name: build debug
-        run: cmake --build build --config=Debug --parallel
+        run: cmake --build build --config=Debug -- -v
       - name: build release
-        run: cmake --build build --config=Release --parallel
+        run: cmake --build build --config=Release -- -v
       - name: test debug
         run: cd build && ctest -V -C Debug
       - name: test release
