@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/trigonometric.hpp>
 #include <glm/vec2.hpp>
 
 namespace le {

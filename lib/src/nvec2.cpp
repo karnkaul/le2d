@@ -1,5 +1,4 @@
 #include <glm/mat2x2.hpp>
-#include <glm/trigonometric.hpp>
 #include <klib/assert.hpp>
 #include <le2d/nvec2.hpp>
 
