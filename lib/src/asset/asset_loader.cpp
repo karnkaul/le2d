@@ -26,7 +26,7 @@ auto AssetLoader::load_impl(std::type_info const& type, std::string_view const u
 		return {};
 	}
 
-	log.info("=='{}'== {} loaded", uri, loader.type_name());
+	log.info("=='{}' {} loaded==", uri, loader.type_name());
 	return ret;
 }
 } // namespace le
