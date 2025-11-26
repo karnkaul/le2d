@@ -1,4 +1,4 @@
-#include <le2d/text/text_buffer.hpp>
+#include "le2d/text/text_buffer.hpp"
 #include <algorithm>
 
 namespace le {

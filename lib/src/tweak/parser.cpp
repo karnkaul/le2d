@@ -1,4 +1,4 @@
-#include <le2d/tweak/parser.hpp>
+#include "le2d/tweak/parser.hpp"
 
 namespace le::tweak {
 auto Parser<bool>::parse(std::string_view const in, bool& out) -> bool {

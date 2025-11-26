@@ -1,5 +1,5 @@
-#include <le2d/text/text_geometry.hpp>
-#include <le2d/text/util.hpp>
+#include "le2d/text/text_geometry.hpp"
+#include "le2d/text/util.hpp"
 
 namespace le {
 void TextGeometry::append_glyphs(std::span<kvf::ttf::GlyphLayout const> layouts, glm::vec2 const offset, kvf::Color const color) {

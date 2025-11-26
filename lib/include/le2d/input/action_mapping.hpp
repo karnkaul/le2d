@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/input/action.hpp>
-#include <le2d/input/mapping.hpp>
+#include "le2d/input/action.hpp"
+#include "le2d/input/mapping.hpp"
 #include <functional>
 #include <gsl/pointers>
 #include <vector>

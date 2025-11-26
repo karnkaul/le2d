@@ -1,4 +1,4 @@
-#include <le2d/shape/quad.hpp>
+#include "le2d/shape/quad.hpp"
 
 namespace le::shape {
 namespace {

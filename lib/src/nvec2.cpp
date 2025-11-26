@@ -1,6 +1,6 @@
+#include "le2d/nvec2.hpp"
 #include <glm/mat2x2.hpp>
 #include <klib/assert.hpp>
-#include <le2d/nvec2.hpp>
 
 namespace le {
 auto nvec2::normal_or(glm::vec2 const xy, glm::vec2 const fallback) -> nvec2 {

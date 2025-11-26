@@ -1,8 +1,8 @@
 #pragma once
+#include "le2d/anim/animator.hpp"
+#include "le2d/drawable/sprite.hpp"
 #include <applet/applet.hpp>
 #include <klib/enum_array.hpp>
-#include <le2d/anim/animator.hpp>
-#include <le2d/drawable/sprite.hpp>
 #include <tile_drawer.hpp>
 
 namespace le::assed {

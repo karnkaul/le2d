@@ -1,4 +1,4 @@
-#include <le2d/tweak/registry.hpp>
+#include "le2d/tweak/registry.hpp"
 
 namespace le::tweak {
 void Registry::add_tweakable(std::string_view const id, gsl::not_null<ITweakable*> tweakable) { m_tweakables.insert_or_assign(id, tweakable); }

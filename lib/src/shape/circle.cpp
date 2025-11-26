@@ -1,5 +1,5 @@
+#include "le2d/shape/circle.hpp"
 #include <glm/trigonometric.hpp>
-#include <le2d/shape/circle.hpp>
 #include <cmath>
 
 namespace le::shape {

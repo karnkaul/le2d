@@ -1,5 +1,5 @@
+#include "le2d/input/action_mapping.hpp"
 #include <klib/visitor.hpp>
-#include <le2d/input/action_mapping.hpp>
 
 namespace le::input {
 void ActionMapping::bind_action(gsl::not_null<IAction*> action, OnAction on_action) {

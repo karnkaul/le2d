@@ -1,6 +1,6 @@
+#include "le2d/resource/texture.hpp"
 #include <kvf/render_pass.hpp>
 #include <kvf/util.hpp>
-#include <le2d/resource/texture.hpp>
 
 namespace le {
 RenderTexture::RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass) : m_render_pass(render_pass) {}

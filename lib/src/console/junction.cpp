@@ -1,5 +1,5 @@
+#include "le2d/console/junction.hpp"
 #include <kvf/is_positive.hpp>
-#include <le2d/console/junction.hpp>
 
 namespace le::console {
 void Junction::dispatch(std::span<Event const> events, glm::ivec2 const framebuffer_size) const {

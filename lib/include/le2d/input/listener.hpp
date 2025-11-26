@@ -1,6 +1,6 @@
 #pragma once
+#include "le2d/event.hpp"
 #include <klib/base_types.hpp>
-#include <le2d/event.hpp>
 #include <gsl/pointers>
 
 namespace le::input {

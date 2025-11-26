@@ -1,6 +1,6 @@
 #pragma once
+#include "le2d/resource/audio_buffer.hpp"
 #include <capo/buffer.hpp>
-#include <le2d/resource/audio_buffer.hpp>
 
 namespace le::detail {
 class AudioBuffer : public IAudioBuffer {

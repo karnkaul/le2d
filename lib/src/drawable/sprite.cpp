@@ -1,4 +1,4 @@
-#include <le2d/drawable/sprite.hpp>
+#include "le2d/drawable/sprite.hpp"
 
 namespace le::drawable {
 auto SpriteBase::to_primitive() const -> Primitive {

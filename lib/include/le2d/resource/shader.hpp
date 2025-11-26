@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/resource/resource.hpp>
+#include "le2d/resource/resource.hpp"
 #include <vulkan/vulkan.hpp>
 
 namespace le {

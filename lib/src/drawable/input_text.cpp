@@ -1,5 +1,5 @@
+#include "le2d/drawable/input_text.hpp"
 #include <GLFW/glfw3.h>
-#include <le2d/drawable/input_text.hpp>
 #include <cmath>
 #include <numbers>
 

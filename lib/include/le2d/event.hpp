@@ -1,8 +1,8 @@
 #pragma once
+#include "le2d/vector_space.hpp"
 #include <glm/vec2.hpp>
 #include <klib/visitor.hpp>
 #include <kvf/codepoint.hpp>
-#include <le2d/vector_space.hpp>
 #include <span>
 #include <string>
 #include <variant>

@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/nvec2.hpp"
 #include <glm/gtx/norm.hpp>
 #include <glm/mat4x4.hpp>
-#include <le2d/nvec2.hpp>
 
 namespace le {
 /// \brief 2D transformation.

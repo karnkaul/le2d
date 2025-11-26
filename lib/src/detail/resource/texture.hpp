@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/resource/texture.hpp"
 #include <kvf/image_bitmap.hpp>
 #include <kvf/util.hpp>
-#include <le2d/resource/texture.hpp>
 
 namespace le::detail {
 template <std::derived_from<ITextureBase> BaseT>

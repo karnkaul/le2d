@@ -1,7 +1,7 @@
 #pragma once
-#include <le2d/drawable/draw_primitive.hpp>
-#include <le2d/resource/font.hpp>
-#include <le2d/text/text_geometry.hpp>
+#include "le2d/drawable/draw_primitive.hpp"
+#include "le2d/resource/font.hpp"
+#include "le2d/text/text_geometry.hpp"
 
 namespace le::drawable {
 /// \brief Horizontal text expansion.

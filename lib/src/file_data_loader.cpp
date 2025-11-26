@@ -1,5 +1,5 @@
+#include "le2d/file_data_loader.hpp"
 #include <kvf/util.hpp>
-#include <le2d/file_data_loader.hpp>
 #include <log.hpp>
 #include <filesystem>
 #include <fstream>

@@ -1,8 +1,8 @@
 #pragma once
+#include "le2d/drawable/draw_primitive.hpp"
+#include "le2d/shape/quad.hpp"
+#include "le2d/vertex_bounds.hpp"
 #include <kvf/aspect_resize.hpp>
-#include <le2d/drawable/draw_primitive.hpp>
-#include <le2d/shape/quad.hpp>
-#include <le2d/vertex_bounds.hpp>
 
 namespace le::drawable {
 /// \brief Base class for Sprite types.

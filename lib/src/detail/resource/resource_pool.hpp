@@ -1,9 +1,9 @@
 #pragma once
+#include "le2d/resource/texture.hpp"
 #include <detail/pipeline_pool.hpp>
 #include <detail/resource/texture.hpp>
 #include <kvf/device_waiter.hpp>
 #include <kvf/render_device.hpp>
-#include <le2d/resource/texture.hpp>
 
 namespace le::detail {
 class ResourcePool {

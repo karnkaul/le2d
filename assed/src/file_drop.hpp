@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/file_data_loader.hpp"
+#include "le2d/uri.hpp"
 #include <klib/enum_ops.hpp>
-#include <le2d/file_data_loader.hpp>
-#include <le2d/uri.hpp>
 #include <cstdint>
 
 namespace le::assed {
@@ -24,7 +24,5 @@ struct FileDrop {
 	std::string extension{};
 	std::string json_type{};
 };
+constexpr auto enable_enum_bitops(FileDrop::Type /*unused*/) -> bool { return true; }
 } // namespace le::assed
-
-template <>
-inline constexpr auto klib::enable_enum_ops_v<le::assed::FileDrop::Type> = true;

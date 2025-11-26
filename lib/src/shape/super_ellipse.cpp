@@ -1,5 +1,5 @@
+#include "le2d/shape/super_ellipse.hpp"
 #include <glm/trigonometric.hpp>
-#include <le2d/shape/super_ellipse.hpp>
 #include <cmath>
 
 namespace le::shape {

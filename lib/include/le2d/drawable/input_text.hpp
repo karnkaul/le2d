@@ -1,9 +1,9 @@
 #pragma once
+#include "le2d/drawable/drawable.hpp"
+#include "le2d/event.hpp"
+#include "le2d/text/line_input.hpp"
+#include "le2d/text/text_geometry.hpp"
 #include <kvf/time.hpp>
-#include <le2d/drawable/drawable.hpp>
-#include <le2d/event.hpp>
-#include <le2d/text/line_input.hpp>
-#include <le2d/text/text_geometry.hpp>
 
 namespace le {
 /// \brief Input Text creation parameters.

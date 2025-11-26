@@ -1,5 +1,5 @@
+#include "le2d/input/action.hpp"
 #include <glm/gtx/norm.hpp>
-#include <le2d/input/action.hpp>
 #include <algorithm>
 #include <array>
 #include <utility>

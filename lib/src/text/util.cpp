@@ -1,6 +1,6 @@
+#include "le2d/text/util.hpp"
+#include "le2d/shape/quad.hpp"
 #include <kvf/is_positive.hpp>
-#include <le2d/shape/quad.hpp>
-#include <le2d/text/util.hpp>
 #include <algorithm>
 
 namespace le {

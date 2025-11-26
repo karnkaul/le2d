@@ -1,5 +1,5 @@
+#include "le2d/shape/triangle.hpp"
 #include <glm/trigonometric.hpp>
-#include <le2d/shape/triangle.hpp>
 #include <cmath>
 
 namespace le::shape {

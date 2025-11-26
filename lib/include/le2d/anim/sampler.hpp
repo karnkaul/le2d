@@ -1,7 +1,7 @@
 #pragma once
-#include <le2d/anim/interpolator.hpp>
-#include <le2d/anim/keyframe.hpp>
-#include <le2d/tile/tile_id.hpp>
+#include "le2d/anim/interpolator.hpp"
+#include "le2d/anim/keyframe.hpp"
+#include "le2d/tile/tile_id.hpp"
 #include <algorithm>
 #include <concepts>
 #include <span>

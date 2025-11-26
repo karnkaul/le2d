@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/input/action_mapping.hpp>
-#include <le2d/input/router.hpp>
+#include "le2d/input/action_mapping.hpp"
+#include "le2d/input/router.hpp"
 
 namespace le::input {
 /// \brief RAII wrapper for associating a mapping with a router.

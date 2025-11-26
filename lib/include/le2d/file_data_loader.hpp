@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/data_loader.hpp>
+#include "le2d/data_loader.hpp"
 
 namespace le {
 /// \brief Concrete IDataLoader that uses the filesystem.

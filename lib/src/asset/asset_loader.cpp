@@ -1,5 +1,5 @@
+#include "le2d/asset/asset_loader.hpp"
 #include <klib/log.hpp>
-#include <le2d/asset/asset_loader.hpp>
 
 namespace le {
 namespace {
