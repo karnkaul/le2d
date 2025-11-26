@@ -1,9 +1,9 @@
 #pragma once
-#include <le2d/drawable/figure.hpp>
-#include <le2d/shape/circle.hpp>
-#include <le2d/shape/quad.hpp>
-#include <le2d/shape/super_ellipse.hpp>
-#include <le2d/shape/triangle.hpp>
+#include "le2d/drawable/figure.hpp"
+#include "le2d/shape/circle.hpp"
+#include "le2d/shape/quad.hpp"
+#include "le2d/shape/super_ellipse.hpp"
+#include "le2d/shape/triangle.hpp"
 
 namespace le::drawable {
 using Triangle = Figure<shape::Triangle>;

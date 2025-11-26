@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/geometry.hpp"
 #include <kvf/color.hpp>
 #include <kvf/rect.hpp>
-#include <le2d/geometry.hpp>
 
 namespace le::shape {
 /// \brief Interface for Quad Geometry.

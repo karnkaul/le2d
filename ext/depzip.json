@@ -1,0 +1,16 @@
+{
+  "packages": [
+    {
+      "uri": "karnkaul/kvf",
+      "branch": "v0.4.10"
+    },
+    {
+      "uri": "capo-devs/capo-lite",
+      "branch": "v2.1.0"
+    },
+    {
+      "uri": "karnkaul/djson",
+      "branch": "v3.1.3"
+    }
+  ]
+}

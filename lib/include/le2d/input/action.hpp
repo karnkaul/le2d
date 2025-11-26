@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/input/action_types.hpp>
+#include "le2d/input/action_types.hpp"
 
 namespace le::input::action {
 /// \brief Digital action for a key match.

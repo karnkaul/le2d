@@ -1,7 +1,7 @@
 #pragma once
-#include <le2d/drawable/draw_primitive.hpp>
-#include <le2d/geometry.hpp>
-#include <le2d/vertex_bounds.hpp>
+#include "le2d/drawable/draw_primitive.hpp"
+#include "le2d/geometry.hpp"
+#include "le2d/vertex_bounds.hpp"
 
 namespace le::drawable {
 /// \brief Interface for drawable figures.

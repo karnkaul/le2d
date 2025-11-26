@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/input/device.hpp>
-#include <le2d/input/mapping.hpp>
+#include "le2d/input/device.hpp"
+#include "le2d/input/mapping.hpp"
 #include <optional>
 
 namespace le::input {

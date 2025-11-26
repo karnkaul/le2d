@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/resource/font.hpp>
-#include <le2d/vertex_array.hpp>
+#include "le2d/resource/font.hpp"
+#include "le2d/vertex_array.hpp"
 
 namespace le::util {
 [[nodiscard]] auto clamp(TextHeight height) -> TextHeight;

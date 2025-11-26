@@ -1,8 +1,8 @@
 #pragma once
-#include <le2d/resource/audio_buffer.hpp>
-#include <le2d/resource/font.hpp>
-#include <le2d/resource/shader.hpp>
-#include <le2d/resource/texture.hpp>
+#include "le2d/resource/audio_buffer.hpp"
+#include "le2d/resource/font.hpp"
+#include "le2d/resource/shader.hpp"
+#include "le2d/resource/texture.hpp"
 #include <memory>
 
 namespace le {

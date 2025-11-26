@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/gtx/norm.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/vec2.hpp>
 
 namespace le {
@@ -8,6 +10,8 @@ inline constexpr auto up_v = glm::vec2{0.0f, 1.0f};
 /// \brief Normalized 2D vector.
 class nvec2 : public glm::vec2 {
   public:
+	[[nodiscard]] static auto normal_or(glm::vec2 xy, glm::vec2 fallback) -> nvec2;
+
 	explicit(false) nvec2(glm::vec2 xy = right_v);
 	explicit(false) nvec2(float x, float y) : nvec2(glm::vec2{x, y}) {}
 

@@ -1,3 +1,6 @@
+#include "le2d/context.hpp"
+#include "le2d/asset/asset_type_loaders.hpp"
+#include "le2d/error.hpp"
 #include <capo/engine.hpp>
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
@@ -6,9 +9,6 @@
 #include <detail/resource/resource_pool.hpp>
 #include <klib/assert.hpp>
 #include <klib/version_str.hpp>
-#include <le2d/asset/asset_type_loaders.hpp>
-#include <le2d/context.hpp>
-#include <le2d/error.hpp>
 #include <log.hpp>
 #include <spirv.hpp>
 

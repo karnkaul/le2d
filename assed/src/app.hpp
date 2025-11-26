@@ -1,10 +1,10 @@
 #pragma once
+#include "le2d/context.hpp"
+#include "le2d/file_data_loader.hpp"
+#include "le2d/input/dispatch.hpp"
+#include "le2d/service_locator.hpp"
 #include <applet/applet.hpp>
 #include <kvf/time.hpp>
-#include <le2d/context.hpp>
-#include <le2d/file_data_loader.hpp>
-#include <le2d/input/dispatch.hpp>
-#include <le2d/service_locator.hpp>
 #include <memory>
 
 namespace le::assed {

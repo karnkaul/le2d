@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/tweak/store.hpp>
+#include "le2d/tweak/store.hpp"
 #include <map>
 
 namespace le::tweak {

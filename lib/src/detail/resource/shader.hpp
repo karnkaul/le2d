@@ -1,6 +1,6 @@
 #pragma once
+#include "le2d/resource/shader.hpp"
 #include <klib/hash_combine.hpp>
-#include <le2d/resource/shader.hpp>
 
 namespace le::detail {
 class Shader : public IShader {

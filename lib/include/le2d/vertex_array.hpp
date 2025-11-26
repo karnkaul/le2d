@@ -1,5 +1,5 @@
 #pragma once
-#include <le2d/vertex.hpp>
+#include "le2d/vertex.hpp"
 #include <cstdint>
 #include <span>
 #include <vector>

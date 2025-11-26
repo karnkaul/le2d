@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/resource/audio_buffer.hpp"
 #include <capo/source.hpp>
 #include <klib/base_types.hpp>
-#include <le2d/resource/audio_buffer.hpp>
 #include <gsl/pointers>
 
 namespace le {

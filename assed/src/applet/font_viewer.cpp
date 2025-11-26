@@ -1,6 +1,6 @@
+#include "le2d/input/dispatch.hpp"
 #include <applet/font_viewer.hpp>
 #include <klib/assert.hpp>
-#include <le2d/input/dispatch.hpp>
 #include <algorithm>
 
 namespace le::assed {

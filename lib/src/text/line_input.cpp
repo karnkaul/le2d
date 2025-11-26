@@ -1,5 +1,5 @@
+#include "le2d/text/line_input.hpp"
 #include <klib/assert.hpp>
-#include <le2d/text/line_input.hpp>
 
 namespace le {
 LineInput::LineInput(gsl::not_null<IFont*> font, TextHeight const height) : m_atlas(&font->get_atlas(height)) {}

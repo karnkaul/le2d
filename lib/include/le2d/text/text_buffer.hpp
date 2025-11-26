@@ -1,8 +1,8 @@
 #pragma once
-#include <le2d/primitive.hpp>
-#include <le2d/render_instance.hpp>
-#include <le2d/resource/font.hpp>
-#include <le2d/text/text_geometry.hpp>
+#include "le2d/primitive.hpp"
+#include "le2d/render_instance.hpp"
+#include "le2d/resource/font.hpp"
+#include "le2d/text/text_geometry.hpp"
 #include <deque>
 #include <gsl/pointers>
 #include <span>

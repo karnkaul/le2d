@@ -1,8 +1,8 @@
 #pragma once
+#include "le2d/geometry.hpp"
+#include "le2d/primitive.hpp"
+#include "le2d/vertex_array.hpp"
 #include <kvf/ttf.hpp>
-#include <le2d/geometry.hpp>
-#include <le2d/primitive.hpp>
-#include <le2d/vertex_array.hpp>
 
 namespace le {
 /// \brief Drawable geometry for text.

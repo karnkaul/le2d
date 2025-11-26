@@ -1,9 +1,9 @@
 #pragma once
+#include "le2d/resource/resource.hpp"
+#include "le2d/tile/tile_set.hpp"
 #include <kvf/bitmap.hpp>
 #include <kvf/render_device_fwd.hpp>
 #include <kvf/vma.hpp>
-#include <le2d/resource/resource.hpp>
-#include <le2d/tile/tile_set.hpp>
 #include <gsl/pointers>
 
 namespace kvf {

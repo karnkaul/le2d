@@ -1,6 +1,6 @@
+#include "le2d/util.hpp"
 #include <klib/env.hpp>
 #include <kvf/is_positive.hpp>
-#include <le2d/util.hpp>
 
 namespace le {
 auto util::exe_path() -> std::string const& { return klib::env::exe_path(); }

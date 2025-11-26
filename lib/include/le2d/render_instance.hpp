@@ -1,6 +1,6 @@
 #pragma once
+#include "le2d/transform.hpp"
 #include <kvf/color.hpp>
-#include <le2d/transform.hpp>
 
 namespace le {
 /// \brief Instance data for instanced rendering.

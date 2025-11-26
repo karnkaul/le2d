@@ -1,13 +1,13 @@
 #pragma once
-#include <le2d/anim/animation.hpp>
-#include <le2d/asset/asset_loader.hpp>
-#include <le2d/data_loader.hpp>
-#include <le2d/resource/audio_buffer.hpp>
-#include <le2d/resource/font.hpp>
-#include <le2d/resource/resource_factory.hpp>
-#include <le2d/resource/shader.hpp>
-#include <le2d/resource/texture.hpp>
-#include <le2d/tile/tile_set.hpp>
+#include "le2d/anim/animation.hpp"
+#include "le2d/asset/asset_loader.hpp"
+#include "le2d/data_loader.hpp"
+#include "le2d/resource/audio_buffer.hpp"
+#include "le2d/resource/font.hpp"
+#include "le2d/resource/resource_factory.hpp"
+#include "le2d/resource/shader.hpp"
+#include "le2d/resource/texture.hpp"
+#include "le2d/tile/tile_set.hpp"
 
 namespace le {
 template <std::derived_from<IAsset> AssetTypeT>

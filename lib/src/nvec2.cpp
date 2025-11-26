@@ -1,9 +1,14 @@
+#include "le2d/nvec2.hpp"
 #include <glm/mat2x2.hpp>
-#include <glm/trigonometric.hpp>
 #include <klib/assert.hpp>
-#include <le2d/nvec2.hpp>
 
 namespace le {
+auto nvec2::normal_or(glm::vec2 const xy, glm::vec2 const fallback) -> nvec2 {
+	auto const length = glm::length2(xy);
+	if (length == 0.0f) { return fallback; }
+	return nvec2{InPlace{}, xy / glm::sqrt(length)};
+}
+
 nvec2::nvec2(glm::vec2 const xy) : glm::vec2(xy) {
 	auto const length = glm::length(static_cast<glm::vec2>(*this));
 	KLIB_ASSERT(length > 0.0f);

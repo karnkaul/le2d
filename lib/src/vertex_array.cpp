@@ -1,4 +1,4 @@
-#include <le2d/vertex_array.hpp>
+#include "le2d/vertex_array.hpp"
 #include <algorithm>
 
 namespace le {

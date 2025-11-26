@@ -1,10 +1,10 @@
 #pragma once
+#include "le2d/resource/font.hpp"
+#include "le2d/text/util.hpp"
+#include "le2d/text_height.hpp"
 #include <detail/resource/texture.hpp>
 #include <klib/assert.hpp>
 #include <kvf/is_positive.hpp>
-#include <le2d/resource/font.hpp>
-#include <le2d/text/util.hpp>
-#include <le2d/text_height.hpp>
 #include <unordered_map>
 
 namespace le::detail {

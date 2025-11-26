@@ -1,5 +1,5 @@
+#include "le2d/viewport.hpp"
 #include <kvf/aspect_resize.hpp>
-#include <le2d/viewport.hpp>
 #include <optional>
 
 namespace le::viewport {

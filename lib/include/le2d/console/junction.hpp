@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/console/terminal.hpp>
-#include <le2d/input/router.hpp>
+#include "le2d/console/terminal.hpp"
+#include "le2d/input/router.hpp"
 #include <span>
 
 namespace le::console {

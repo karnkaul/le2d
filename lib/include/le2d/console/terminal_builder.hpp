@@ -1,8 +1,8 @@
 #pragma once
+#include "le2d/console/terminal.hpp"
+#include "le2d/text_height.hpp"
 #include <kvf/color.hpp>
 #include <kvf/time.hpp>
-#include <le2d/console/terminal.hpp>
-#include <le2d/text_height.hpp>
 #include <gsl/pointers>
 
 namespace le {

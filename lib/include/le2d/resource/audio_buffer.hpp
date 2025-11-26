@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/resource/resource.hpp"
 #include <capo/source.hpp>
 #include <kvf/time.hpp>
-#include <le2d/resource/resource.hpp>
 
 namespace le {
 /// \brief Opaque interface for an Audio Buffer.

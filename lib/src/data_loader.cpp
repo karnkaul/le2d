@@ -1,5 +1,5 @@
+#include "le2d/data_loader.hpp"
 #include <djson/json.hpp>
-#include <le2d/data_loader.hpp>
 
 namespace le {
 auto IDataLoader::load_bytes(std::string_view const uri) const -> std::vector<std::byte> {

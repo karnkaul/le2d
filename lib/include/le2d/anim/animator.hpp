@@ -1,6 +1,6 @@
 #pragma once
-#include <le2d/anim/animation.hpp>
-#include <le2d/anim/sampler.hpp>
+#include "le2d/anim/animation.hpp"
+#include "le2d/anim/sampler.hpp"
 
 namespace le {
 namespace anim {

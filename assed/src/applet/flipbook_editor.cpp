@@ -1,6 +1,6 @@
+#include "le2d/json_io.hpp"
 #include <applet/flipbook_editor.hpp>
 #include <klib/fixed_string.hpp>
-#include <le2d/json_io.hpp>
 #include <ranges>
 
 namespace le::assed {

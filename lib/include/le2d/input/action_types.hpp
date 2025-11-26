@@ -1,9 +1,9 @@
 #pragma once
+#include "le2d/event.hpp"
+#include "le2d/input/gamepad.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 #include <klib/base_types.hpp>
-#include <le2d/event.hpp>
-#include <le2d/input/gamepad.hpp>
 #include <bitset>
 #include <optional>
 

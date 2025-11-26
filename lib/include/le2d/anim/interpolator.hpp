@@ -1,6 +1,6 @@
 #pragma once
+#include "le2d/transform.hpp"
 #include <glm/common.hpp>
-#include <le2d/transform.hpp>
 #include <cmath>
 
 namespace le::anim {

@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/renderer.hpp"
 #include <glm/vec2.hpp>
 #include <klib/base_types.hpp>
-#include <le2d/renderer.hpp>
 
 namespace le {
 /// \brief Opaque interface for 2D render pass, owns a multi-sampled color RenderTarget.

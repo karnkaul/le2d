@@ -1,29 +1,19 @@
 #pragma once
+#include "le2d/asset/asset_loader.hpp"
+#include "le2d/audio_mixer.hpp"
+#include "le2d/build_version.hpp"
+#include "le2d/data_loader.hpp"
+#include "le2d/event.hpp"
+#include "le2d/frame_stats.hpp"
+#include "le2d/render_pass.hpp"
+#include "le2d/resource/resource_factory.hpp"
+#include "le2d/unprojector.hpp"
+#include "le2d/vsync.hpp"
 #include <GLFW/glfw3.h>
 #include <klib/enum_ops.hpp>
 #include <kvf/render_device.hpp>
 #include <kvf/window.hpp>
-#include <le2d/asset/asset_loader.hpp>
-#include <le2d/audio_mixer.hpp>
-#include <le2d/build_version.hpp>
-#include <le2d/data_loader.hpp>
-#include <le2d/event.hpp>
-#include <le2d/frame_stats.hpp>
-#include <le2d/render_pass.hpp>
-#include <le2d/resource/resource_factory.hpp>
-#include <le2d/unprojector.hpp>
-#include <le2d/vsync.hpp>
 #include <variant>
-
-namespace le {
-enum class PlatformFlag : std::uint8_t;
-enum class WindowFlag : std::uint8_t;
-} // namespace le
-
-template <>
-inline constexpr auto klib::enable_enum_ops_v<le::WindowFlag> = true;
-template <>
-inline constexpr auto klib::enable_enum_ops_v<le::PlatformFlag> = true;
 
 namespace le {
 /// \brief Platform flags (GLFW init hints).
@@ -34,6 +24,7 @@ enum class PlatformFlag : std::uint8_t {
 	/// \brief Disable libdecor (only relevant on Wayland).
 	NoLibdecor,
 };
+constexpr auto enable_enum_bitops(PlatformFlag /*unused*/) -> bool { return true; }
 
 /// \brief Window creation flags (GLFW window hints).
 enum class WindowFlag : std::uint8_t {
@@ -53,6 +44,7 @@ enum class WindowFlag : std::uint8_t {
 	/// \brief Framebuffer is resized based on content scale changes.
 	ScaleFramebuffer = 1 << 6,
 };
+constexpr auto enable_enum_bitops(WindowFlag /*unused*/) -> bool { return true; }
 
 /// \brief Default Window creation flags.
 inline constexpr auto default_window_flags_v = WindowFlag::Decorated | WindowFlag::Resizeable | WindowFlag::Visible;

@@ -1,7 +1,7 @@
 #pragma once
+#include "le2d/event.hpp"
+#include "le2d/input/gamepad.hpp"
 #include <klib/base_types.hpp>
-#include <le2d/event.hpp>
-#include <le2d/input/gamepad.hpp>
 #include <span>
 
 namespace le::input {
