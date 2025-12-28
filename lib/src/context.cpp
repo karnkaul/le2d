@@ -427,10 +427,10 @@ void Context::set_visible(bool const visible) {
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void Context::lock_aspect_ratio(glm::ivec2 const ratio) { glfwSetWindowAspectRatio(get_window(), ratio.x, ratio.y); }
-
-// NOLINTNEXTLINE(readability-make-member-function-const)
-void Context::unlock_aspect_ratio() { glfwSetWindowAspectRatio(get_window(), GLFW_DONT_CARE, GLFW_DONT_CARE); }
+void Context::lock_aspect_ratio(bool const lock) {
+	auto const size = lock ? window_size() : glm::ivec2{GLFW_DONT_CARE, GLFW_DONT_CARE};
+	glfwSetWindowAspectRatio(get_window(), size.x, size.y);
+}
 
 auto Context::is_running() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
 // NOLINTNEXTLINE(readability-make-member-function-const)
