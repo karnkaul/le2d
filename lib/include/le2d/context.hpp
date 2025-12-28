@@ -132,6 +132,12 @@ class Context : public klib::Polymorphic {
 	void set_windowed(glm::ivec2 size = {1280, 720});
 	/// \brief Show/hide window.
 	void set_visible(bool visible);
+	/// \brief Lock the window aspect ratio.
+	/// Has no effect if fullscreen or if window is not resizable.
+	void lock_aspect_ratio(glm::ivec2 ratio);
+	/// \brief Disable aspect ratio locking.
+	/// Has no effect if fullscreen or if window is not resizable.
+	void unlock_aspect_ratio();
 
 	/// \brief Check if Window is (and should remain) open.
 	/// \returns true unless the close flag has been set.
