@@ -217,9 +217,8 @@ class ContextImpl : public Context {
 		m_event_queue.clear();
 		m_drops.clear();
 		m_cmd = m_render_device->next_frame();
-		++m_fps.counter;
 		process_requests();
-		m_frame_start = kvf::Clock::now();
+		update_timings_and_stats(kvf::Clock::now());
 		return m_cmd;
 	}
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> final { return m_event_queue; }
@@ -229,10 +228,9 @@ class ContextImpl : public Context {
 	}
 	void present() final {
 		m_renderer->end_render();
-		auto const present_start = kvf::Clock::now();
 		m_render_device->render(m_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
-		update_stats(present_start);
+		m_frame_finish = kvf::Clock::now();
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
@@ -256,10 +254,11 @@ class ContextImpl : public Context {
 		}
 	}
 
-	void update_stats(kvf::Clock::time_point present_start) {
-		auto const now = kvf::Clock::now();
-		m_frame_stats.present_dt = now - present_start;
+	void update_timings_and_stats(kvf::Clock::time_point const now) {
 		m_frame_stats.total_dt = now - m_frame_start;
+		m_frame_stats.frame_dt = m_frame_finish - m_frame_start;
+		m_frame_start = now;
+		++m_fps.counter;
 		m_fps.elapsed += m_frame_stats.total_dt;
 		if (m_fps.elapsed >= 1s) {
 			m_fps.value = std::exchange(m_fps.counter, {});
@@ -369,6 +368,7 @@ class ContextImpl : public Context {
 	vk::CommandBuffer m_cmd{};
 
 	kvf::Clock::time_point m_frame_start{};
+	kvf::Clock::time_point m_frame_finish{};
 	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
