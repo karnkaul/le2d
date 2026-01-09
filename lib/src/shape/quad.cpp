@@ -1,4 +1,5 @@
 #include "le2d/shape/quad.hpp"
+#include <kvf/is_positive.hpp>
 
 namespace le::shape {
 namespace {
@@ -9,6 +10,11 @@ constexpr std::size_t lt_v{3};
 } // namespace
 
 auto IQuad::get_rect() const -> kvf::Rect<> { return kvf::Rect<>{.lt = m_vertices[lt_v].position, .rb = m_vertices[rb_v].position}; }
+
+void IQuad::create(glm::vec2 size) {
+	if (!kvf::is_positive(size)) { size = {}; }
+	create(kvf::Rect<>::from_size(size));
+}
 
 void IQuad::create(kvf::Rect<> const& rect, kvf::UvRect const& uv, kvf::Color const color) {
 	auto const vec4_color = color.to_linear();

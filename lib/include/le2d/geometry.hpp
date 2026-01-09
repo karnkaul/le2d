@@ -8,6 +8,8 @@ namespace le {
 /// \brief Interface for drawable geometry.
 class IGeometry : public klib::Polymorphic {
   public:
+	static constexpr auto default_length_v{200.0f};
+
 	[[nodiscard]] virtual auto get_vertices() const -> std::span<Vertex const> = 0;
 	[[nodiscard]] virtual auto get_indices() const -> std::span<std::uint32_t const> = 0;
 	[[nodiscard]] virtual auto get_topology() const -> vk::PrimitiveTopology = 0;

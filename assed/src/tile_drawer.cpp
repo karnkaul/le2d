@@ -25,7 +25,6 @@ void TileDrawer::setup(std::span<Tile const> tiles, glm::vec2 const texture_size
 }
 
 void TileDrawer::clear() {
-	quad.create();
 	quad.texture = nullptr;
 	tile_frames.clear();
 	selected_tile.reset();
