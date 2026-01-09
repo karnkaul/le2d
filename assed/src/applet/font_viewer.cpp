@@ -5,7 +5,6 @@
 
 namespace le::assed {
 FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_font(get_context().get_resource_factory().create_font()) {
-	m_quad.create();
 	m_drop_types = FileDrop::Type::Font;
 }
 

@@ -16,6 +16,8 @@ class IDrawPrimitive : public IDrawable {
 template <std::derived_from<IDrawPrimitive> Type>
 class SingleDrawPrimitive : public Type, public RenderInstance {
   public:
+	using Type::Type;
+
 	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
 };
 
@@ -23,6 +25,8 @@ class SingleDrawPrimitive : public Type, public RenderInstance {
 template <std::derived_from<IDrawPrimitive> Type>
 class InstancedDrawPrimitive : public Type {
   public:
+	using Type::Type;
+
 	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return instances; }
 
 	std::vector<RenderInstance> instances{};

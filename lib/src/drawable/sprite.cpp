@@ -1,4 +1,5 @@
 #include "le2d/drawable/sprite.hpp"
+#include <kvf/is_positive.hpp>
 
 namespace le::drawable {
 auto SpriteBase::to_primitive() const -> Primitive {
@@ -10,7 +11,8 @@ auto SpriteBase::to_primitive() const -> Primitive {
 	};
 }
 
-void SpriteBase::set_base_size(glm::vec2 const size) {
+void SpriteBase::set_base_size(glm::vec2 size) {
+	if (!kvf::is_positive(size)) { size = {}; }
 	if (size == m_size) { return; }
 	m_size = size;
 	update(get_base_size(), get_origin(), get_uv());

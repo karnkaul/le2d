@@ -10,7 +10,7 @@ namespace le::drawable {
 /// based on the set ResizeAspect logic and aspect ratio of UV coordinates.
 class SpriteBase : public IDrawPrimitive {
   public:
-	static constexpr auto size_v{shape::Quad::size_v};
+	explicit SpriteBase(glm::vec2 const size = glm::vec2{200.0f}) { set_base_size(size); }
 
 	[[nodiscard]] auto to_primitive() const -> Primitive final;
 
@@ -44,9 +44,14 @@ class SpriteBase : public IDrawPrimitive {
 /// \brief Sprite Draw Primitive.
 class Sprite : public SingleDrawPrimitive<SpriteBase> {
   public:
+	using SingleDrawPrimitive<SpriteBase>::SingleDrawPrimitive;
+
 	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(to_primitive().vertices, transform.to_model()); }
 };
 
 /// \brief Instanced Sprite Draw Primitive.
-class InstancedSprite : public InstancedDrawPrimitive<SpriteBase> {};
+class InstancedSprite : public InstancedDrawPrimitive<SpriteBase> {
+  public:
+	using InstancedDrawPrimitive<SpriteBase>::InstancedDrawPrimitive;
+};
 } // namespace le::drawable
