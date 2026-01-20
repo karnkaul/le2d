@@ -29,8 +29,8 @@ void TextBase::set_string(IFont& font, std::string_view const line, Params const
 
 	auto offset = glm::vec2{};
 	switch (params.expand) {
-	case TextExpand::eBoth: offset.x -= 0.5f * m_size.x; break;
-	case TextExpand::eLeft: offset.x -= m_size.x; break;
+	case TextExpand::eBoth: offset.x -= (0.5f * m_size.x) + rect.lt.x; break;
+	case TextExpand::eLeft: offset.x -= m_size.x + rect.lt.x; break;
 	default: break;
 	}
 
