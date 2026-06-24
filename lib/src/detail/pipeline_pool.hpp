@@ -82,8 +82,14 @@ class PipelinePool {
 	}
 
 	void create_layout() {
+		auto const max_push_constant_size = m_render_device->get_gpu().properties.limits.maxPushConstantsSize;
+
+		auto const push_constant_range =
+			vk::PushConstantRange{}.setStageFlags(vk::ShaderStageFlagBits::eAllGraphics).setOffset(0).setSize(max_push_constant_size);
+
 		auto plci = vk::PipelineLayoutCreateInfo{};
 		plci.setSetLayouts(m_set_layouts);
+		plci.setPushConstantRanges(push_constant_range);
 		m_layout = m_render_device->get_device().createPipelineLayoutUnique(plci);
 	}
 

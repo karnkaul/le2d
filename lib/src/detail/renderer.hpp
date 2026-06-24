@@ -1,4 +1,5 @@
 #pragma once
+#include "le2d/push_constant.hpp"
 #include "le2d/renderer.hpp"
 #include <detail/resource/resource_pool.hpp>
 #include <kvf/render_device.hpp>
@@ -34,6 +35,10 @@ class Renderer : public IRenderer {
 
 	void set_shader(IShader const& shader) final { m_shader = &shader; }
 	void set_user_data(UserDrawData const& user_data) final { m_user_data = user_data; }
+	void set_push_constants(vk::ShaderStageFlagBits stages, std::uint32_t size, void const* data, std::uint32_t offset) final {
+		m_push_constants = {.stages = stages, .size = size, .offset = offset};
+		if (data && size > 0) { std::memcpy(m_push_constants.data.data(), data, size); }
+	}
 
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec<int>(m_pass->get_extent()); }
 
@@ -57,6 +62,8 @@ class Renderer : public IRenderer {
 
 	vk::Pipeline m_pipeline{};
 	float m_line_width{1.0f};
+
+	PushConstant m_push_constants{};
 
 	kvf::RenderTarget m_rt{};
 	RenderStats m_stats{};

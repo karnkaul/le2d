@@ -32,6 +32,8 @@ void run() {
 	auto const audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
 	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
+    
+
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.
 	auto const waiter = context->create_waiter();

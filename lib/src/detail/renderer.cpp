@@ -115,6 +115,8 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	cmd.setViewport(0, m_viewport);
 	cmd.setScissor(0, m_scissor);
 	cmd.setLineWidth(m_line_width);
+	cmd.pushConstants(m_resource_pool->get_pipeline_layout(), m_push_constants.stages, m_push_constants.offset, m_push_constants.size,
+					  m_push_constants.data.data());
 
 	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->get_pipeline_layout(), 0, descriptor_sets, {});
 	vbo.draw(cmd, std::uint32_t(instances.size()));

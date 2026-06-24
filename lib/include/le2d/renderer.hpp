@@ -39,6 +39,7 @@ class IRenderer : public klib::Polymorphic {
 	virtual void set_line_width(float width) = 0;
 	virtual void set_shader(IShader const& shader) = 0;
 	virtual void set_user_data(UserDrawData const& user_data) = 0;
+	virtual void set_push_constants(vk::ShaderStageFlagBits stages, std::uint32_t size, void const* data, std::uint32_t offset = 0) = 0;
 
 	/// \brief Draw given instances of a Primitive.
 	/// \param primitive Primitive to draw.
