@@ -1,7 +1,7 @@
 #pragma once
+#include "klib/enum/bitops.hpp"
 #include "le2d/file_data_loader.hpp"
 #include "le2d/uri.hpp"
-#include <klib/enum_ops.hpp>
 #include <cstdint>
 
 namespace le::assed {

@@ -1,6 +1,6 @@
 #pragma once
+#include "klib/debug/assert.hpp"
 #include "le2d/asset/asset_type_loader.hpp"
-#include <klib/assert.hpp>
 #include <gsl/pointers>
 #include <memory>
 #include <string_view>

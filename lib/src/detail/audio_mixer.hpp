@@ -1,7 +1,7 @@
 #pragma once
+#include "klib/debug/assert.hpp"
 #include "le2d/audio_mixer.hpp"
 #include <capo/engine.hpp>
-#include <klib/assert.hpp>
 #include <log.hpp>
 #include <algorithm>
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <kvf/time.hpp>
+#include "kvf/time.hpp"
 
 namespace le::anim {
 /// \brief Class template for an animation keyframe.

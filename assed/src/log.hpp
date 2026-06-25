@@ -1,6 +1,6 @@
 #pragma once
-#include <klib/log.hpp>
+#include "klib/log/tagged.hpp"
 
 namespace le::assed {
-auto const log = klib::TaggedLogger{"le::assed"};
+auto const log = klib::log::Tagged{"le::assed"};
 } // namespace le::assed

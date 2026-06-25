@@ -1,7 +1,7 @@
 #pragma once
+#include "kvf/ttf.hpp"
 #include "le2d/resource/texture.hpp"
 #include "le2d/text_height.hpp"
-#include <kvf/ttf.hpp>
 
 namespace le {
 /// \brief Opaque interface for a Font Atlas.

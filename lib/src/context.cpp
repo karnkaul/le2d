@@ -1,14 +1,14 @@
 #include "le2d/context.hpp"
+#include "klib/debug/assert.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
 #include "le2d/error.hpp"
+#include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
 #include <detail/audio_mixer.hpp>
 #include <detail/pipeline_pool.hpp>
 #include <detail/render_pass.hpp>
 #include <detail/resource/resource_factory.hpp>
 #include <detail/resource/resource_pool.hpp>
-#include <klib/assert.hpp>
-#include <klib/version_str.hpp>
 #include <log.hpp>
 #include <spirv.hpp>
 
@@ -136,10 +136,11 @@ class ContextImpl : public Context {
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
 		  m_render_device(std::make_unique<kvf::RenderDevice>(get_window(), create_info.render_device)),
-		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get())) {
+		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
+		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())) {
 
 		auto default_shader = create_default_shader(get_resource_factory());
-		m_resource_pool = std::make_unique<detail::ResourcePool>(m_render_device.get(), std::move(default_shader));
+		m_resource_pool = std::make_unique<detail::ResourcePool>(m_render_device.get(), m_sampler_factory.get(), std::move(default_shader));
 		m_pass = create_render_pass(create_info.framebuffer_samples);
 		m_renderer = m_pass->create_renderer();
 		m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
@@ -349,6 +350,7 @@ class ContextImpl : public Context {
 
 	kvf::UniqueWindow m_window{};
 	std::unique_ptr<kvf::RenderDevice> m_render_device{};
+	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
 
 	std::unique_ptr<IRenderPass> m_pass{};
 	std::unique_ptr<IRenderer> m_renderer{};

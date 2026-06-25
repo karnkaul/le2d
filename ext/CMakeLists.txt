@@ -12,3 +12,8 @@ endif()
 
 message(STATUS "[kvf]")
 add_subdirectory(src/kvf)
+
+if(LE2D_BUILD_SPIRV2CPP OR LE2D_BUILD_ASSED)
+  message(STATUS "[clap]")
+  add_subdirectory(src/clap)
+endif()

@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/version.hpp>
+#include "klib/version.hpp"
 
 namespace le {
 constexpr auto build_version_v = klib::Version{

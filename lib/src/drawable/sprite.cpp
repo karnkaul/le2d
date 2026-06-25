@@ -1,5 +1,5 @@
 #include "le2d/drawable/sprite.hpp"
-#include <kvf/is_positive.hpp>
+#include "kvf/is_positive.hpp"
 
 namespace le::drawable {
 auto SpriteBase::to_primitive() const -> Primitive {

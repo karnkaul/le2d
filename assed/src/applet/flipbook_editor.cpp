@@ -1,6 +1,6 @@
+#include "klib/string/fixed_string.hpp"
 #include "le2d/json_io.hpp"
 #include <applet/flipbook_editor.hpp>
-#include <klib/fixed_string.hpp>
 #include <ranges>
 
 namespace le::assed {
@@ -96,10 +96,10 @@ void FlipbookEditor::inspect() {
 }
 
 void FlipbookEditor::inspect_display() {
-	auto const display_str = display_str_v[m_display];
+	auto const display_str = display_name_map.to_name(m_display);
 	if (ImGui::BeginCombo("Display", display_str.data())) {
-		for (auto const [index, str] : std::views::enumerate(display_str_v)) {
-			if (ImGui::Selectable(str.data(), str == display_str)) { m_display = Display(index); }
+		for (auto const [index, str] : std::views::enumerate(display_name_map.as_span())) {
+			if (ImGui::Selectable(str.second.data(), str.second == display_str)) { m_display = Display(index); }
 		}
 		ImGui::EndCombo();
 	}

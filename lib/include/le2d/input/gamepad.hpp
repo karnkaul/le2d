@@ -1,6 +1,6 @@
 #pragma once
+#include "klib/string/c_string.hpp"
 #include <GLFW/glfw3.h>
-#include <klib/c_string.hpp>
 #include <array>
 #include <optional>
 #include <variant>

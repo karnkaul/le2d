@@ -1,15 +1,15 @@
 #include "le2d/console/terminal.hpp"
+#include "klib/concepts.hpp"
+#include "klib/debug/assert.hpp"
+#include "klib/log/tagged.hpp"
+#include "klib/string/from_chars.hpp"
+#include "kvf/util.hpp"
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
 #include "le2d/text/text_buffer.hpp"
 #include "le2d/tweak/registry.hpp"
 #include <GLFW/glfw3.h>
-#include <klib/assert.hpp>
-#include <klib/concepts.hpp>
-#include <klib/log.hpp>
-#include <klib/str_to_num.hpp>
-#include <kvf/util.hpp>
 #include <algorithm>
 #include <ranges>
 
@@ -96,7 +96,7 @@ constexpr auto longest_match(std::span<std::string_view const> candidates, std::
 	return ret;
 }
 
-auto const log = klib::TaggedLogger{"le::console"};
+auto const log = klib::log::Tagged{"le::console"};
 
 class Terminal : public ITerminal {
   public:

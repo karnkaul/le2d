@@ -1,4 +1,7 @@
 #pragma once
+#include "klib/enum/bitops.hpp"
+#include "kvf/render_device.hpp"
+#include "kvf/window.hpp"
 #include "le2d/asset/asset_loader.hpp"
 #include "le2d/audio_mixer.hpp"
 #include "le2d/build_version.hpp"
@@ -10,9 +13,6 @@
 #include "le2d/unprojector.hpp"
 #include "le2d/vsync.hpp"
 #include <GLFW/glfw3.h>
-#include <klib/enum_ops.hpp>
-#include <kvf/render_device.hpp>
-#include <kvf/window.hpp>
 #include <variant>
 
 namespace le {

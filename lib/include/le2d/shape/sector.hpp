@@ -1,8 +1,8 @@
 #pragma once
+#include "kvf/color.hpp"
+#include "kvf/rect.hpp"
 #include "le2d/geometry.hpp"
 #include "le2d/vertex_array.hpp"
-#include <kvf/color.hpp>
-#include <kvf/rect.hpp>
 
 namespace le::shape {
 /// \brief Sector creation parameters.
