@@ -1,6 +1,6 @@
 #include "le2d/input/gamepad.hpp"
-#include <klib/assert.hpp>
-#include <klib/visitor.hpp>
+#include "klib/debug/assert.hpp"
+#include "klib/visitor.hpp"
 #include <ranges>
 
 namespace le::input {

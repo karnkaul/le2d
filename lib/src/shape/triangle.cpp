@@ -1,6 +1,6 @@
 #include "le2d/shape/triangle.hpp"
+#include "kvf/is_positive.hpp"
 #include <glm/trigonometric.hpp>
-#include <kvf/is_positive.hpp>
 #include <cmath>
 
 namespace le::shape {

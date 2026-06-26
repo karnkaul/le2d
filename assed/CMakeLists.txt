@@ -4,6 +4,7 @@ add_executable(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   ${project_name}::${project_name}
+  clap::clap
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

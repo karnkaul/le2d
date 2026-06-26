@@ -1,6 +1,5 @@
-#include <klib/args/parse.hpp>
-#include <klib/file_io.hpp>
-#include <array>
+#include "clap/parser.hpp"
+#include "klib/file_io.hpp"
 #include <cassert>
 #include <filesystem>
 #include <print>
@@ -120,19 +119,24 @@ class Writer {
 };
 
 auto run(int argc, char** argv) -> int {
-	auto const parse_info = klib::args::ParseInfo{
-		.help_text = "embed SPIR-V as C++",
-	};
 	auto config = Config{};
 	auto path = std::string_view{};
-	auto const args = std::array{
-		klib::args::named_option(config.ns, "n,namespace", "API namespace (default: [none])"),
-		klib::args::named_option(config.fn, "f,function", "API function (default:  get_spirv)"),
-		klib::args::named_option(config.col_width, "c,col-width", "column width (default: 120)"),
-		klib::args::positional_required(path, "IN"),
+	auto spec = clap::spec::Parameters{
+		.parameters =
+			{
+				clap::named_option(config.ns, "n,namespace", "API namespace (default: [none])"),
+				clap::named_option(config.fn, "f,function", "API function (default:  get_spirv)"),
+				clap::named_option(config.col_width, "c,col-width", "column width (default: 120)"),
+				clap::positional_required(path, "IN"),
+			},
+		.program =
+			{
+				.description = "embed SPIR-V as C++",
+			},
 	};
-	auto const parse_result = klib::args::parse_main(parse_info, args, argc, argv);
-	if (parse_result.early_return()) { return parse_result.get_return_code(); }
+	auto parser = clap::Parser{std::move(spec)};
+	auto const parse_result = parser.parse_main(argc, argv);
+	if (parse_result.should_early_exit()) { return parse_result.return_code(); }
 
 	auto code = std::vector<std::uint32_t>{};
 	if (!klib::read_file_bytes_into(code, path.data())) {

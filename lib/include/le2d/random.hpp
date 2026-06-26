@@ -1,6 +1,6 @@
 #pragma once
+#include "klib/random.hpp"
 #include <glm/vec2.hpp>
-#include <klib/random.hpp>
 
 namespace le {
 /// \brief Stateful random number generator.

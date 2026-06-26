@@ -1,10 +1,9 @@
 #pragma once
+#include "klib/debug/assert.hpp"
 #include "le2d/resource/font.hpp"
 #include "le2d/text/util.hpp"
 #include "le2d/text_height.hpp"
 #include <detail/resource/texture.hpp>
-#include <klib/assert.hpp>
-#include <kvf/is_positive.hpp>
 #include <unordered_map>
 
 namespace le::detail {
@@ -13,7 +12,8 @@ class FontAtlas : public IFontAtlas {
 	using Glyph = kvf::ttf::Glyph;
 	using GlyphLayout = kvf::ttf::GlyphLayout;
 
-	explicit FontAtlas(gsl::not_null<kvf::IRenderApi const*> render_api) : m_texture(render_api) {}
+	explicit FontAtlas(gsl::not_null<kvf::IRenderApi const*> render_api, gsl::not_null<ISamplerFactory*> sampler_factory)
+		: m_texture(render_api, sampler_factory) {}
 
 	[[nodiscard]] auto is_ready() const -> bool final { return m_texture.is_ready() && m_face && m_face->is_loaded(); }
 
@@ -55,7 +55,8 @@ class FontAtlas : public IFontAtlas {
 
 class Font : public IFont {
   public:
-	explicit Font(gsl::not_null<kvf::IRenderApi const*> render_api) : m_render_api(render_api) {}
+	explicit Font(gsl::not_null<kvf::IRenderApi const*> render_api, gsl::not_null<ISamplerFactory*> sampler_factory)
+		: m_render_api(render_api), m_sampler_factory(sampler_factory) {}
 
 	[[nodiscard]] auto is_ready() const -> bool final { return m_face.is_loaded(); }
 
@@ -76,7 +77,7 @@ class Font : public IFont {
 		height = util::clamp(height);
 		auto it = m_atlases.find(height);
 		if (it == m_atlases.end()) {
-			auto atlas = FontAtlas{m_render_api};
+			auto atlas = FontAtlas{m_render_api, m_sampler_factory};
 			atlas.build(&m_face, height);
 			it = m_atlases.insert({height, std::move(atlas)}).first;
 		}
@@ -85,6 +86,7 @@ class Font : public IFont {
 
   private:
 	gsl::not_null<kvf::IRenderApi const*> m_render_api;
+	gsl::not_null<ISamplerFactory*> m_sampler_factory;
 
 	kvf::ttf::Typeface m_face{};
 	std::unordered_map<TextHeight, FontAtlas> m_atlases{};

@@ -1,15 +1,17 @@
 #pragma once
+#include "kvf/device_waiter.hpp"
+#include "kvf/render_device.hpp"
 #include "le2d/resource/texture.hpp"
 #include <detail/pipeline_pool.hpp>
 #include <detail/resource/texture.hpp>
-#include <kvf/device_waiter.hpp>
-#include <kvf/render_device.hpp>
 
 namespace le::detail {
 class ResourcePool {
   public:
-	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, std::unique_ptr<IShader> default_shader)
-		: m_pipelines(render_device), m_default_shader(std::move(default_shader)), m_white_texture(render_device), m_waiter(render_device->get_device()) {}
+	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory,
+						  std::unique_ptr<IShader> default_shader)
+		: sampler_factory(sampler_factory), m_pipelines(render_device), m_default_shader(std::move(default_shader)),
+		  m_white_texture(render_device, sampler_factory), m_waiter(render_device->get_device()) {}
 
 	[[nodiscard]] auto allocate_pipeline(PipelineFixedState const& state, IShader const& shader) -> vk::Pipeline { return m_pipelines.allocate(state, shader); }
 
@@ -21,6 +23,8 @@ class ResourcePool {
 	[[nodiscard]] auto descriptor_image(ITextureBase const* texture) const -> vk::DescriptorImageInfo {
 		return texture && texture->is_ready() ? texture->descriptor_info() : get_white_texture().descriptor_info();
 	}
+
+	gsl::not_null<ISamplerFactory*> sampler_factory;
 
 	std::vector<std::byte> scratch_buffer{};
 

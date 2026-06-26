@@ -1,6 +1,6 @@
 #include "le2d/input/dispatch.hpp"
+#include "klib/debug/assert.hpp"
 #include <imgui.h>
-#include <klib/assert.hpp>
 #include <functional>
 #include <ranges>
 

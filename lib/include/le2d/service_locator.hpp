@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/assert.hpp>
+#include "klib/debug/assert.hpp"
 #include <gsl/pointers>
 #include <typeindex>
 #include <unordered_map>

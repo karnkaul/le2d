@@ -1,9 +1,9 @@
 #include "le2d/asset/asset_loader.hpp"
-#include <klib/log.hpp>
+#include "klib/log/typed.hpp"
 
 namespace le {
 namespace {
-auto const log = klib::TaggedLogger{"AssetLoader"};
+auto const log = klib::log::Typed<AssetLoader>{};
 } // namespace
 
 void AssetLoader::add_loader(std::unique_ptr<detail::IAssetTypeLoaderBase> loader) {

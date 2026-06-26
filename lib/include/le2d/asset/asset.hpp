@@ -1,5 +1,5 @@
 #pragma once
-#include <klib/base_types.hpp>
+#include "klib/base_types.hpp"
 
 namespace le {
 /// \brief Interface for asset types.

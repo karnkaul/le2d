@@ -1,8 +1,8 @@
 #pragma once
+#include "klib/enum/name.hpp"
 #include "le2d/anim/animator.hpp"
 #include "le2d/drawable/sprite.hpp"
 #include <applet/applet.hpp>
-#include <klib/enum_array.hpp>
 #include <tile_drawer.hpp>
 
 namespace le::assed {
@@ -16,7 +16,10 @@ class FlipbookEditor : public Applet {
 
   private:
 	enum class Display : std::int8_t { TileSheet, Sprite, COUNT_ };
-	static constexpr auto display_str_v = klib::EnumArray<Display, std::string_view>{"TileSheet", "Sprite"};
+	static inline auto const display_name_map = klib::EnumNameMap<Display>{
+		{Display::TileSheet, "TileSheet"},
+		{Display::Sprite, "Sprite"},
+	};
 
 	void tick(kvf::Seconds dt) final;
 	void render(IRenderer& renderer) const final;

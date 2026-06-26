@@ -1,10 +1,9 @@
 #pragma once
+#include "kvf/device_waiter.hpp"
+#include "kvf/render_device.hpp"
+#include "kvf/render_pass.hpp"
 #include "le2d/render_pass.hpp"
 #include <detail/renderer.hpp>
-#include <kvf/device_waiter.hpp>
-#include <kvf/render_device.hpp>
-#include <kvf/render_pass.hpp>
-#include <kvf/util.hpp>
 #include <algorithm>
 
 namespace le::detail {
@@ -29,7 +28,7 @@ class RenderPass : public IRenderPass {
 
 	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_render_pass.get_samples(); }
 
-	[[nodiscard]] auto render_texture() const -> RenderTexture final { return RenderTexture{&m_render_pass}; }
+	[[nodiscard]] auto render_texture() const -> RenderTexture final { return RenderTexture{&m_render_pass, m_resource_pool->sampler_factory}; }
 
 	void set_clear_color(kvf::Color const color) final { m_render_pass.clear_color = color.to_linear(); }
 
