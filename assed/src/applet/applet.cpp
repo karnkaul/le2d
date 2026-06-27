@@ -1,5 +1,5 @@
+#include "applet/applet.hpp"
 #include "le2d/input/dispatch.hpp"
-#include <applet/applet.hpp>
 
 namespace le::assed {
 namespace {

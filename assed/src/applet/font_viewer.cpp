@@ -1,6 +1,6 @@
+#include "applet/font_viewer.hpp"
 #include "klib/debug/assert.hpp"
-#include "le2d/input/dispatch.hpp"
-#include <applet/font_viewer.hpp>
+#include "klib/enum/map.hpp"
 #include <algorithm>
 
 namespace le::assed {
@@ -62,13 +62,13 @@ void FontViewer::inspect() {
 }
 
 void FontViewer::inspect_display() {
-	static constexpr auto display_str_v = klib::EnumArray<Display, klib::CString>{
-		"Atlas",
-		"InputText",
+	static auto const display_name_map = klib::EnumMap<Display, klib::CString>{
+		{Display::Atlas, "Atlas"},
+		{Display::InputText, "InputText"},
 	};
-	if (m_input_text && ImGui::BeginCombo("Display", display_str_v[m_display].c_str())) {
+	if (m_input_text && ImGui::BeginCombo("Display", display_name_map.to_value(m_display)->c_str())) {
 		for (auto d = Display{}; d < Display::COUNT_; d = Display(int(d) + 1)) {
-			if (ImGui::Selectable(display_str_v[d].c_str())) { set_display(d); }
+			if (ImGui::Selectable(display_name_map.to_value(d)->c_str())) { set_display(d); }
 		}
 		ImGui::EndCombo();
 	}
