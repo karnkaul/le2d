@@ -82,7 +82,7 @@
       "name": "ninja-ubsan",
       "displayName": "Ninja UBSan",
       "description": "UBSan build configuration using Ninja Multi-config",
-      "inherits": "default",
+      "inherits": "base-clang",
       "binaryDir": "${sourceDir}/out/ubsan",
       "cacheVariables": {
         "CMAKE_CXX_FLAGS_INIT": "-fsanitize=undefined -Wall -Wextra -Wpedantic -Wconversion -Werror=return-type"

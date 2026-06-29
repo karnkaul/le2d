@@ -1,5 +1,5 @@
 #pragma once
-#include "klib/enum/name.hpp"
+#include "klib/enum/map.hpp"
 #include <cstdint>
 
 namespace le {

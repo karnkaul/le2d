@@ -1,5 +1,4 @@
-#include "le2d/json_io.hpp"
-#include <file_drop.hpp>
+#include "file_drop.hpp"
 #include <algorithm>
 #include <array>
 #include <filesystem>
