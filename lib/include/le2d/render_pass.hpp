@@ -1,5 +1,6 @@
 #pragma once
 #include "klib/base_types.hpp"
+#include "kvf/render_device_fwd.hpp"
 #include "le2d/renderer.hpp"
 #include <glm/vec2.hpp>
 
@@ -18,8 +19,9 @@ class IRenderPass : public klib::Polymorphic {
 	/// \returns Multi-sampling count.
 	[[nodiscard]] virtual auto get_samples() const -> vk::SampleCountFlagBits = 0;
 
+	/// \param sampler Handle to Vulkan Sampler.
 	/// \returns RenderTarget as a texture. Must not outlive RenderPass.
-	[[nodiscard]] virtual auto render_texture() const -> RenderTexture = 0;
+	[[nodiscard]] virtual auto render_texture(vk::Sampler sampler) const -> RenderTexture = 0;
 
 	/// \brief Set clear color for next pass.
 	/// \param color Clear color.
