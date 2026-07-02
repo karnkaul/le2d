@@ -28,7 +28,7 @@ class RenderPass : public IRenderPass {
 
 	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_render_pass.get_samples(); }
 
-	[[nodiscard]] auto render_texture() const -> RenderTexture final { return RenderTexture{&m_render_pass, m_resource_pool->sampler_factory}; }
+	[[nodiscard]] auto render_texture(vk::Sampler const sampler) const -> RenderTexture final { return RenderTexture{&m_render_pass, sampler}; }
 
 	void set_clear_color(kvf::Color const color) final { m_render_pass.clear_color = color.to_linear(); }
 

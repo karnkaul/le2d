@@ -19,8 +19,11 @@ class TextureImpl : public BaseT {
 	[[nodiscard]] auto get_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec<int>(m_texture.get_extent()); }
 
 	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final {
-		auto const sampler = m_sampler_factory->get_or_create(this->sampler);
-		return m_texture.descriptor_info(sampler);
+		if (!m_cached_sampler.vk_sampler || m_cached_sampler.sampler != this->sampler) {
+			m_cached_sampler.sampler = this->sampler;
+			m_cached_sampler.vk_sampler = m_sampler_factory->get_or_create(this->sampler);
+		}
+		return m_texture.descriptor_info(m_cached_sampler.vk_sampler);
 	}
 
 	void overwrite(kvf::Bitmap const& bitmap) final { m_texture = kvf::vma::Texture{m_render_api, bitmap}; }
@@ -35,10 +38,16 @@ class TextureImpl : public BaseT {
 	[[nodiscard]] auto is_ready() const -> bool final { return m_texture.is_ready(); }
 
   private:
+	struct CachedSampler {
+		TextureSampler sampler{};
+		vk::Sampler vk_sampler{};
+	};
+
 	gsl::not_null<kvf::IRenderApi const*> m_render_api;
 	gsl::not_null<ISamplerFactory*> m_sampler_factory;
 
 	kvf::vma::Texture m_texture;
+	mutable CachedSampler m_cached_sampler{};
 };
 
 using Texture = TextureImpl<ITexture>;

@@ -3,9 +3,7 @@
 #include "kvf/render_api.hpp"
 #include "kvf/util.hpp"
 #include "le2d/resource/sampler_factory.hpp"
-#include "le2d/resource/texture.hpp"
 #include <vulkan/vulkan_hash.hpp>
-#include <mutex>
 #include <unordered_map>
 
 namespace le::detail {
@@ -15,7 +13,6 @@ class SamplerFactory : public ISamplerFactory {
 
   private:
 	[[nodiscard]] auto get_or_create(TextureSampler const& sampler) -> vk::Sampler final {
-		auto lock = std::scoped_lock{m_mutex};
 		auto it = m_map.find(sampler);
 		if (it == m_map.end()) {
 			auto sampler_ci = kvf::util::create_sampler_ci(sampler.wrap, sampler.filter);
@@ -31,7 +28,6 @@ class SamplerFactory : public ISamplerFactory {
 	};
 
 	std::unordered_map<TextureSampler, vk::UniqueSampler, Hash> m_map{};
-	std::mutex m_mutex{};
 	gsl::not_null<kvf::IRenderApi const*> m_render_api;
 };
 } // namespace le::detail

@@ -1,7 +1,6 @@
 #pragma once
 #include "kvf/bitmap.hpp"
 #include "le2d/resource/resource.hpp"
-#include "le2d/resource/sampler_factory.hpp"
 #include "le2d/texture_sampler.hpp"
 #include "le2d/tile/tile_set.hpp"
 #include <vulkan/vulkan.hpp>
@@ -51,8 +50,8 @@ class ITileSheet : public ITexture {
 class RenderTexture : public ITextureBase {
   public:
 	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
-	/// \param sampler_factory Pointer to concrete SamplerFactory instance.
-	explicit RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass, gsl::not_null<ISamplerFactory*> sampler_factory);
+	/// \param sampler Handle to Vulkan Sampler.
+	explicit RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass, vk::Sampler sampler);
 
 	[[nodiscard]] auto is_ready() const -> bool final;
 
@@ -61,8 +60,9 @@ class RenderTexture : public ITextureBase {
 
 	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final;
 
+	vk::Sampler sampler{};
+
   private:
 	gsl::not_null<kvf::RenderPass const*> m_render_pass;
-	gsl::not_null<ISamplerFactory*> m_sampler_factory;
 };
 } // namespace le
