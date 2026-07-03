@@ -2,7 +2,8 @@
   "packages": [
     {
       "uri": "karnkaul/kvf",
-      "branch": "v0.4.14"
+      // "branch": "v0.4.14"
+      "branch": "develop"
     },
     {
       "uri": "capo-devs/capo-lite",

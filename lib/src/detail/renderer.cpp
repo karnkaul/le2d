@@ -12,31 +12,32 @@ struct Std430Instance {
 };
 
 struct Vbo {
-	explicit Vbo(kvf::RenderDevice& render_device, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices)
-		: m_buffer(render_device.allocate_scratch_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer,
-														 vertices.size_bytes() + indices.size_bytes())),
-		  m_vertices(std::uint32_t(vertices.size())), m_indices(std::uint32_t(indices.size())) {
+	[[nodiscard]] static auto create(kvf::ScratchBuffer& buffer, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices) -> Vbo {
 		auto const writes = std::array{
 			kvf::BufferWrite{vertices},
 			kvf::BufferWrite{indices},
 		};
-		m_buffer.overwrite_contiguous(writes);
+		buffer.write_contiguous(writes);
+		return Vbo{
+			.buffer = buffer.get_buffer(),
+			.vertices = std::uint32_t(vertices.size()),
+			.indices = std::uint32_t(indices.size()),
+		};
 	}
 
 	void draw(vk::CommandBuffer const m_cmd, std::uint32_t const instances) const {
-		m_cmd.bindVertexBuffers(0, m_buffer.get_buffer(), vk::DeviceSize{});
-		if (m_indices == 0) {
-			m_cmd.draw(m_vertices, instances, 0, 0);
+		m_cmd.bindVertexBuffers(0, buffer, vk::DeviceSize{});
+		if (indices == 0) {
+			m_cmd.draw(vertices, instances, 0, 0);
 		} else {
-			m_cmd.bindIndexBuffer(m_buffer.get_buffer(), m_vertices * sizeof(Vertex), vk::IndexType::eUint32);
-			m_cmd.drawIndexed(m_indices, instances, 0, 0, 0);
+			m_cmd.bindIndexBuffer(buffer, vertices * sizeof(Vertex), vk::IndexType::eUint32);
+			m_cmd.drawIndexed(indices, instances, 0, 0, 0);
 		}
 	}
 
-  private:
-	kvf::vma::Buffer& m_buffer;
-	std::uint32_t m_vertices{};
-	std::uint32_t m_indices{};
+	vk::Buffer buffer{};
+	std::uint32_t vertices{};
+	std::uint32_t indices{};
 };
 
 constexpr auto triangle_count(std::size_t const vertices, std::size_t const indices, vk::PrimitiveTopology const topology) -> std::int64_t {
@@ -57,7 +58,18 @@ auto to_viewport(viewport::Letterbox const& v, glm::vec2 const framebuffer_size)
 	auto const vp_size = rect.size();
 	return vk::Viewport{rect.lt.x, rect.rb.y, vp_size.x, -vp_size.y};
 }
+
+auto const scratch_buffer_layout = std::vector<vk::BufferUsageFlags>{
+	vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer,
+	vk::BufferUsageFlagBits::eUniformBuffer,
+	vk::BufferUsageFlagBits::eStorageBuffer,
+	vk::BufferUsageFlagBits::eStorageBuffer,
+};
 } // namespace
+
+Renderer::Renderer(gsl::not_null<kvf::RenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
+	: m_pass(render_pass), m_resource_pool(resource_pool), m_scratch_buffers(&render_pass->get_render_device(), scratch_buffer_layout),
+	  m_shader(&resource_pool->get_default_shader()) {}
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
 	m_stats = {};
@@ -67,6 +79,7 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 
 	m_pass->clear_color = clear.to_linear();
 	m_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
+	m_scratch_buffers.next_frame();
 
 	return true;
 }
@@ -97,12 +110,16 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 	auto& render_device = m_pass->get_render_device();
 
-	auto const vbo = Vbo{render_device, primitive.vertices, primitive.indices};
-	auto const view_info = write_view();
-	auto const instance_info = write_instances(instances);
+	auto const scratch_buffers = m_scratch_buffers.allocate_next();
+	KLIB_ASSERT(scratch_buffers.size() == scratch_buffer_layout.size());
+
+	auto const vbo = Vbo::create(scratch_buffers[0], primitive.vertices, primitive.indices);
+	auto const view_info = write_view_to(scratch_buffers[1]);
+	auto const instance_info = write_instances_to(scratch_buffers[2], instances);
 	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
 
-	auto const user_ssbo_info = render_device.scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_user_data.ssbo);
+	scratch_buffers[3].write(m_user_data.ssbo);
+	auto const user_ssbo_info = scratch_buffers[3].descriptor_info();
 	auto const user_texture_info = m_resource_pool->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
@@ -147,7 +164,7 @@ auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> boo
 	return m_pass->get_render_device().allocate_sets(out_sets, set_layouts);
 }
 
-auto Renderer::write_view() const -> vk::DescriptorBufferInfo {
+auto Renderer::write_view_to(kvf::ScratchBuffer& buffer) const -> vk::DescriptorBufferInfo {
 	auto const visitor = klib::Visitor{
 		[](viewport::Letterbox const& v) { return v.world_size; },
 		[this](viewport::Dynamic const& /*v*/) { return glm::vec2{m_viewport.width, -m_viewport.height}; },
@@ -157,10 +174,11 @@ auto Renderer::write_view() const -> vk::DescriptorBufferInfo {
 	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
 	auto const mat_v = view.to_view();
 	auto const mat_vp = mat_p * mat_v;
-	return m_pass->get_render_device().scratch_descriptor_buffer(vk::BufferUsageFlagBits::eUniformBuffer, mat_vp);
+	buffer.write(mat_vp);
+	return buffer.descriptor_info();
 }
 
-auto Renderer::write_instances(std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo {
+auto Renderer::write_instances_to(kvf::ScratchBuffer& buffer, std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo {
 	m_resource_pool->scratch_buffer.clear();
 	m_resource_pool->scratch_buffer.resize(instances.size() * sizeof(Std430Instance));
 	auto write_span = std::span{m_resource_pool->scratch_buffer};
@@ -173,6 +191,7 @@ auto Renderer::write_instances(std::span<RenderInstance const> instances) const 
 		std::memcpy(write_span.data(), &instance, sizeof(instance));
 		write_span = write_span.subspan(sizeof(instance));
 	}
-	return m_pass->get_render_device().scratch_descriptor_buffer(vk::BufferUsageFlagBits::eStorageBuffer, m_resource_pool->scratch_buffer);
+	buffer.write(m_resource_pool->scratch_buffer);
+	return buffer.descriptor_info();
 }
 } // namespace le::detail
