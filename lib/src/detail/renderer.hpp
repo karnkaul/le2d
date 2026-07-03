@@ -1,6 +1,7 @@
 #pragma once
 #include "kvf/render_device.hpp"
 #include "kvf/render_pass.hpp"
+#include "kvf/scratch_buffer.hpp"
 #include "kvf/util.hpp"
 #include "le2d/renderer.hpp"
 #include <detail/resource/resource_pool.hpp>
@@ -9,10 +10,7 @@
 namespace le::detail {
 class Renderer : public IRenderer {
   public:
-	/// \param render_pass RenderPass instance. Rendering must have already begun.
-	/// \param resource_pool ResourcePool instance.
-	explicit Renderer(gsl::not_null<kvf::RenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
-		: m_pass(render_pass), m_resource_pool(resource_pool), m_shader(&resource_pool->get_default_shader()) {}
+	explicit Renderer(gsl::not_null<kvf::RenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool);
 
   private:
 	static constexpr auto clamp_size(glm::ivec2 in) {
@@ -44,11 +42,12 @@ class Renderer : public IRenderer {
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
 	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
-	[[nodiscard]] auto write_view() const -> vk::DescriptorBufferInfo;
-	[[nodiscard]] auto write_instances(std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo;
+	[[nodiscard]] auto write_view_to(kvf::ScratchBuffer& buffer) const -> vk::DescriptorBufferInfo;
+	[[nodiscard]] auto write_instances_to(kvf::ScratchBuffer& buffer, std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo;
 
 	gsl::not_null<kvf::RenderPass*> m_pass;
 	gsl::not_null<detail::ResourcePool*> m_resource_pool;
+	kvf::ScratchBuffer::Allocator m_scratch_buffers;
 
 	gsl::not_null<IShader const*> m_shader;
 	vk::Viewport m_viewport{};
