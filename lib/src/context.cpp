@@ -1,14 +1,13 @@
 #include "le2d/context.hpp"
+#include "detail/audio_mixer.hpp"
+#include "detail/render_pass.hpp"
+#include "detail/resource/resource_factory.hpp"
+#include "detail/resource/resource_pool.hpp"
 #include "klib/debug/assert.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
 #include "le2d/error.hpp"
 #include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
-#include <detail/audio_mixer.hpp>
-#include <detail/pipeline_pool.hpp>
-#include <detail/render_pass.hpp>
-#include <detail/resource/resource_factory.hpp>
-#include <detail/resource/resource_pool.hpp>
 #include <log.hpp>
 #include <spirv.hpp>
 
@@ -32,6 +31,12 @@ namespace {
 	default:
 	case Vsync::Strict: return vk::PresentModeKHR::eFifo;
 	}
+}
+
+[[nodiscard]] auto sanitize(kvf::RenderDevice::CreateInfo const& in) {
+	auto ret = in;
+	ret.flags &= ~kvf::RenderDeviceFlag::LinearBackbuffer;
+	return ret;
 }
 
 template <klib::EnumT E>
@@ -135,7 +140,7 @@ class ContextImpl : public Context {
 
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
-		  m_render_device(std::make_unique<kvf::RenderDevice>(get_window(), create_info.render_device)),
+		  m_render_device(std::make_unique<kvf::RenderDevice>(get_window(), sanitize(create_info.render_device))),
 		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
 		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())) {
 

@@ -196,15 +196,17 @@ class Terminal : public ITerminal {
 
 	void draw(IRenderer& renderer) const final {
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
-		auto const old_view = std::exchange(renderer.view, m_render_view);
-		auto const old_viewport = std::exchange(renderer.viewport, viewport::Dynamic{});
+		auto const old_view = renderer.get_view();
+		renderer.set_view(m_render_view);
+		auto const old_viewport = renderer.get_viewport();
+		renderer.set_viewport(viewport::Dynamic{});
 		m_background.draw(renderer);
 		draw_buffer(renderer);
 		m_separator.draw(renderer);
 		m_caret.draw(renderer);
 		m_input.draw(renderer);
-		renderer.view = old_view;
-		renderer.viewport = old_viewport;
+		renderer.set_view(old_view);
+		renderer.set_viewport(old_viewport);
 	}
 
 	void setup(IFont& font) {
@@ -243,7 +245,7 @@ class Terminal : public ITerminal {
 		m_input.transform.position.x += m_caret.text_x;
 		m_hide_y = -0.5f * m_framebuffer_size.y;
 		m_show_y = 0.0f;
-		m_buffer_max_y = m_separator.transform.position.y + 0.5f * float(m_info.style.text_height);
+		m_buffer_max_y = m_separator.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
 	}
@@ -326,7 +328,7 @@ class Terminal : public ITerminal {
 	void try_run(std::string_view const text) {
 		auto const params = Params::create(text);
 		if (params.id.empty()) { return; }
-		auto tweakable = m_tweak_registry.find_tweakable(params.id);
+		auto* tweakable = m_tweak_registry.find_tweakable(params.id);
 		if (!tweakable) {
 			printerr(std::format("unrecognized identifier: {}", params.id));
 			return;

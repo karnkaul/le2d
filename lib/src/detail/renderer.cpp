@@ -1,7 +1,7 @@
+#include "detail/renderer.hpp"
 #include "klib/debug/assert.hpp"
 #include "klib/visitor.hpp"
 #include "kvf/util.hpp"
-#include <detail/renderer.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace le::detail {
@@ -81,6 +81,8 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 	m_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
 	m_scratch_buffers.next_frame();
 
+	refresh_mat_vp();
+
 	return true;
 }
 
@@ -93,7 +95,22 @@ auto Renderer::end_render() -> kvf::RenderTarget const& {
 	return m_rt;
 }
 
+void Renderer::set_view(Transform const& view) {
+	m_view_transform = view;
+	refresh_mat_vp();
+}
+
+void Renderer::set_viewport(Viewport const& viewport) {
+	m_viewport = viewport;
+	refresh_mat_vp();
+}
+
 void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> instances) {
+	auto const std430_instances = bake_instances(instances);
+	draw_baked(primitive, std430_instances);
+}
+
+void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) {
 	auto const cmd = m_pass->get_command_buffer();
 	if (!cmd || primitive.vertices.empty() || instances.empty()) { return; }
 	if (!bind_shader(primitive.topology)) { return; }
@@ -105,7 +122,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
 		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
 	};
-	m_viewport = std::visit(visitor, viewport);
+	m_vk_viewport = std::visit(visitor, m_viewport);
 	m_scissor = m_pass->to_scissor(scissor_rect);
 
 	auto& render_device = m_pass->get_render_device();
@@ -114,12 +131,18 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	KLIB_ASSERT(scratch_buffers.size() == scratch_buffer_layout.size());
 
 	auto const vbo = Vbo::create(scratch_buffers[0], primitive.vertices, primitive.indices);
-	auto const view_info = write_view_to(scratch_buffers[1]);
-	auto const instance_info = write_instances_to(scratch_buffers[2], instances);
+
+	scratch_buffers[1].write(m_mat_vp);
+	auto const view_info = scratch_buffers[1].descriptor_info();
+
+	scratch_buffers[2].write(instances);
+	auto const instance_info = scratch_buffers[2].descriptor_info();
+
 	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
 
 	scratch_buffers[3].write(m_user_data.ssbo);
 	auto const user_ssbo_info = scratch_buffers[3].descriptor_info();
+
 	auto const user_texture_info = m_resource_pool->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
@@ -129,7 +152,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	};
 	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
-	cmd.setViewport(0, m_viewport);
+	cmd.setViewport(0, m_vk_viewport);
 	cmd.setScissor(0, m_scissor);
 	cmd.setLineWidth(m_line_width);
 
@@ -139,7 +162,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
 }
 
-auto Renderer::unprojector() const -> Unprojector { return Unprojector{viewport, view, framebuffer_size()}; }
+auto Renderer::unprojector() const -> Unprojector { return Unprojector{m_viewport, m_view_transform, framebuffer_size()}; }
 
 auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 	auto const fixed_state = PipelineFixedState{
@@ -158,40 +181,35 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 	return true;
 }
 
+void Renderer::refresh_mat_vp() {
+	auto const mat_v = m_view_transform.to_view();
+
+	auto const viewport_visitor = klib::Visitor{
+		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
+		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
+	};
+	m_vk_viewport = std::visit(viewport_visitor, m_viewport);
+
+	auto const render_area_visitor = klib::Visitor{
+		[](viewport::Letterbox const& v) { return v.world_size; },
+		[this](viewport::Dynamic const& /*v*/) { return glm::vec2{m_vk_viewport.width, -m_vk_viewport.height}; },
+	};
+	auto const render_area = std::visit(render_area_visitor, m_viewport);
+	auto const half_extent = 0.5f * render_area;
+	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
+	m_mat_vp = mat_p * mat_v;
+}
+
 auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool {
 	auto const set_layouts = m_resource_pool->get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == out_sets.size());
 	return m_pass->get_render_device().allocate_sets(out_sets, set_layouts);
 }
 
-auto Renderer::write_view_to(kvf::ScratchBuffer& buffer) const -> vk::DescriptorBufferInfo {
-	auto const visitor = klib::Visitor{
-		[](viewport::Letterbox const& v) { return v.world_size; },
-		[this](viewport::Dynamic const& /*v*/) { return glm::vec2{m_viewport.width, -m_viewport.height}; },
-	};
-	auto const render_area = std::visit(visitor, viewport);
-	auto const half_extent = 0.5f * render_area;
-	auto const mat_p = glm::ortho(-half_extent.x, half_extent.x, -half_extent.y, half_extent.y);
-	auto const mat_v = view.to_view();
-	auto const mat_vp = mat_p * mat_v;
-	buffer.write(mat_vp);
-	return buffer.descriptor_info();
-}
-
-auto Renderer::write_instances_to(kvf::ScratchBuffer& buffer, std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo {
-	m_resource_pool->scratch_buffer.clear();
-	m_resource_pool->scratch_buffer.resize(instances.size() * sizeof(Std430Instance));
-	auto write_span = std::span{m_resource_pool->scratch_buffer};
-	for (auto const& in : instances) {
-		auto const instance = Std430Instance{
-			.transform = in.transform.to_model(),
-			.tint = in.tint.to_linear(),
-		};
-		KLIB_ASSERT(write_span.size() >= sizeof(instance));
-		std::memcpy(write_span.data(), &instance, sizeof(instance));
-		write_span = write_span.subspan(sizeof(instance));
-	}
-	buffer.write(m_resource_pool->scratch_buffer);
-	return buffer.descriptor_info();
+auto Renderer::bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const> {
+	m_resource_pool->render_instance_buffer.clear();
+	m_resource_pool->render_instance_buffer.reserve(instances.size());
+	for (auto const& in : instances) { m_resource_pool->render_instance_buffer.push_back(in.to_std430()); }
+	return m_resource_pool->render_instance_buffer;
 }
 } // namespace le::detail

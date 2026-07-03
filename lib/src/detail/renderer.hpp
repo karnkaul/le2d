@@ -1,10 +1,10 @@
 #pragma once
+#include "detail/resource/resource_pool.hpp"
 #include "kvf/render_device.hpp"
 #include "kvf/render_pass.hpp"
 #include "kvf/scratch_buffer.hpp"
 #include "kvf/util.hpp"
 #include "le2d/renderer.hpp"
-#include <detail/resource/resource_pool.hpp>
 #include <algorithm>
 
 namespace le::detail {
@@ -34,23 +34,33 @@ class Renderer : public IRenderer {
 	void set_user_data(UserDrawData const& user_data) final { m_user_data = user_data; }
 
 	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec<int>(m_pass->get_extent()); }
+	[[nodiscard]] auto get_view() const -> Transform const& final { return m_view_transform; }
+	void set_view(Transform const& view) final;
+	[[nodiscard]] auto get_viewport() const -> Viewport const& final { return m_viewport; }
+	void set_viewport(Viewport const& viewport) final;
 
 	void draw(Primitive const& primitive, std::span<RenderInstance const> instances) final;
+	void draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) final;
 
 	[[nodiscard]] auto unprojector() const -> Unprojector final;
 
 	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
 
+	void refresh_mat_vp();
+
 	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
-	[[nodiscard]] auto write_view_to(kvf::ScratchBuffer& buffer) const -> vk::DescriptorBufferInfo;
-	[[nodiscard]] auto write_instances_to(kvf::ScratchBuffer& buffer, std::span<RenderInstance const> instances) const -> vk::DescriptorBufferInfo;
+
+	[[nodiscard]] auto bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const>;
 
 	gsl::not_null<kvf::RenderPass*> m_pass;
 	gsl::not_null<detail::ResourcePool*> m_resource_pool;
 	kvf::ScratchBuffer::Allocator m_scratch_buffers;
 
 	gsl::not_null<IShader const*> m_shader;
-	vk::Viewport m_viewport{};
+	Transform m_view_transform{};
+	glm::mat4 m_mat_vp{1.0f};
+	Viewport m_viewport{viewport::Dynamic{}};
+	vk::Viewport m_vk_viewport{};
 	vk::Rect2D m_scissor{};
 	UserDrawData m_user_data{};
 

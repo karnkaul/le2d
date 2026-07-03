@@ -36,24 +36,30 @@ class IRenderer : public klib::Polymorphic {
 
 	[[nodiscard]] virtual auto framebuffer_size() const -> glm::ivec2 = 0;
 
+	[[nodiscard]] virtual auto get_view() const -> Transform const& = 0;
+	virtual void set_view(Transform const& view) = 0;
+
+	[[nodiscard]] virtual auto get_viewport() const -> Viewport const& = 0;
+	virtual void set_viewport(Viewport const& viewport) = 0;
+
 	virtual void set_line_width(float width) = 0;
 	virtual void set_shader(IShader const& shader) = 0;
 	virtual void set_user_data(UserDrawData const& user_data) = 0;
 
 	/// \brief Draw given instances of a Primitive.
 	/// \param primitive Primitive to draw.
-	/// \param instances Render Instances to draw.
+	/// \param instances Render Instances to draw (will be baked).
 	virtual void draw(Primitive const& primitive, std::span<RenderInstance const> instances) = 0;
+	/// \brief Draw given instances of a Primitive.
+	/// \param primitive Primitive to draw.
+	/// \param instances Render Instances to draw (pre-baked).
+	virtual void draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) = 0;
 
 	/// \returns Unprojector for current view and viewport.
 	[[nodiscard]] virtual auto unprojector() const -> Unprojector = 0;
 
-	/// \brief Render view (generates view matrix).
-	Transform view{};
 	/// \brief Fill mode.
 	vk::PolygonMode polygon_mode{vk::PolygonMode::eFill};
-	/// \brief Viewport type.
-	Viewport viewport{viewport::Dynamic{}};
 	/// \brief Scissor rect.
 	kvf::UvRect scissor_rect{kvf::uv_rect_v};
 };

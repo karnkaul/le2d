@@ -1,9 +1,10 @@
 #pragma once
+#include "detail/pipeline_pool.hpp"
+#include "detail/resource/texture.hpp"
 #include "kvf/device_waiter.hpp"
 #include "kvf/render_device.hpp"
+#include "le2d/render_instance.hpp"
 #include "le2d/resource/texture.hpp"
-#include <detail/pipeline_pool.hpp>
-#include <detail/resource/texture.hpp>
 
 namespace le::detail {
 class ResourcePool {
@@ -27,6 +28,7 @@ class ResourcePool {
 	gsl::not_null<ISamplerFactory*> sampler_factory;
 
 	std::vector<std::byte> scratch_buffer{};
+	std::vector<RenderInstance::Std430> render_instance_buffer{};
 
   private:
 	PipelinePool m_pipelines;
