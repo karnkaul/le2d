@@ -38,13 +38,13 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 }
 
 void FlipbookEditor::render(IRenderer& renderer) const {
-	renderer.view = m_render_view;
+	renderer.set_view(m_render_view);
 	switch (m_display) {
 	case Display::TileSheet: m_drawer.draw(renderer); break;
 	case Display::Sprite: m_sprite.draw(renderer); break;
 	default: break;
 	}
-	renderer.view = {};
+	renderer.set_view({});
 }
 
 void FlipbookEditor::on_drop(FileDrop const& drop) {

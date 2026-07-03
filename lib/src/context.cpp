@@ -1,14 +1,14 @@
 #include "le2d/context.hpp"
+#include "detail/audio_mixer.hpp"
+#include "detail/pipeline_pool.hpp"
+#include "detail/render_pass.hpp"
+#include "detail/resource/resource_factory.hpp"
+#include "detail/resource/resource_pool.hpp"
 #include "klib/debug/assert.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
 #include "le2d/error.hpp"
 #include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
-#include <detail/audio_mixer.hpp>
-#include <detail/pipeline_pool.hpp>
-#include <detail/render_pass.hpp>
-#include <detail/resource/resource_factory.hpp>
-#include <detail/resource/resource_pool.hpp>
 #include <log.hpp>
 #include <spirv.hpp>
 

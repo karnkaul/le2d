@@ -28,13 +28,13 @@ void FontViewer::tick(kvf::Seconds const dt) {
 }
 
 void FontViewer::render(IRenderer& renderer) const {
-	renderer.view = m_render_view;
+	renderer.set_view(m_render_view);
 	if (m_display == Display::InputText && m_input_text) {
 		m_input_text->draw(renderer);
 	} else {
 		m_quad.draw(renderer);
 	}
-	renderer.view = {};
+	renderer.set_view({});
 }
 
 void FontViewer::on_drop(FileDrop const& drop) {

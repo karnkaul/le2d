@@ -1,9 +1,9 @@
 #pragma once
+#include "detail/resource/texture.hpp"
 #include "klib/debug/assert.hpp"
 #include "le2d/resource/font.hpp"
 #include "le2d/text/util.hpp"
 #include "le2d/text_height.hpp"
-#include <detail/resource/texture.hpp>
 #include <unordered_map>
 
 namespace le::detail {
