@@ -1,6 +1,6 @@
 #pragma once
 #include "klib/hash_combine.hpp"
-#include "kvf/render_api.hpp"
+#include "kvf/render_device.hpp"
 #include "kvf/util.hpp"
 #include "le2d/resource/sampler_factory.hpp"
 #include <vulkan/vulkan_hash.hpp>
@@ -9,7 +9,7 @@
 namespace le::detail {
 class SamplerFactory : public ISamplerFactory {
   public:
-	explicit SamplerFactory(gsl::not_null<kvf::IRenderApi const*> render_api) : m_render_api(render_api) {}
+	explicit SamplerFactory(gsl::not_null<kvf::IRenderDevice*> render_device) : m_render_device(render_device) {}
 
   private:
 	[[nodiscard]] auto get_or_create(TextureSampler const& sampler) -> vk::Sampler final {
@@ -17,7 +17,7 @@ class SamplerFactory : public ISamplerFactory {
 		if (it == m_map.end()) {
 			auto sampler_ci = kvf::util::create_sampler_ci(sampler.wrap, sampler.filter);
 			sampler_ci.setBorderColor(sampler.border);
-			auto vk_sampler = m_render_api->create_sampler(sampler_ci);
+			auto vk_sampler = m_render_device->create_sampler(sampler_ci);
 			it = m_map.insert_or_assign(sampler, std::move(vk_sampler)).first;
 		}
 		return *it->second;
@@ -28,6 +28,6 @@ class SamplerFactory : public ISamplerFactory {
 	};
 
 	std::unordered_map<TextureSampler, vk::UniqueSampler, Hash> m_map{};
-	gsl::not_null<kvf::IRenderApi const*> m_render_api;
+	gsl::not_null<kvf::IRenderDevice*> m_render_device;
 };
 } // namespace le::detail

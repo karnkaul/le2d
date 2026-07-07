@@ -4,12 +4,11 @@
 #include "kvf/device_waiter.hpp"
 #include "kvf/render_device.hpp"
 #include "le2d/render_instance.hpp"
-#include "le2d/resource/texture.hpp"
 
 namespace le::detail {
 class ResourcePool {
   public:
-	explicit ResourcePool(gsl::not_null<kvf::RenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory,
+	explicit ResourcePool(gsl::not_null<kvf::IRenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory,
 						  std::unique_ptr<IShader> default_shader)
 		: sampler_factory(sampler_factory), m_pipelines(render_device), m_default_shader(std::move(default_shader)),
 		  m_white_texture(render_device, sampler_factory), m_waiter(render_device->get_device()) {}
@@ -27,7 +26,6 @@ class ResourcePool {
 
 	gsl::not_null<ISamplerFactory*> sampler_factory;
 
-	std::vector<std::byte> scratch_buffer{};
 	std::vector<RenderInstance::Std430> render_instance_buffer{};
 
   private:

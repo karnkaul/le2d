@@ -1,7 +1,6 @@
 #pragma once
 #include "klib/base_types.hpp"
 #include "kvf/rect.hpp"
-#include "kvf/render_pass_fwd.hpp"
 #include "kvf/render_target.hpp"
 #include "le2d/primitive.hpp"
 #include "le2d/render_instance.hpp"

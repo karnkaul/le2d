@@ -18,7 +18,7 @@ class PipelinePool {
 
 	static constexpr std::size_t set_count_v{3};
 
-	explicit PipelinePool(gsl::not_null<kvf::RenderDevice const*> render_device) : m_render_device(render_device) {
+	explicit PipelinePool(gsl::not_null<kvf::IRenderDevice const*> render_device) : m_render_device(render_device) {
 		create_set_layouts();
 		create_layout();
 	}
@@ -120,11 +120,12 @@ class PipelinePool {
 		auto const format = kvf::PipelineFormat{
 			.samples = state.samples,
 			.color = vk::Format::eR8G8B8A8Srgb,
+			.depth = vk::Format::eUndefined,
 		};
 		return m_render_device->create_pipeline(*m_layout, pipeline_state, format);
 	}
 
-	gsl::not_null<kvf::RenderDevice const*> m_render_device;
+	gsl::not_null<kvf::IRenderDevice const*> m_render_device;
 
 	vk::UniquePipelineLayout m_layout{};
 	std::array<vk::UniqueDescriptorSetLayout, set_count_v> m_set_layout_storage{};

@@ -1,6 +1,6 @@
 #pragma once
 #include "klib/base_types.hpp"
-#include "kvf/render_device_fwd.hpp"
+#include "kvf/kvf_fwd.hpp"
 #include "le2d/renderer.hpp"
 #include <glm/vec2.hpp>
 
@@ -11,7 +11,7 @@ class IRenderPass : public klib::Polymorphic {
 	static constexpr auto min_size_v{32};
 	static constexpr auto max_size_v{4 * 4096};
 
-	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice& = 0;
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::IRenderDevice& = 0;
 
 	/// \returns Reference to latest RenderTarget.
 	[[nodiscard]] virtual auto get_render_target() const -> kvf::RenderTarget const& = 0;

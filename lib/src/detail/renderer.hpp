@@ -2,7 +2,7 @@
 #include "detail/resource/resource_pool.hpp"
 #include "kvf/render_device.hpp"
 #include "kvf/render_pass.hpp"
-#include "kvf/scratch_buffer.hpp"
+#include "kvf/ring_buffer_allocator.hpp"
 #include "kvf/util.hpp"
 #include "le2d/renderer.hpp"
 #include <algorithm>
@@ -10,7 +10,7 @@
 namespace le::detail {
 class Renderer : public IRenderer {
   public:
-	explicit Renderer(gsl::not_null<kvf::RenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool);
+	explicit Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool);
 
   private:
 	static constexpr auto clamp_size(glm::ivec2 in) {
@@ -52,9 +52,10 @@ class Renderer : public IRenderer {
 
 	[[nodiscard]] auto bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const>;
 
-	gsl::not_null<kvf::RenderPass*> m_pass;
+	gsl::not_null<kvf::IRenderPass*> m_pass;
 	gsl::not_null<detail::ResourcePool*> m_resource_pool;
-	kvf::ScratchBuffer::Allocator m_scratch_buffers;
+	std::shared_ptr<kvf::IRingBufferAllocator> m_buffer_allocator;
+	gsl::not_null<kvf::IRingDescriptorAllocator*> m_descriptor_allocator;
 
 	gsl::not_null<IShader const*> m_shader;
 	Transform m_view_transform{};

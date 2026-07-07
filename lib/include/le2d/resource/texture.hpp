@@ -1,14 +1,11 @@
 #pragma once
 #include "kvf/bitmap.hpp"
+#include "kvf/kvf_fwd.hpp"
 #include "le2d/resource/resource.hpp"
 #include "le2d/texture_sampler.hpp"
 #include "le2d/tile/tile_set.hpp"
 #include <vulkan/vulkan.hpp>
 #include <gsl/pointers>
-
-namespace kvf {
-class RenderPass;
-} // namespace kvf
 
 namespace le {
 /// \brief Interface for drawable texture.
@@ -51,7 +48,7 @@ class RenderTexture : public ITextureBase {
   public:
 	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
 	/// \param sampler Handle to Vulkan Sampler.
-	explicit RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass, vk::Sampler sampler);
+	explicit RenderTexture(gsl::not_null<kvf::IRenderPass const*> render_pass, vk::Sampler sampler);
 
 	[[nodiscard]] auto is_ready() const -> bool final;
 
@@ -63,6 +60,6 @@ class RenderTexture : public ITextureBase {
 	vk::Sampler sampler{};
 
   private:
-	gsl::not_null<kvf::RenderPass const*> m_render_pass;
+	gsl::not_null<kvf::IRenderPass const*> m_render_pass;
 };
 } // namespace le

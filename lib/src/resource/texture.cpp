@@ -4,7 +4,7 @@
 #include "kvf/util.hpp"
 
 namespace le {
-RenderTexture::RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass, vk::Sampler const sampler) : sampler(sampler), m_render_pass(render_pass) {
+RenderTexture::RenderTexture(gsl::not_null<kvf::IRenderPass const*> render_pass, vk::Sampler const sampler) : sampler(sampler), m_render_pass(render_pass) {
 	KLIB_ASSERT(this->sampler);
 }
 

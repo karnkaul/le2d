@@ -12,7 +12,7 @@ struct Std430Instance {
 };
 
 struct Vbo {
-	[[nodiscard]] static auto create(kvf::ScratchBuffer& buffer, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices) -> Vbo {
+	[[nodiscard]] static auto create(kvf::FixedUsageBuffer const& buffer, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices) -> Vbo {
 		auto const writes = std::array{
 			kvf::BufferWrite{vertices},
 			kvf::BufferWrite{indices},
@@ -67,9 +67,10 @@ auto const scratch_buffer_layout = std::vector<vk::BufferUsageFlags>{
 };
 } // namespace
 
-Renderer::Renderer(gsl::not_null<kvf::RenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
-	: m_pass(render_pass), m_resource_pool(resource_pool), m_scratch_buffers(&render_pass->get_render_device(), scratch_buffer_layout),
-	  m_shader(&resource_pool->get_default_shader()) {}
+Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
+	: m_pass(render_pass), m_resource_pool(resource_pool),
+	  m_buffer_allocator(kvf::IRingBufferAllocator::create(&render_pass->get_render_device(), scratch_buffer_layout)),
+	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()), m_shader(&resource_pool->get_default_shader()) {}
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
 	m_stats = {};
@@ -79,7 +80,6 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 
 	m_pass->clear_color = clear.to_linear();
 	m_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
-	m_scratch_buffers.next_frame();
 
 	refresh_mat_vp();
 
@@ -127,7 +127,7 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 
 	auto& render_device = m_pass->get_render_device();
 
-	auto const scratch_buffers = m_scratch_buffers.allocate_next();
+	auto const scratch_buffers = m_buffer_allocator->allocate_next();
 	KLIB_ASSERT(scratch_buffers.size() == scratch_buffer_layout.size());
 
 	auto const vbo = Vbo::create(scratch_buffers[0], primitive.vertices, primitive.indices);
@@ -175,7 +175,7 @@ auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
 
 	if (m_pipeline == pipeline) { return true; }
 
-	m_pass->bind_pipeline(pipeline);
+	m_pass->bind_graphics_pipeline(pipeline);
 	m_pipeline = pipeline;
 
 	return true;
@@ -203,7 +203,7 @@ void Renderer::refresh_mat_vp() {
 auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool {
 	auto const set_layouts = m_resource_pool->get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == out_sets.size());
-	return m_pass->get_render_device().allocate_sets(out_sets, set_layouts);
+	return m_descriptor_allocator->allocate_next(out_sets, set_layouts);
 }
 
 auto Renderer::bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const> {

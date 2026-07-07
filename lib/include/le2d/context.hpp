@@ -93,7 +93,7 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<Context>;
 
 	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
-	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::IRenderDevice const& = 0;
 	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
 	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;

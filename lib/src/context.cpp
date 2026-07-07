@@ -33,7 +33,7 @@ namespace {
 	}
 }
 
-[[nodiscard]] auto sanitize(kvf::RenderDevice::CreateInfo const& in) {
+[[nodiscard]] auto sanitize(kvf::IRenderDevice::CreateInfo const& in) {
 	auto ret = in;
 	ret.flags &= ~kvf::RenderDeviceFlag::LinearBackbuffer;
 	return ret;
@@ -140,7 +140,7 @@ class ContextImpl : public Context {
 
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
-		  m_render_device(std::make_unique<kvf::RenderDevice>(get_window(), sanitize(create_info.render_device))),
+		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
 		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
 		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())) {
 
@@ -185,7 +185,7 @@ class ContextImpl : public Context {
 	}
 
 	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
-	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& final { return *m_render_device; }
+	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice const& final { return *m_render_device; }
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resource_factory; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resource_pool->get_default_shader(); }
@@ -354,7 +354,7 @@ class ContextImpl : public Context {
 	}
 
 	kvf::UniqueWindow m_window{};
-	std::unique_ptr<kvf::RenderDevice> m_render_device{};
+	std::unique_ptr<kvf::IRenderDevice> m_render_device{};
 	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
 
 	std::unique_ptr<IRenderPass> m_pass{};
@@ -388,7 +388,7 @@ auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> 
 
 auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
 auto Context::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
-auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_framebuffer_extent(); }
+auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_swapchain_image_extent(); }
 auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
 auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 

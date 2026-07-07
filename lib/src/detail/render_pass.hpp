@@ -17,29 +17,30 @@ class RenderPass : public IRenderPass {
 		return in;
 	}
 
-	explicit RenderPass(gsl::not_null<kvf::RenderDevice*> render_device, gsl::not_null<detail::ResourcePool*> resource_pool, vk::SampleCountFlagBits samples)
-		: m_render_device(render_device), m_resource_pool(resource_pool), m_render_pass(render_device, samples), m_waiter(render_device->get_device()) {
-		m_render_pass.set_color_target(color_format_v);
+	explicit RenderPass(gsl::not_null<kvf::IRenderDevice*> render_device, gsl::not_null<detail::ResourcePool*> resource_pool, vk::SampleCountFlagBits samples)
+		: m_render_device(render_device), m_resource_pool(resource_pool), m_render_pass(kvf::IRenderPass::create(render_device, samples)),
+		  m_waiter(render_device->get_device()) {
+		m_render_pass->set_color_target(color_format_v);
 	}
 
-	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice& final { return *m_render_device; }
+	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice& final { return *m_render_device; }
 
-	[[nodiscard]] auto get_render_target() const -> kvf::RenderTarget const& final { return m_render_pass.render_target(); }
+	[[nodiscard]] auto get_render_target() const -> kvf::RenderTarget const& final { return m_render_pass->render_target(); }
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_render_pass.get_samples(); }
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_render_pass->get_samples(); }
 
-	[[nodiscard]] auto render_texture(vk::Sampler const sampler) const -> RenderTexture final { return RenderTexture{&m_render_pass, sampler}; }
+	[[nodiscard]] auto render_texture(vk::Sampler const sampler) const -> RenderTexture final { return RenderTexture{m_render_pass.get(), sampler}; }
 
-	void set_clear_color(kvf::Color const color) final { m_render_pass.clear_color = color.to_linear(); }
+	void set_clear_color(kvf::Color const color) final { m_render_pass->clear_color = color.to_linear(); }
 
-	void recreate(vk::SampleCountFlagBits const samples) final { m_render_pass.recreate(samples); }
+	void recreate(vk::SampleCountFlagBits const samples) final { m_render_pass->recreate(samples); }
 
-	[[nodiscard]] auto create_renderer() -> std::unique_ptr<IRenderer> final { return std::make_unique<Renderer>(&m_render_pass, m_resource_pool); }
+	[[nodiscard]] auto create_renderer() -> std::unique_ptr<IRenderer> final { return std::make_unique<Renderer>(m_render_pass.get(), m_resource_pool); }
 
   private:
-	gsl::not_null<kvf::RenderDevice*> m_render_device;
+	gsl::not_null<kvf::IRenderDevice*> m_render_device;
 	gsl::not_null<detail::ResourcePool*> m_resource_pool;
-	kvf::RenderPass m_render_pass;
+	std::unique_ptr<kvf::IRenderPass> m_render_pass;
 
 	kvf::DeviceWaiter m_waiter;
 };
