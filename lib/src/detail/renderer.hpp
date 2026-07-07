@@ -44,8 +44,6 @@ class Renderer : public IRenderer {
 
 	[[nodiscard]] auto unprojector() const -> Unprojector final;
 
-	auto bind_shader(vk::PrimitiveTopology topology) -> bool;
-
 	void refresh_mat_vp();
 
 	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
@@ -65,7 +63,6 @@ class Renderer : public IRenderer {
 	vk::Rect2D m_scissor{};
 	UserDrawData m_user_data{};
 
-	vk::Pipeline m_pipeline{};
 	float m_line_width{1.0f};
 
 	kvf::RenderTarget m_rt{};

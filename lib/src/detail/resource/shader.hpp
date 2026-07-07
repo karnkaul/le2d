@@ -1,47 +1,48 @@
 #pragma once
-#include "klib/hash_combine.hpp"
+#include "kvf/graphics_shader.hpp"
 #include "le2d/resource/shader.hpp"
+#include "le2d/vertex.hpp"
+#include <array>
 
 namespace le::detail {
 class Shader : public IShader {
   public:
-	explicit Shader(vk::Device const device) : m_device(device) {}
-
-	[[nodiscard]] auto is_ready() const -> bool final { return m_vertex && m_fragment; }
+	explicit Shader(gsl::not_null<kvf::IRenderDevice*> render_device, std::span<vk::DescriptorSetLayout const> set_layouts)
+		: m_render_device(render_device), m_set_layouts(set_layouts) {}
 
 	[[nodiscard]] auto load(SpirV vertex, SpirV fragment) -> bool final {
-		auto smci = std::array<vk::ShaderModuleCreateInfo, 2>{};
-		smci[0].setCode(vertex);
-		smci[1].setCode(fragment);
-		auto vert = m_device.createShaderModuleUnique(smci[0]);
-		auto frag = m_device.createShaderModuleUnique(smci[1]);
-		if (!vert || !frag) { return false; }
+		static constexpr auto bindings_v = std::array{
+			vk::VertexInputBindingDescription2EXT{0, sizeof(Vertex), vk::VertexInputRate::eVertex, 1},
+		};
 
-		m_vertex = std::move(vert);
-		m_fragment = std::move(frag);
-		m_hash = compute_hash(vertex, fragment);
+		static constexpr auto attributes_v = std::array{
+			vk::VertexInputAttributeDescription2EXT{0, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, position)},
+			vk::VertexInputAttributeDescription2EXT{1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Vertex, color)},
+			vk::VertexInputAttributeDescription2EXT{2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, uv)},
+		};
 
-		return true;
+		static constexpr auto input_v = kvf::GraphicsShaderInput{
+			.bindings = bindings_v,
+			.attributes = attributes_v,
+		};
+
+		auto const shader_ci = kvf::IGraphicsShader::CreateInfo{
+			.code = {.vertex = vertex, .fragment = fragment},
+			.input = input_v,
+			.set_layouts = m_set_layouts,
+		};
+		m_shader = kvf::IGraphicsShader::create(m_render_device, shader_ci);
+		return m_shader != nullptr;
 	}
-
-	[[nodiscard]] auto get_modules() const -> Modules final { return Modules{.vertex = *m_vertex, .fragment = *m_fragment}; }
-	[[nodiscard]] auto get_hash() const -> std::size_t final { return m_hash; }
 
   private:
-	[[nodiscard]] static auto compute_hash(SpirV const vert, SpirV const frag) -> std::size_t {
-		auto ret = std::size_t{};
-		auto const compute = [&](SpirV const spir_v) {
-			for (auto const u32 : spir_v) { klib::hash_combine(ret, u32); }
-		};
-		compute(vert);
-		compute(frag);
-		return ret;
-	}
+	[[nodiscard]] auto get_kvf_shader() const -> kvf::IGraphicsShader const& final { return *m_shader; }
 
-	vk::Device m_device{};
+	[[nodiscard]] auto is_ready() const -> bool final { return true; }
 
-	vk::UniqueShaderModule m_vertex{};
-	vk::UniqueShaderModule m_fragment{};
-	std::size_t m_hash{};
+	gsl::not_null<kvf::IRenderDevice*> m_render_device;
+	std::span<vk::DescriptorSetLayout const> m_set_layouts;
+
+	std::unique_ptr<kvf::IGraphicsShader> m_shader{};
 };
 } // namespace le::detail

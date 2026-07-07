@@ -74,7 +74,7 @@ Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<d
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
 	m_stats = {};
-	if (!command_buffer || is_rendering() || !m_shader->is_ready()) { return false; }
+	if (!command_buffer || is_rendering()) { return false; }
 
 	size = clamp_size(size);
 
@@ -91,7 +91,6 @@ auto Renderer::end_render() -> kvf::RenderTarget const& {
 		m_rt = m_pass->render_target();
 		m_pass->end_render();
 	}
-	m_pipeline = vk::Pipeline{};
 	return m_rt;
 }
 
@@ -113,7 +112,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) {
 	auto const cmd = m_pass->get_command_buffer();
 	if (!cmd || primitive.vertices.empty() || instances.empty()) { return; }
-	if (!bind_shader(primitive.topology)) { return; }
+	// if (!bind_shader(primitive.topology)) { return; }
 
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
 	if (!allocate_sets(descriptor_sets)) { return; }
@@ -152,34 +151,23 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	};
 	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
+	m_pass->bind_graphics_shader(m_shader->get_kvf_shader());
+
+	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->shader_layout->get_pipeline_layout(), 0, descriptor_sets, {});
+
+	cmd.setPrimitiveTopology(primitive.topology);
+	cmd.setPolygonModeEXT(polygon_mode);
+
 	cmd.setViewport(0, m_vk_viewport);
 	cmd.setScissor(0, m_scissor);
 	cmd.setLineWidth(m_line_width);
 
-	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->get_pipeline_layout(), 0, descriptor_sets, {});
 	vbo.draw(cmd, std::uint32_t(instances.size()));
 	++m_stats.draw_calls;
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
 }
 
 auto Renderer::unprojector() const -> Unprojector { return Unprojector{m_viewport, m_view_transform, framebuffer_size()}; }
-
-auto Renderer::bind_shader(vk::PrimitiveTopology const topology) -> bool {
-	auto const fixed_state = PipelineFixedState{
-		.samples = m_pass->get_samples(),
-		.topology = topology,
-		.polygon_mode = polygon_mode,
-	};
-	auto const pipeline = m_resource_pool->allocate_pipeline(fixed_state, *m_shader);
-	if (!pipeline) { return false; }
-
-	if (m_pipeline == pipeline) { return true; }
-
-	m_pass->bind_graphics_pipeline(pipeline);
-	m_pipeline = pipeline;
-
-	return true;
-}
 
 void Renderer::refresh_mat_vp() {
 	auto const mat_v = m_view_transform.to_view();
@@ -201,7 +189,7 @@ void Renderer::refresh_mat_vp() {
 }
 
 auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool {
-	auto const set_layouts = m_resource_pool->get_set_layouts();
+	auto const set_layouts = m_resource_pool->shader_layout->get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == out_sets.size());
 	return m_descriptor_allocator->allocate_next(out_sets, set_layouts);
 }

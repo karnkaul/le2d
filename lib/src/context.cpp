@@ -3,13 +3,12 @@
 #include "detail/render_pass.hpp"
 #include "detail/resource/resource_factory.hpp"
 #include "detail/resource/resource_pool.hpp"
+#include "detail/shader_layout.hpp"
 #include "klib/debug/assert.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
-#include "le2d/error.hpp"
 #include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
 #include <log.hpp>
-#include <spirv.hpp>
 
 namespace le {
 namespace {
@@ -108,14 +107,6 @@ auto get_glfw_vec2(GLFWwindow* window, F glfw_func) -> glm::ivec2 {
 	return ret;
 }
 
-[[nodiscard]] auto create_default_shader(IResourceFactory const& factory) -> std::unique_ptr<IShader> {
-	auto const vert_spirv = spirv::vert();
-	auto const frag_spirv = spirv::frag();
-	auto ret = factory.create_shader();
-	if (!ret->load(vert_spirv, frag_spirv)) { throw Error{"Failed to create default shader"}; }
-	return ret;
-}
-
 struct AssetLoaderBuilder {
 	template <typename... Ts>
 	auto build() {
@@ -141,14 +132,14 @@ class ContextImpl : public Context {
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
 		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
+		  m_shader_layout(std::make_unique<detail::ShaderLayout>(m_render_device->get_device())),
 		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
-		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())) {
+		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get(), m_shader_layout->get_set_layouts())),
+		  m_resource_pool(std::make_unique<detail::ResourcePool>(m_render_device.get(), m_sampler_factory.get(), m_shader_layout.get())),
+		  m_audio_mixer(std::make_unique<detail::AudioMixer>(create_info.sfx_buffers)) {
 
-		auto default_shader = create_default_shader(get_resource_factory());
-		m_resource_pool = std::make_unique<detail::ResourcePool>(m_render_device.get(), m_sampler_factory.get(), std::move(default_shader));
-		m_pass = create_render_pass(create_info.framebuffer_samples);
-		m_renderer = m_pass->create_renderer();
-		m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
+		m_render_pass = create_render_pass(create_info.framebuffer_samples);
+		m_renderer = m_render_pass->create_renderer();
 
 		auto const supported_modes = m_render_device->get_supported_present_modes();
 		m_supported_vsync.reserve(supported_modes.size());
@@ -208,7 +199,7 @@ class ContextImpl : public Context {
 		return true;
 	}
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_pass->get_samples()); }
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
 		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
 	}
@@ -234,7 +225,7 @@ class ContextImpl : public Context {
 	}
 	void present() final {
 		m_renderer->end_render();
-		m_render_device->render(m_pass->get_render_target());
+		m_render_device->render(m_render_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
 		m_frame_finish = kvf::Clock::now();
 	}
@@ -255,7 +246,7 @@ class ContextImpl : public Context {
 
 		m_render_device->get_device().waitIdle();
 		if (m_requests.set_samples) {
-			m_pass->recreate(*m_requests.set_samples);
+			m_render_pass->recreate(*m_requests.set_samples);
 			m_requests.set_samples.reset();
 		}
 	}
@@ -355,15 +346,16 @@ class ContextImpl : public Context {
 
 	kvf::UniqueWindow m_window{};
 	std::unique_ptr<kvf::IRenderDevice> m_render_device{};
+
+	std::unique_ptr<detail::ShaderLayout> m_shader_layout{};
 	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
-
-	std::unique_ptr<IRenderPass> m_pass{};
-	std::unique_ptr<IRenderer> m_renderer{};
-	std::vector<Vsync> m_supported_vsync{};
-
 	std::unique_ptr<IResourceFactory> m_resource_factory{};
 	std::unique_ptr<detail::ResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
+
+	std::unique_ptr<IRenderPass> m_render_pass{};
+	std::unique_ptr<IRenderer> m_renderer{};
+	std::vector<Vsync> m_supported_vsync{};
 
 	std::vector<Event> m_event_queue{};
 	std::vector<std::string> m_drops{};

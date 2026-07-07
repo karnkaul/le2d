@@ -10,11 +10,12 @@
 namespace le::detail {
 class ResourceFactory : public IResourceFactory {
   public:
-	explicit ResourceFactory(gsl::not_null<kvf::IRenderDevice*> render_api, gsl::not_null<ISamplerFactory*> sampler_factory)
-		: m_render_device(render_api), m_sampler_factory(sampler_factory) {}
+	explicit ResourceFactory(gsl::not_null<kvf::IRenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory,
+							 std::span<vk::DescriptorSetLayout const> set_layouts)
+		: m_render_device(render_device), m_sampler_factory(sampler_factory), m_set_layouts(set_layouts) {}
 
   private:
-	[[nodiscard]] auto create_shader() const -> std::unique_ptr<IShader> final { return std::make_unique<Shader>(m_render_device->get_device()); }
+	[[nodiscard]] auto create_shader() const -> std::unique_ptr<IShader> final { return std::make_unique<Shader>(m_render_device, m_set_layouts); }
 
 	[[nodiscard]] auto create_texture(TextureSampler const& sampler) const -> std::unique_ptr<ITexture> final {
 		return std::make_unique<Texture>(m_render_device, m_sampler_factory, sampler);
@@ -30,5 +31,6 @@ class ResourceFactory : public IResourceFactory {
 
 	gsl::not_null<kvf::IRenderDevice*> m_render_device;
 	gsl::not_null<ISamplerFactory*> m_sampler_factory;
+	std::span<vk::DescriptorSetLayout const> m_set_layouts;
 };
 } // namespace le::detail
