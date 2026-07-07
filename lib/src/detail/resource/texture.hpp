@@ -28,7 +28,7 @@ class TextureBase {
 
 	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo { return m_texture->descriptor_info(m_cached_sampler.vk_sampler); }
 
-	void overwrite(kvf::Bitmap const& bitmap) { m_texture = kvf::IImage::create_texture(m_render_device, bitmap); }
+	void overwrite(kvf::Bitmap const& bitmap) { m_texture->resize_and_overwrite(bitmap); }
 
 	auto load_and_write(std::span<std::byte const> compressed_image) -> bool {
 		auto const image = kvf::ImageBitmap{compressed_image};

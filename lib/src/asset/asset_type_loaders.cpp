@@ -37,6 +37,29 @@ auto to_texture_sampler(dj::Json const& json) -> TextureSampler {
 	if (auto const& border = json["border"]) { ret.border = to_border_color(border.as_string_view()); }
 	return ret;
 }
+
+struct TextureData {
+	kvf::ImageBitmap image{};
+	TextureSampler sampler{};
+};
+
+[[nodiscard]] auto to_texture_data(IDataLoader const& data_loader, std::string_view const uri) -> TextureData {
+	auto ret = TextureData{};
+	auto image_uri = uri;
+
+	if (uri.ends_with(".json") || uri.ends_with(".jsonc")) {
+		auto const json = data_loader.load_json(uri);
+		if (!json) { return ret; }
+
+		image_uri = json["image"].as_string_view();
+		ret.sampler = to_texture_sampler(json);
+	}
+
+	auto const image_bytes = data_loader.load_bytes(image_uri);
+	ret.image.decompress(image_bytes);
+
+	return ret;
+}
 } // namespace
 
 auto ShaderLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<IShader> {
@@ -55,21 +78,9 @@ auto FontLoader::load_asset(std::string_view const uri) const -> std::unique_ptr
 }
 
 auto TextureLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<ITexture> {
-	auto sampler = TextureSampler{};
-	auto image_bytes = std::vector<std::byte>{};
-	auto const json = m_data_loader->load_json(uri);
-	if (is_json_type<ITexture>(json)) {
-		image_bytes = m_data_loader->load_bytes(json["image"].as_string_view());
-		sampler = to_texture_sampler(json);
-	} else {
-		image_bytes = m_data_loader->load_bytes(uri);
-	}
-	if (image_bytes.empty()) { return {}; }
-
-	auto image = kvf::ImageBitmap{image_bytes};
-	if (!image.is_loaded()) { return {}; }
-
-	return m_resource_factory->create_texture(image.bitmap(), sampler);
+	auto const data = to_texture_data(*m_data_loader, uri);
+	if (!data.image.is_loaded()) { return {}; }
+	return m_resource_factory->create_texture(data.image.bitmap(), data.sampler);
 }
 
 auto TileSetLoader::load_asset(std::string_view const uri) const -> std::unique_ptr<TileSet> { return json_to_asset<TileSet>(*m_data_loader, uri); }
@@ -78,14 +89,10 @@ auto TileSheetLoader::load_asset(std::string_view const uri) const -> std::uniqu
 	auto const json = m_data_loader->load_json(uri);
 	if (!is_json_type<ITileSheet>(json)) { return {}; }
 
-	auto const texture_uri = json["texture"].as_string_view();
-	auto const image_bytes = m_data_loader->load_bytes(texture_uri);
-	if (image_bytes.empty()) { return {}; }
+	auto const data = to_texture_data(*m_data_loader, json["texture"].as_string_view());
+	if (!data.image.is_loaded()) { return {}; }
 
-	auto image = kvf::ImageBitmap{image_bytes};
-	if (!image.is_loaded()) { return {}; }
-
-	auto ret = m_resource_factory->create_tilesheet(image.bitmap());
+	auto ret = m_resource_factory->create_tilesheet(data.image.bitmap(), data.sampler);
 
 	auto const& tile_set_json = json["tile_set"];
 	if (tile_set_json.is_string()) {
