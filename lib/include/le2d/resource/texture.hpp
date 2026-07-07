@@ -15,8 +15,6 @@ class ITextureBase : public IResource {
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
 
 	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
-
-	TextureSampler sampler{};
 };
 
 /// \brief Concrete drawable Texture.
@@ -29,6 +27,9 @@ class ITexture : public ITextureBase {
 	/// \param compressed_image Bytes of compressed image.
 	/// \returns true if successfully decompressed.
 	virtual auto load_and_write(std::span<std::byte const> compressed_image) -> bool = 0;
+
+	[[nodiscard]] virtual auto get_sampler() const -> TextureSampler const& = 0;
+	virtual void set_sampler(TextureSampler const& sampler) = 0;
 };
 
 /// \brief Texture with a TileSet.
@@ -49,8 +50,6 @@ class RenderTexture : public ITextureBase {
 	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
 	/// \param sampler Handle to Vulkan Sampler.
 	explicit RenderTexture(gsl::not_null<kvf::IRenderPass const*> render_pass, vk::Sampler sampler);
-
-	[[nodiscard]] auto is_ready() const -> bool final;
 
 	[[nodiscard]] auto get_image() const -> vk::ImageView final;
 	[[nodiscard]] auto get_size() const -> glm::ivec2 final;

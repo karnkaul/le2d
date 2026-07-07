@@ -1,4 +1,5 @@
 #pragma once
+#include "klib/debug/assert.hpp"
 #include "kvf/graphics_shader.hpp"
 #include "le2d/resource/shader.hpp"
 #include "le2d/vertex.hpp"
@@ -36,9 +37,10 @@ class Shader : public IShader {
 	}
 
   private:
-	[[nodiscard]] auto get_kvf_shader() const -> kvf::IGraphicsShader const& final { return *m_shader; }
-
-	[[nodiscard]] auto is_ready() const -> bool final { return true; }
+	[[nodiscard]] auto get_kvf_shader() const -> kvf::IGraphicsShader const& final {
+		KLIB_ASSERT(m_shader);
+		return *m_shader;
+	}
 
 	gsl::not_null<kvf::IRenderDevice*> m_render_device;
 	std::span<vk::DescriptorSetLayout const> m_set_layouts;

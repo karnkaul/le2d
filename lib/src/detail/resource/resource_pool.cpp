@@ -20,6 +20,6 @@ ResourcePool::ResourcePool(gsl::not_null<kvf::IRenderDevice*> render_device, gsl
 	  m_white_texture(render_device, sampler_factory), m_waiter(render_device->get_device()) {}
 
 auto ResourcePool::descriptor_image(ITextureBase const* texture) const -> vk::DescriptorImageInfo {
-	return texture && texture->is_ready() ? texture->descriptor_info() : get_white_texture().descriptor_info();
+	return texture ? texture->descriptor_info() : get_white_texture().descriptor_info();
 }
 } // namespace le::detail

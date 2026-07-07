@@ -68,7 +68,7 @@ auto const scratch_buffer_layout = std::vector<vk::BufferUsageFlags>{
 } // namespace
 
 Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
-	: m_pass(render_pass), m_resource_pool(resource_pool),
+	: m_render_pass(render_pass), m_resource_pool(resource_pool),
 	  m_buffer_allocator(kvf::IRingBufferAllocator::create(&render_pass->get_render_device(), scratch_buffer_layout)),
 	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()), m_shader(&resource_pool->get_default_shader()) {}
 
@@ -78,8 +78,8 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 
 	size = clamp_size(size);
 
-	m_pass->clear_color = clear.to_linear();
-	m_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
+	m_render_pass->clear_color = clear.to_linear();
+	m_render_pass->begin_render(command_buffer, kvf::util::to_vk_extent(size));
 
 	refresh_mat_vp();
 
@@ -88,8 +88,8 @@ auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 s
 
 auto Renderer::end_render() -> kvf::RenderTarget const& {
 	if (is_rendering()) {
-		m_rt = m_pass->render_target();
-		m_pass->end_render();
+		m_rt = m_render_pass->render_target();
+		m_render_pass->end_render();
 	}
 	return m_rt;
 }
@@ -110,7 +110,7 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 }
 
 void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) {
-	auto const cmd = m_pass->get_command_buffer();
+	auto const cmd = m_render_pass->get_command_buffer();
 	if (!cmd || primitive.vertices.empty() || instances.empty()) { return; }
 	// if (!bind_shader(primitive.topology)) { return; }
 
@@ -118,13 +118,13 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	if (!allocate_sets(descriptor_sets)) { return; }
 
 	auto const visitor = klib::Visitor{
-		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
+		[this](viewport::Dynamic const& v) { return m_render_pass->to_viewport(v.n_rect); },
 		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
 	};
 	m_vk_viewport = std::visit(visitor, m_viewport);
-	m_scissor = m_pass->to_scissor(scissor_rect);
+	m_scissor = m_render_pass->to_scissor(scissor_rect);
 
-	auto& render_device = m_pass->get_render_device();
+	auto& render_device = m_render_pass->get_render_device();
 
 	auto const scratch_buffers = m_buffer_allocator->allocate_next();
 	KLIB_ASSERT(scratch_buffers.size() == scratch_buffer_layout.size());
@@ -151,7 +151,7 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	};
 	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
-	m_pass->bind_graphics_shader(m_shader->get_kvf_shader());
+	m_render_pass->bind_graphics_shader(m_shader->get_kvf_shader());
 
 	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->shader_layout->get_pipeline_layout(), 0, descriptor_sets, {});
 
@@ -173,7 +173,7 @@ void Renderer::refresh_mat_vp() {
 	auto const mat_v = m_view_transform.to_view();
 
 	auto const viewport_visitor = klib::Visitor{
-		[this](viewport::Dynamic const& v) { return m_pass->to_viewport(v.n_rect); },
+		[this](viewport::Dynamic const& v) { return m_render_pass->to_viewport(v.n_rect); },
 		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
 	};
 	m_vk_viewport = std::visit(viewport_visitor, m_viewport);

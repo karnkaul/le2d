@@ -52,7 +52,7 @@ class AudioMixer : public IAudioMixer {
 	}
 
 	void play_sfx(gsl::not_null<IAudioBuffer const*> buffer) final {
-		if (!m_engine || !buffer->is_ready()) { return; }
+		if (!m_engine) { return; }
 		auto* source = get_idle_source();
 		if (source == nullptr) { source = &get_oldest_source(); }
 		play_sfx(*source, [buffer](capo::ISource& source) { buffer->bind(source); });
