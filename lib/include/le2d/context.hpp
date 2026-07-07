@@ -71,8 +71,9 @@ struct ContextCreateInfo {
 	/// \brief Window creation parameters.
 	WindowCreateInfo window{WindowInfo{}};
 	/// \brief Render Device creation parameters.
+	/// kvf::RenderDeviceFlag::LinearBackbuffer is not supported (will automatically be reset).
 	kvf::RenderDeviceCreateInfo render_device{};
-	/// \brief Multi sampled anti-aliasing.
+	/// \brief Multi-sampling anti-aliasing.
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
 	/// \brief Number of SFX buffers (concurrently playable).
 	int sfx_buffers{16};
@@ -206,8 +207,7 @@ class Context::Waiter {
   private:
 	struct Deleter {
 		void operator()(Context* ptr) const {
-			if (!ptr) { return; }
-			ptr->wait_idle();
+			if (ptr) { ptr->wait_idle(); }
 		}
 	};
 

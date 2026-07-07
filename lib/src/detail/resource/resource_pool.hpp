@@ -1,16 +1,15 @@
 #pragma once
+#include "detail/resource/resource_factory.hpp"
 #include "detail/resource/texture.hpp"
 #include "detail/shader_layout.hpp"
 #include "kvf/device_waiter.hpp"
-#include "kvf/render_device.hpp"
 #include "le2d/render_instance.hpp"
 #include "le2d/resource/shader.hpp"
 
 namespace le::detail {
 class ResourcePool {
   public:
-	explicit ResourcePool(gsl::not_null<kvf::IRenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory,
-						  gsl::not_null<ShaderLayout const*> shader_layout);
+	explicit ResourcePool(gsl::not_null<ResourceFactory const*> resource_factory);
 
 	[[nodiscard]] auto get_white_texture() const -> ITexture const& { return m_white_texture; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& { return *m_default_shader; }

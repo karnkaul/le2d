@@ -107,6 +107,14 @@ auto get_glfw_vec2(GLFWwindow* window, F glfw_func) -> glm::ivec2 {
 	return ret;
 }
 
+[[nodiscard]] auto build_supported_vsync(kvf::IRenderDevice const& render_device) {
+	auto ret = std::vector<Vsync>{};
+	auto const supported_present_modes = render_device.get_supported_present_modes();
+	ret.reserve(supported_present_modes.size());
+	for (auto const present_mode : supported_present_modes) { ret.push_back(to_vsync(present_mode)); }
+	return ret;
+}
+
 struct AssetLoaderBuilder {
 	template <typename... Ts>
 	auto build() {
@@ -132,18 +140,12 @@ class ContextImpl : public Context {
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
 		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
-		  m_shader_layout(std::make_unique<detail::ShaderLayout>(m_render_device->get_device())),
 		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
-		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get(), m_shader_layout->get_set_layouts())),
-		  m_resource_pool(std::make_unique<detail::ResourcePool>(m_render_device.get(), m_sampler_factory.get(), m_shader_layout.get())),
-		  m_audio_mixer(std::make_unique<detail::AudioMixer>(create_info.sfx_buffers)) {
-
-		m_render_pass = create_render_pass(create_info.framebuffer_samples);
-		m_renderer = m_render_pass->create_renderer();
-
-		auto const supported_modes = m_render_device->get_supported_present_modes();
-		m_supported_vsync.reserve(supported_modes.size());
-		for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
+		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())),
+		  m_resource_pool(std::make_unique<detail::ResourcePool>(m_resource_factory.get())),
+		  m_audio_mixer(std::make_unique<detail::AudioMixer>(create_info.sfx_buffers)),
+		  m_render_pass(std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), create_info.framebuffer_samples)),
+		  m_renderer(m_render_pass->create_renderer()), m_supported_vsync(build_supported_vsync(*m_render_device)) {
 
 		log.info("[{}] Context initialized, platform: {}", build_version_v, glfw_platform_str(glfwGetPlatform()));
 		m_on_destroy.reset(this);
@@ -347,9 +349,8 @@ class ContextImpl : public Context {
 	kvf::UniqueWindow m_window{};
 	std::unique_ptr<kvf::IRenderDevice> m_render_device{};
 
-	std::unique_ptr<detail::ShaderLayout> m_shader_layout{};
 	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
-	std::unique_ptr<IResourceFactory> m_resource_factory{};
+	std::unique_ptr<detail::ResourceFactory> m_resource_factory{};
 	std::unique_ptr<detail::ResourcePool> m_resource_pool{};
 	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 

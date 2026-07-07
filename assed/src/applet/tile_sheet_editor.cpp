@@ -1,5 +1,4 @@
 #include "applet/tile_sheet_editor.hpp"
-#include "klib/debug/assert.hpp"
 #include "klib/string/fixed_string.hpp"
 #include "le2d/file_data_loader.hpp"
 #include "le2d/json_io.hpp"
