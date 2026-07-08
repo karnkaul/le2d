@@ -44,5 +44,9 @@ class ITileSheet : public ITexture {
 
 /// \brief Wraps a RenderTarget as a texture.
 /// This is just a view type, it doesn't own any resources.
-class IRenderTexture : public ITextureBase {};
+class IRenderTexture : public ITextureBase {
+  public:
+	/// \returns true if the associated IRenderPass has completed rendering.
+	[[nodiscard]] virtual auto has_render_target() const -> bool = 0;
+};
 } // namespace le

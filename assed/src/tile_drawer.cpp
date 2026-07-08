@@ -46,7 +46,7 @@ void TileDrawer::draw(IRenderer& renderer) const {
 	quad.draw(renderer);
 
 	renderer.set_line_width(style.frame_width);
-	drawable::LineRect const* selected{};
+	auto selected = klib::Ptr<drawable::LineRect const>{};
 	for (auto const [index, tile_frame] : std::views::enumerate(tile_frames)) {
 		if (selected_tile && *selected_tile == std::size_t(index)) {
 			selected = &tile_frame;
@@ -54,7 +54,7 @@ void TileDrawer::draw(IRenderer& renderer) const {
 		}
 		tile_frame.draw(renderer);
 	}
-	if (selected != nullptr) { selected->draw(renderer); }
+	if (selected) { selected->draw(renderer); }
 }
 
 void TileDrawer::inspect_style() {

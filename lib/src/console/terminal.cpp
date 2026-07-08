@@ -1,9 +1,6 @@
 #include "le2d/console/terminal.hpp"
-#include "klib/concepts.hpp"
 #include "klib/debug/assert.hpp"
 #include "klib/log/tagged.hpp"
-#include "klib/string/from_chars.hpp"
-#include "kvf/util.hpp"
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
@@ -18,7 +15,7 @@ namespace console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
-	ITexture const* texture{};
+	klib::Ptr<ITexture const> texture{};
 	RenderInstance instance{};
 	float text_x{};
 
@@ -328,7 +325,7 @@ class Terminal : public ITerminal {
 	void try_run(std::string_view const text) {
 		auto const params = Params::create(text);
 		if (params.id.empty()) { return; }
-		auto* tweakable = m_tweak_registry.find_tweakable(params.id);
+		auto const tweakable = m_tweak_registry.find_tweakable(params.id);
 		if (!tweakable) {
 			printerr(std::format("unrecognized identifier: {}", params.id));
 			return;

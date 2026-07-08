@@ -36,7 +36,7 @@ class FontViewer : public Applet {
 	void set_display(Display display);
 
 	std::unique_ptr<IFont> m_font{};
-	IFontAtlas const* m_atlas{};
+	klib::Ptr<IFontAtlas const> m_atlas{};
 	TextHeight m_text_height{TextHeight::Default};
 
 	drawable::Quad m_quad{};

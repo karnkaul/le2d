@@ -1,4 +1,5 @@
 #pragma once
+#include "klib/ptr.hpp"
 #include "le2d/anim/animation.hpp"
 #include "le2d/anim/sampler.hpp"
 
@@ -12,14 +13,14 @@ class Animator {
 	using Sampler = SamplerT;
 	using AnimationT = Animation<PayloadT>;
 
-	[[nodiscard]] auto has_animation() const -> bool { return get_animation() != nullptr; }
+	[[nodiscard]] auto has_animation() const -> bool { return get_animation(); }
 
-	[[nodiscard]] auto get_animation() const -> AnimationT const* { return m_animation; }
+	[[nodiscard]] auto get_animation() const -> klib::Ptr<AnimationT const> { return m_animation; }
 
-	void set_animation(AnimationT const* animation) {
+	void set_animation(klib::Ptr<AnimationT const> animation) {
 		m_animation = animation;
 		elapsed = {};
-		if (animation != nullptr) {
+		if (animation) {
 			repeat = animation->repeat;
 			update_payload();
 		}
@@ -50,7 +51,7 @@ class Animator {
   private:
 	void update_payload() { m_payload = SamplerT{}.sample(m_animation->get_timeline().keyframes, elapsed); }
 
-	AnimationT const* m_animation{};
+	klib::Ptr<AnimationT const> m_animation{};
 	Payload m_payload{};
 };
 } // namespace anim

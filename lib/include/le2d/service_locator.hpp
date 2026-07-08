@@ -1,5 +1,6 @@
 #pragma once
 #include "klib/debug/assert.hpp"
+#include "klib/ptr.hpp"
 #include <gsl/pointers>
 #include <typeindex>
 #include <unordered_map>
@@ -20,11 +21,11 @@ class ServiceLocator {
 
 	template <typename Type>
 	[[nodiscard]] auto contains() const -> bool {
-		return find<Type>() != nullptr;
+		return find<Type>();
 	}
 
 	template <typename Type>
-	[[nodiscard]] auto find() const -> Type* {
+	[[nodiscard]] auto find() const -> klib::Ptr<Type> {
 		auto const it = m_services.find(typeid(Type));
 		if (it == m_services.end()) { return nullptr; }
 		return static_cast<Type*>(it->second.get());

@@ -1,4 +1,5 @@
 #pragma once
+#include "klib/ptr.hpp"
 #include "le2d/resource/texture.hpp"
 #include "le2d/vertex.hpp"
 #include <cstdint>
@@ -11,6 +12,6 @@ struct Primitive {
 	std::span<Vertex const> vertices{};
 	std::span<std::uint32_t const> indices{};
 	vk::PrimitiveTopology topology{vk::PrimitiveTopology::eTriangleList};
-	ITextureBase const* texture{};
+	klib::Ptr<ITextureBase const> texture{};
 };
 } // namespace le

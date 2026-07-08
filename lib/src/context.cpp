@@ -168,12 +168,13 @@ class ContextImpl : public Context {
 		return fb_size / w_size;
 	}
 
-	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
+	[[nodiscard]] auto get_window() const -> gsl::not_null<GLFWwindow*> final { return m_window.get(); }
 	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice const& final { return *m_render_device; }
 	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resources.resource_factory; }
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_resources.audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resources.render_resources->get_default_shader(); }
 	[[nodiscard]] auto get_renderer() const -> IRenderer const& final { return *m_renderer; }
+	[[nodiscard]] auto get_render_texture() const -> IRenderTexture const& final { return m_render_pass->render_texture(); }
 
 	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
 	auto set_render_scale(float scale) -> bool final {
@@ -386,7 +387,7 @@ auto Context::get_refresh_rate() const -> std::int32_t {
 
 auto Context::is_fullscreen() const -> bool { return glfwGetWindowMonitor(get_window()) != nullptr; }
 
-auto Context::set_fullscreen(GLFWmonitor* target) -> bool {
+auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 	set_visible(true);
 	auto const display = target_display(target);
 	if (!display) { return false; }

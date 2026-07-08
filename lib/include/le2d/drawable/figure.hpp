@@ -22,7 +22,7 @@ class FigureBase : public Type, public IFigure {
 		};
 	}
 
-	ITextureBase const* texture{};
+	klib::Ptr<ITextureBase const> texture{};
 };
 
 /// \brief Base class for Figures using a single Render Instance.

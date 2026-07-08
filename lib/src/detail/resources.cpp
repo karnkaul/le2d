@@ -479,10 +479,8 @@ class RenderResources : public IRenderResources {
 		  m_white_texture(&resource_factory->get_render_device(), sampler_factory), m_waiter(resource_factory->get_render_device().get_device()) {}
 
 	[[nodiscard]] auto get_shader_layout() const -> ShaderLayout const& final { return *m_shader_layout; }
-	[[nodiscard]] auto get_white_texture() const -> ITexture const& final { return m_white_texture; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return *m_default_shader; }
-
-	[[nodiscard]] auto descriptor_image(ITextureBase const* texture) const -> vk::DescriptorImageInfo;
+	[[nodiscard]] auto get_white_texture() const -> ITexture const& final { return m_white_texture; }
 
 	std::vector<RenderInstance::Std430> render_instance_buffer{};
 
@@ -512,7 +510,8 @@ class RenderPass : public IRenderPass {
 
 	explicit RenderPass(gsl::not_null<ISamplerFactory*> sampler_factory, gsl::not_null<IRenderResources*> resources, vk::SampleCountFlagBits samples)
 		: m_render_device(&sampler_factory->get_render_device()), m_resources(resources), m_render_pass(kvf::IRenderPass::create(m_render_device, samples)),
-		  m_render_texture(std::make_unique<RenderTexture>(sampler_factory, m_render_pass.get())), m_waiter(m_render_device->get_device()) {
+		  m_render_texture(std::make_unique<RenderTexture>(sampler_factory, m_render_pass.get(), &m_resources->get_white_texture())),
+		  m_waiter(m_render_device->get_device()) {
 		m_render_pass->set_color_target(color_format_v);
 	}
 
@@ -533,21 +532,30 @@ class RenderPass : public IRenderPass {
   private:
 	class RenderTexture : public IRenderTexture {
 	  public:
-		explicit RenderTexture(gsl::not_null<ISamplerFactory*> sampler_factory, gsl::not_null<kvf::IRenderPass*> render_pass)
-			: m_render_pass(render_pass), m_cached_sampler(sampler_factory) {}
+		explicit RenderTexture(gsl::not_null<ISamplerFactory*> sampler_factory, gsl::not_null<kvf::IRenderPass*> render_pass,
+							   gsl::not_null<ITexture const*> fallback_texture)
+			: m_render_pass(render_pass), m_fallback_texture(fallback_texture), m_cached_sampler(sampler_factory) {}
 
 	  private:
-		[[nodiscard]] auto get_image() const -> vk::ImageView final { return m_render_pass->render_target().view; }
+		[[nodiscard]] auto get_image() const -> vk::ImageView final { return get_target_image(); }
+
 		[[nodiscard]] auto get_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec(m_render_pass->get_extent()); }
 
 		[[nodiscard]] auto get_sampler() const -> TextureSampler const& final { return m_cached_sampler.get_sampler(); }
 		void set_sampler(TextureSampler const& sampler) final { m_cached_sampler.set_sampler(sampler); }
 
 		[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final {
-			return m_render_pass->render_texture_descriptor_info(m_cached_sampler.get_vk_sampler());
+			auto const ret = m_render_pass->render_texture_descriptor_info(m_cached_sampler.get_vk_sampler());
+			if (!ret.imageView) { return m_fallback_texture->descriptor_info(); }
+			return ret;
 		}
 
+		[[nodiscard]] auto has_render_target() const -> bool final { return get_target_image(); }
+
+		[[nodiscard]] auto get_target_image() const -> vk::ImageView { return m_render_pass->render_target().view; }
+
 		gsl::not_null<kvf::IRenderPass*> m_render_pass;
+		gsl::not_null<ITexture const*> m_fallback_texture;
 		CachedSampler m_cached_sampler;
 	};
 

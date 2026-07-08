@@ -7,7 +7,7 @@ void Registry::remove_tweakable(std::string_view const id) {
 	if (auto const it = m_tweakables.find(id); it != m_tweakables.end()) { m_tweakables.erase(it); }
 }
 
-auto Registry::find_tweakable(std::string_view const id) const -> ITweakable* {
+auto Registry::find_tweakable(std::string_view const id) const -> klib::Ptr<ITweakable> {
 	if (auto const it = m_tweakables.find(id); it != m_tweakables.end()) { return it->second; }
 	return {};
 }

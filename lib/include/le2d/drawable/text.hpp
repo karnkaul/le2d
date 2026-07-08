@@ -23,12 +23,12 @@ class TextBase : public IDrawPrimitive {
 	void set_string(IFont& font, std::string_view line, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
-	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_texture; }
+	[[nodiscard]] auto get_texture() const -> klib::Ptr<ITexture const> { return m_texture; }
 
   private:
 	TextGeometry m_geometry{};
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
-	ITexture const* m_texture{};
+	klib::Ptr<ITexture const> m_texture{};
 	glm::vec2 m_size{};
 };
 

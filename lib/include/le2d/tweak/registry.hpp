@@ -1,4 +1,5 @@
 #pragma once
+#include "klib/ptr.hpp"
 #include "le2d/tweak/store.hpp"
 #include <map>
 
@@ -14,7 +15,7 @@ class Registry : public IStore {
 	void add_tweakable(std::string_view id, gsl::not_null<ITweakable*> tweakable) override;
 	void remove_tweakable(std::string_view id) override;
 
-	[[nodiscard]] auto find_tweakable(std::string_view id) const -> ITweakable*;
+	[[nodiscard]] auto find_tweakable(std::string_view id) const -> klib::Ptr<ITweakable>;
 
 	void fill_entries(std::vector<Entry>& out) const;
 	[[nodiscard]] auto get_entries() const -> std::vector<Entry>;

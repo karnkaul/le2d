@@ -1,3 +1,4 @@
+#include "kvf/aspect_resize.hpp"
 #include "le2d/context.hpp"
 #include "le2d/drawable/shape.hpp"
 #include "le2d/drawable/text.hpp"
@@ -54,6 +55,11 @@ void run() {
 	text.transform.position.y += 30.0f;
 	text.tint = kvf::yellow_v;
 
+	auto rt_quad = le::drawable::Quad{};
+	// rt_quad.create(context->);
+	rt_quad.transform.position = glm::vec2{200.0f};
+	rt_quad.texture = &context->get_render_texture();
+
 	// loop while context is running (ie, window is open).
 	while (context->is_running()) {
 		// start the next frame. This polls events and waits for any
@@ -81,12 +87,17 @@ void run() {
 			}
 		}
 
+		auto const size = kvf::aspect_resize(glm::vec2{100.0f}, context->main_pass_size(), kvf::ResizeAspect::FixHeight);
+		rt_quad.create(size);
+
 		// begin the primary render pass.
 		auto& renderer = context->begin_render();
 		// draw quad.
 		quad.draw(renderer);
 		// draw text.
 		text.draw(renderer);
+
+		rt_quad.draw(renderer);
 
 		// end pass and submit the frame for presentation.
 		context->present();

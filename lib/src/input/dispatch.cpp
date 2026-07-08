@@ -57,7 +57,7 @@ void Dispatch::disengage_all() {
 	for (auto* listener : m_listeners) { listener->disengage_input(); }
 }
 
-void Dispatch::update_listeners(Dispatch* target) const {
+void Dispatch::update_listeners(klib::Ptr<Dispatch> target) const {
 	for (auto* listener : m_listeners) { listener->m_dispatch = target; }
 }
 

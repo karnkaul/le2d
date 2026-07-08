@@ -1,5 +1,6 @@
 #pragma once
 #include "klib/base_types.hpp"
+#include "klib/ptr.hpp"
 #include "le2d/event.hpp"
 #include <gsl/pointers>
 
@@ -29,11 +30,11 @@ class Listener : public klib::Polymorphic {
 
 	virtual void disengage_input() {}
 
-	[[nodiscard]] auto get_dispatch() const -> Dispatch* { return m_dispatch; }
-	[[nodiscard]] auto is_attached() const -> bool { return get_dispatch() != nullptr; }
+	[[nodiscard]] auto get_dispatch() const -> klib::Ptr<Dispatch> { return m_dispatch; }
+	[[nodiscard]] auto is_attached() const -> bool { return get_dispatch(); }
 
   private:
-	Dispatch* m_dispatch{};
+	klib::Ptr<Dispatch> m_dispatch{};
 
 	friend class Dispatch;
 };

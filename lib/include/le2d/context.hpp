@@ -92,12 +92,13 @@ class Context : public klib::Polymorphic {
 
 	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<Context>;
 
-	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
+	[[nodiscard]] virtual auto get_window() const -> gsl::not_null<GLFWwindow*> = 0;
 	[[nodiscard]] virtual auto get_render_device() const -> kvf::IRenderDevice const& = 0;
 	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
 	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
 	[[nodiscard]] virtual auto get_renderer() const -> IRenderer const& = 0;
+	[[nodiscard]] virtual auto get_render_texture() const -> IRenderTexture const& = 0;
 
 	/// \returns Window size as reported by GLFW.
 	[[nodiscard]] auto window_size() const -> glm::ivec2;
@@ -126,7 +127,7 @@ class Context : public klib::Polymorphic {
 	/// \brief Show window and set fullscreen.
 	/// \param target Target monitor (optional).
 	/// \returns true if successful.
-	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
+	auto set_fullscreen(klib::Ptr<GLFWmonitor> target = nullptr) -> bool;
 	/// \brief Show window and set windowed with given size.
 	/// \param size Window size. Must be positive.
 	void set_windowed(glm::ivec2 size = {1280, 720});
@@ -201,7 +202,7 @@ class Context::Waiter {
 
 	[[nodiscard]] auto is_active() const -> bool { return m_context != nullptr; }
 
-	[[nodiscard]] auto get_context() const -> Context* { return m_context.get(); }
+	[[nodiscard]] auto get_context() const -> klib::Ptr<Context> { return m_context.get(); }
 
   private:
 	struct Deleter {
