@@ -1,6 +1,5 @@
 #pragma once
 #include "kvf/bitmap.hpp"
-#include "kvf/kvf_fwd.hpp"
 #include "le2d/resource/resource.hpp"
 #include "le2d/texture_sampler.hpp"
 #include "le2d/tile/tile_set.hpp"
@@ -13,6 +12,9 @@ class ITextureBase : public IResource {
   public:
 	[[nodiscard]] virtual auto get_image() const -> vk::ImageView = 0;
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
+
+	[[nodiscard]] virtual auto get_sampler() const -> TextureSampler const& = 0;
+	virtual void set_sampler(TextureSampler const& sampler) = 0;
 
 	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
 };
@@ -27,9 +29,6 @@ class ITexture : public ITextureBase {
 	/// \param compressed_image Bytes of compressed image.
 	/// \returns true if successfully decompressed.
 	virtual auto load_and_write(std::span<std::byte const> compressed_image) -> bool = 0;
-
-	[[nodiscard]] virtual auto get_sampler() const -> TextureSampler const& = 0;
-	virtual void set_sampler(TextureSampler const& sampler) = 0;
 };
 
 /// \brief Texture with a TileSet.
@@ -45,20 +44,5 @@ class ITileSheet : public ITexture {
 
 /// \brief Wraps a RenderTarget as a texture.
 /// This is just a view type, it doesn't own any resources.
-class RenderTexture : public ITextureBase {
-  public:
-	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
-	/// \param sampler Handle to Vulkan Sampler.
-	explicit RenderTexture(gsl::not_null<kvf::IRenderPass const*> render_pass, vk::Sampler sampler);
-
-	[[nodiscard]] auto get_image() const -> vk::ImageView final;
-	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
-
-	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final;
-
-	vk::Sampler sampler{};
-
-  private:
-	gsl::not_null<kvf::IRenderPass const*> m_render_pass;
-};
+class IRenderTexture : public ITextureBase {};
 } // namespace le

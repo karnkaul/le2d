@@ -1,6 +1,7 @@
 #include "detail/renderer.hpp"
 #include "klib/debug/assert.hpp"
 #include "klib/visitor.hpp"
+#include "kvf/render_device.hpp"
 #include "kvf/util.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -67,10 +68,10 @@ auto const scratch_buffer_layout = std::vector<vk::BufferUsageFlags>{
 };
 } // namespace
 
-Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool)
-	: m_render_pass(render_pass), m_resource_pool(resource_pool),
+Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<IRenderResources*> resources)
+	: m_render_pass(render_pass), m_resources(resources),
 	  m_buffer_allocator(kvf::IRingBufferAllocator::create(&render_pass->get_render_device(), scratch_buffer_layout)),
-	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()), m_shader(&resource_pool->get_default_shader()) {}
+	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()), m_shader(&resources->get_default_shader()) {}
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
 	m_stats = {};
@@ -92,6 +93,11 @@ auto Renderer::end_render() -> kvf::RenderTarget const& {
 		m_render_pass->end_render();
 	}
 	return m_rt;
+}
+
+void Renderer::set_line_width(float width) {
+	width = std::clamp(width, 0.0f, m_render_pass->get_render_device().get_gpu().properties.limits.lineWidthRange[1]);
+	m_line_width = width;
 }
 
 void Renderer::set_view(Transform const& view) {
@@ -137,12 +143,12 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	scratch_buffers[2].write(instances);
 	auto const instance_info = scratch_buffers[2].descriptor_info();
 
-	auto const texture_info = m_resource_pool->descriptor_image(primitive.texture);
+	auto const texture_info = m_resources->descriptor_image(primitive.texture);
 
 	scratch_buffers[3].write(m_user_data.ssbo);
 	auto const user_ssbo_info = scratch_buffers[3].descriptor_info();
 
-	auto const user_texture_info = m_resource_pool->descriptor_image(m_user_data.texture);
+	auto const user_texture_info = m_resources->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
 		kvf::util::ubo_write(&view_info, descriptor_sets[0], 0),		   kvf::util::ssbo_write(&instance_info, descriptor_sets[1], 0),
@@ -153,7 +159,7 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 
 	m_render_pass->bind_graphics_shader(m_shader->get_kvf_shader());
 
-	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resource_pool->shader_layout->get_pipeline_layout(), 0, descriptor_sets, {});
+	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resources->get_shader_layout().get_pipeline_layout(), 0, descriptor_sets, {});
 
 	cmd.setPrimitiveTopology(primitive.topology);
 	cmd.setPolygonModeEXT(polygon_mode);
@@ -189,15 +195,15 @@ void Renderer::refresh_mat_vp() {
 }
 
 auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool {
-	auto const set_layouts = m_resource_pool->shader_layout->get_set_layouts();
+	auto const set_layouts = m_resources->get_shader_layout().get_set_layouts();
 	KLIB_ASSERT(set_layouts.size() == out_sets.size());
 	return m_descriptor_allocator->allocate_next(out_sets, set_layouts);
 }
 
 auto Renderer::bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const> {
-	m_resource_pool->render_instance_buffer.clear();
-	m_resource_pool->render_instance_buffer.reserve(instances.size());
-	for (auto const& in : instances) { m_resource_pool->render_instance_buffer.push_back(in.to_std430()); }
-	return m_resource_pool->render_instance_buffer;
+	m_resources->render_instance_buffer.clear();
+	m_resources->render_instance_buffer.reserve(instances.size());
+	for (auto const& in : instances) { m_resources->render_instance_buffer.push_back(in.to_std430()); }
+	return m_resources->render_instance_buffer;
 }
 } // namespace le::detail

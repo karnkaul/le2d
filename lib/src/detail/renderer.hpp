@@ -1,6 +1,6 @@
 #pragma once
-#include "detail/resource/resource_pool.hpp"
-#include "kvf/render_device.hpp"
+#include "detail/render_resources.hpp"
+#include "kvf/kvf_fwd.hpp"
 #include "kvf/render_pass.hpp"
 #include "kvf/ring_buffer_allocator.hpp"
 #include "kvf/util.hpp"
@@ -10,7 +10,7 @@
 namespace le::detail {
 class Renderer : public IRenderer {
   public:
-	explicit Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<detail::ResourcePool*> resource_pool);
+	explicit Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<IRenderResources*> resources);
 
   private:
 	static constexpr auto clamp_size(glm::ivec2 in) {
@@ -25,10 +25,7 @@ class Renderer : public IRenderer {
 	auto begin_render(vk::CommandBuffer command_buffer, glm::ivec2 size, kvf::Color clear) -> bool final;
 	auto end_render() -> kvf::RenderTarget const& final;
 
-	void set_line_width(float width) final {
-		width = std::clamp(width, 0.0f, m_render_pass->get_render_device().get_gpu().properties.limits.lineWidthRange[1]);
-		m_line_width = width;
-	}
+	void set_line_width(float width) final;
 
 	void set_shader(IShader const& shader) final { m_shader = &shader; }
 
@@ -52,7 +49,7 @@ class Renderer : public IRenderer {
 	[[nodiscard]] auto bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const>;
 
 	gsl::not_null<kvf::IRenderPass*> m_render_pass;
-	gsl::not_null<detail::ResourcePool*> m_resource_pool;
+	gsl::not_null<IRenderResources*> m_resources;
 	std::shared_ptr<kvf::IRingBufferAllocator> m_buffer_allocator;
 	gsl::not_null<kvf::IRingDescriptorAllocator*> m_descriptor_allocator;
 

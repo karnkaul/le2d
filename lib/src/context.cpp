@@ -1,12 +1,8 @@
 #include "le2d/context.hpp"
-#include "detail/audio_mixer.hpp"
-#include "detail/render_pass.hpp"
-#include "detail/resource/resource_factory.hpp"
-#include "detail/resource/resource_pool.hpp"
-#include "detail/shader_layout.hpp"
+#include "detail/context_resources.hpp"
 #include "klib/debug/assert.hpp"
+#include "kvf/window.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
-#include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
 #include <log.hpp>
 
@@ -88,10 +84,10 @@ auto fastest_display() {
 auto target_display(GLFWmonitor* desired) -> std::optional<Display> {
 	GLFWvidmode const* video_mode{};
 	if (desired == nullptr) {
-		auto const fastest_monitor = fastest_display();
-		if (!fastest_monitor) { return {}; }
-		desired = fastest_monitor->monitor;
-		video_mode = fastest_monitor->video_mode;
+		auto const fastest = fastest_display();
+		if (!fastest) { return {}; }
+		desired = fastest->monitor;
+		video_mode = fastest->video_mode;
 	}
 	if (video_mode == nullptr) {
 		video_mode = glfwGetVideoMode(desired);
@@ -140,13 +136,8 @@ class ContextImpl : public Context {
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
 		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
-		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
-		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())),
-		  m_resource_pool(std::make_unique<detail::ResourcePool>(m_resource_factory.get())),
-		  m_audio_mixer(std::make_unique<detail::AudioMixer>(create_info.sfx_buffers)),
-		  m_render_pass(std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), create_info.framebuffer_samples)),
+		  m_resources(m_render_device.get(), create_info.sfx_buffers), m_render_pass(m_resources.create_render_pass(create_info.framebuffer_samples)),
 		  m_renderer(m_render_pass->create_renderer()), m_supported_vsync(build_supported_vsync(*m_render_device)) {
-
 		log.info("[{}] Context initialized, platform: {}", build_version_v, glfw_platform_str(glfwGetPlatform()));
 		m_on_destroy.reset(this);
 	}
@@ -179,9 +170,9 @@ class ContextImpl : public Context {
 
 	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
 	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice const& final { return *m_render_device; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resource_factory; }
-	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resources.resource_factory; }
+	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_resources.audio_mixer; }
+	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resources.render_resources->get_default_shader(); }
 	[[nodiscard]] auto get_renderer() const -> IRenderer const& final { return *m_renderer; }
 
 	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
@@ -227,18 +218,19 @@ class ContextImpl : public Context {
 	}
 	void present() final {
 		m_renderer->end_render();
+		m_frame_finish = kvf::Clock::now();
 		m_render_device->render(m_render_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
-		m_frame_finish = kvf::Clock::now();
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
 
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> final {
-		return std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), samples);
+		return m_resources.create_render_pass(samples);
 	}
+
 	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader final {
-		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
+		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resources.resource_factory};
 		return builder.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader,
 							 FlipbookAnimationLoader>();
 	}
@@ -348,11 +340,7 @@ class ContextImpl : public Context {
 
 	kvf::UniqueWindow m_window{};
 	std::unique_ptr<kvf::IRenderDevice> m_render_device{};
-
-	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
-	std::unique_ptr<detail::ResourceFactory> m_resource_factory{};
-	std::unique_ptr<detail::ResourcePool> m_resource_pool{};
-	std::unique_ptr<IAudioMixer> m_audio_mixer{};
+	detail::ContextResources m_resources;
 
 	std::unique_ptr<IRenderPass> m_render_pass{};
 	std::unique_ptr<IRenderer> m_renderer{};

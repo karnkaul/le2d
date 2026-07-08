@@ -21,7 +21,7 @@ class IRenderPass : public klib::Polymorphic {
 
 	/// \param sampler Handle to Vulkan Sampler.
 	/// \returns RenderTarget as a texture. Must not outlive RenderPass.
-	[[nodiscard]] virtual auto render_texture(vk::Sampler sampler) const -> RenderTexture = 0;
+	[[nodiscard]] virtual auto render_texture() const -> IRenderTexture& = 0;
 
 	/// \brief Set clear color for next pass.
 	/// \param color Clear color.
