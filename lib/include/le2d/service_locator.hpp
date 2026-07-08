@@ -21,7 +21,7 @@ class ServiceLocator {
 
 	template <typename Type>
 	[[nodiscard]] auto contains() const -> bool {
-		return find<Type>();
+		return find<Type>() != nullptr;
 	}
 
 	template <typename Type>
