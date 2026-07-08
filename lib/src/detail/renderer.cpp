@@ -118,7 +118,6 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) {
 	auto const cmd = m_render_pass->get_command_buffer();
 	if (!cmd || primitive.vertices.empty() || instances.empty()) { return; }
-	// if (!bind_shader(primitive.topology)) { return; }
 
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
 	if (!allocate_sets(descriptor_sets)) { return; }

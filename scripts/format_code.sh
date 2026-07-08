@@ -7,7 +7,7 @@ if [[ ! -d ./lib ]]; then
   exit 1
 fi
 
-files=$(find lib example assed spirv2cpp -name "*.?pp")
+files=$(find lib example quickstart assed spirv2cpp -name "*.?pp")
 
 if [[ "$files" == "" ]]; then
   echo "-- No source files found"

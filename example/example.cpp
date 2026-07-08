@@ -86,7 +86,7 @@ void run() {
 
 	auto exit_action = le::input::action::KeyDigital{GLFW_KEY_ESCAPE};
 	action_mapping.bind_action(&exit_action, [&](le::input::action::Value const& v) {
-		if (v.get<bool>()) { context->set_window_close(); }
+		if (v.get<bool>()) { context->set_window_should_close(); }
 	});
 
 	// store playback trigger data.

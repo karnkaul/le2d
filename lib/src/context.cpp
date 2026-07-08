@@ -423,7 +423,7 @@ void Context::lock_aspect_ratio(bool const lock) {
 
 auto Context::is_running() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void Context::set_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
+void Context::set_window_should_close() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
 // NOLINTNEXTLINE(readability-make-member-function-const)
 void Context::cancel_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_FALSE); }
 

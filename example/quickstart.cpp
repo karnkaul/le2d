@@ -33,8 +33,6 @@ void run() {
 	auto const audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
 	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
 
-	auto const mono_font = asset_loader.load<le::IFont>("fonts/mono.ttf");
-
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.
 	auto const waiter = context->create_waiter();
@@ -65,6 +63,16 @@ void run() {
 
 		// compute the delta time (in float seconds).
 		auto const dt = delta_time.tick();
+
+		for (auto const& event : context->event_queue()) {
+			// handle events here.
+			// for example, if you want to close the window on Escape key press:
+			if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
+				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
+					context->set_window_should_close(); // set the close flag.
+				}
+			}
+		}
 
 		// update audio playback.
 		audio_wait -= dt;

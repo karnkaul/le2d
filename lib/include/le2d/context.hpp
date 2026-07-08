@@ -142,7 +142,7 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] auto is_running() const -> bool;
 	/// \brief Set the Window close flag.
 	/// Note: the window will remain visible until this object is destroyed by owning code.
-	void set_window_close();
+	void set_window_should_close();
 	/// \brief Reset the Window close flag.
 	void cancel_window_close();
 
