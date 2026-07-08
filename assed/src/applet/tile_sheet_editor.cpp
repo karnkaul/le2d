@@ -162,7 +162,7 @@ void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
 void TileSheetEditor::set_texture(std::unique_ptr<ITexture> texture) {
 	wait_idle();
 	m_texture = std::move(texture);
-	m_drawer.quad.create(m_texture->get_size());
+	m_drawer.quad.geometry.create(m_texture->get_size());
 	m_drawer.quad.texture = m_texture.get();
 }
 

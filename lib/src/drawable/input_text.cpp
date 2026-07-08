@@ -90,7 +90,7 @@ void InputText::tick(kvf::Seconds const dt) {
 
 void InputText::draw(IRenderer& renderer) const {
 	auto const line_primitive = m_line_input.to_primitive();
-	renderer.draw(line_primitive, {static_cast<RenderInstance const*>(this), 1});
+	renderer.draw(line_primitive, {&instance, 1});
 	if (!is_interactive()) { return; }
 
 	auto const cursor_primitive = Primitive{
@@ -100,7 +100,7 @@ void InputText::draw(IRenderer& renderer) const {
 		.texture = line_primitive.texture,
 	};
 	auto cursor_instance = RenderInstance{
-		.transform = transform,
+		.transform = instance.transform,
 		.tint = m_cursor_color,
 	};
 	cursor_instance.transform.position.x += m_line_input.get_cursor_x() + m_cursor_offset_x;

@@ -2,15 +2,6 @@
 #include "kvf/is_positive.hpp"
 
 namespace le::drawable {
-auto SpriteBase::to_primitive() const -> Primitive {
-	return Primitive{
-		.vertices = m_quad.get_vertices(),
-		.indices = m_quad.get_indices(),
-		.topology = m_quad.get_topology(),
-		.texture = get_texture(),
-	};
-}
-
 void SpriteBase::set_base_size(glm::vec2 size) {
 	if (!kvf::is_positive(size)) { size = {}; }
 	if (size == m_size) { return; }

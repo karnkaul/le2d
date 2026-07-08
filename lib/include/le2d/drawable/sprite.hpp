@@ -1,8 +1,7 @@
 #pragma once
 #include "kvf/aspect_resize.hpp"
-#include "le2d/drawable/draw_primitive.hpp"
+#include "le2d/drawable/draw_instance.hpp"
 #include "le2d/shape/quad.hpp"
-#include "le2d/vertex_bounds.hpp"
 
 namespace le::drawable {
 /// \brief Base class for Sprite types.
@@ -12,7 +11,8 @@ class SpriteBase : public IDrawPrimitive {
   public:
 	explicit SpriteBase(glm::vec2 const size = glm::vec2{200.0f}) { set_base_size(size); }
 
-	[[nodiscard]] auto to_primitive() const -> Primitive final;
+	[[nodiscard]] auto get_geometry() const -> IGeometry const& final { return m_quad; }
+	[[nodiscard]] auto get_texture() const -> klib::Ptr<ITextureBase const> final { return m_texture; }
 
 	[[nodiscard]] auto get_base_size() const -> glm::vec2 { return m_size; }
 	void set_base_size(glm::vec2 size);
@@ -25,7 +25,6 @@ class SpriteBase : public IDrawPrimitive {
 	[[nodiscard]] auto get_uv() const -> kvf::UvRect { return m_quad.get_uv(); }
 	void set_uv(kvf::UvRect const& uv);
 
-	[[nodiscard]] auto get_texture() const -> klib::Ptr<ITextureBase const> { return m_texture; }
 	void set_texture(klib::Ptr<ITextureBase const> texture, kvf::UvRect const& uv = kvf::uv_rect_v);
 	void set_tile(klib::Ptr<ITileSheet const> sheet, TileId tile_id);
 
@@ -41,17 +40,8 @@ class SpriteBase : public IDrawPrimitive {
 	kvf::ResizeAspect m_aspect{kvf::ResizeAspect::None};
 };
 
-/// \brief Sprite Draw Primitive.
-class Sprite : public SingleDrawPrimitive<SpriteBase> {
-  public:
-	using SingleDrawPrimitive<SpriteBase>::SingleDrawPrimitive;
-
-	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(to_primitive().vertices, transform.to_model()); }
-};
-
-/// \brief Instanced Sprite Draw Primitive.
-class InstancedSprite : public InstancedDrawPrimitive<SpriteBase> {
-  public:
-	using InstancedDrawPrimitive<SpriteBase>::InstancedDrawPrimitive;
-};
+/// \brief Sprite drawable.
+class Sprite : public DrawInstance<SpriteBase> {};
+/// \brief Sprite drawable for multiple instances.
+class InstancedSprite : public DrawInstances<SpriteBase> {};
 } // namespace le::drawable

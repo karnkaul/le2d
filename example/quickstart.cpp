@@ -1,44 +1,12 @@
-#include "klib/string/fixed_string.hpp"
-#include "kvf/aspect_resize.hpp"
-#include "le2d/console/junction.hpp"
-#include "le2d/console/terminal.hpp"
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/context.hpp"
 #include "le2d/drawable/shape.hpp"
 #include "le2d/drawable/text.hpp"
 #include "le2d/file_data_loader.hpp"
-#include "le2d/input/action_mapping.hpp"
-#include <imgui.h>
 #include <print>
 
 namespace example {
 namespace {
-auto draw_stats(le::Context& context) -> bool {
-	auto const& frame_stats = context.get_frame_stats();
-	auto const& render_stats = context.get_renderer().get_stats();
-	auto ret = true;
-	ImGui::SetNextWindowSize({300.0f, 200.0f});
-	ImGui::Begin("Stats", &ret);
-	ImGui::TextUnformatted(klib::FixedString{"fps: {}", frame_stats.framerate}.c_str());
-	ImGui::TextUnformatted(klib::FixedString{"total dt: {:.1f}ms", 1000.0f * frame_stats.total_dt.count()}.c_str());
-	ImGui::TextUnformatted(klib::FixedString{"frame dt: {:.1f}ms", 1000.0f * frame_stats.frame_dt.count()}.c_str());
-	ImGui::TextUnformatted(klib::FixedString{"frames: {}", frame_stats.total_frames}.c_str());
-	ImGui::TextUnformatted(klib::FixedString{"draws: {}", render_stats.draw_calls}.c_str());
-	ImGui::TextUnformatted(klib::FixedString{"tris: {}", render_stats.triangles}.c_str());
-	ImGui::Separator();
-
-	auto const supported_vsync = context.get_supported_vsync();
-	auto const vsync = context.get_vsync();
-	if (ImGui::BeginCombo("vsync", le::vsync_name_map.to_name(vsync).data())) {
-		for (auto const v : supported_vsync) {
-			if (ImGui::Selectable(le::vsync_name_map.to_name(v).data(), v == vsync)) { context.set_vsync(v); }
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::End();
-	return ret;
-}
-
 void run() {
 	// all members are constexpr-friendly.
 	static constexpr auto context_create_info_v = le::Context::CreateInfo{
@@ -70,24 +38,6 @@ void run() {
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.
 	auto const waiter = context->create_waiter();
-
-	auto terminal = std::unique_ptr<le::console::ITerminal>{};
-	auto show_stats = le::Tweakable<bool>{};
-	if (mono_font) {
-		terminal = le::console::TerminalBuilder{}.build(mono_font.get());
-		terminal->add_tweakable("example.show_stats", &show_stats);
-	}
-
-	auto input_router = le::input::Router{};
-	auto junction = le::console::Junction{&input_router, terminal.get()};
-
-	auto action_mapping = le::input::ActionMapping{};
-	input_router.push_mapping(&action_mapping);
-
-	auto exit_action = le::input::action::KeyDigital{GLFW_KEY_ESCAPE};
-	action_mapping.bind_action(&exit_action, [&](le::input::action::Value const& v) {
-		if (v.get<bool>()) { context->set_window_close(); }
-	});
 
 	// store playback trigger data.
 	auto audio_wait = kvf::Seconds{2.0f};
@@ -124,20 +74,12 @@ void run() {
 			audio_played = true;
 		}
 
-		junction.dispatch(context->event_queue(), context->framebuffer_size());
-
-		if (show_stats.get_value()) { show_stats.set_value(draw_stats(*context)); }
-
-		if (terminal) { terminal->tick(dt); }
-
 		// begin the primary render pass.
 		auto& renderer = context->begin_render();
 		// draw quad.
 		quad.draw(renderer);
 		// draw text.
 		text.draw(renderer);
-
-		if (terminal) { terminal->draw(renderer); }
 
 		// end pass and submit the frame for presentation.
 		context->present();

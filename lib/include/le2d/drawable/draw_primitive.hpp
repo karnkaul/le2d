@@ -1,34 +1,22 @@
 #pragma once
-#include "le2d/drawable/drawable.hpp"
-#include <vector>
+#include "le2d/geometry.hpp"
 
 namespace le {
-/// \brief Interface for drawable primitives.
-class IDrawPrimitive : public IDrawable {
+/// \brief Interface for draw primitives (geometry and texture).
+class IDrawPrimitive : public klib::Polymorphic {
   public:
-	[[nodiscard]] virtual auto get_instances() const -> std::span<RenderInstance const> = 0;
-	[[nodiscard]] virtual auto to_primitive() const -> Primitive = 0;
-
-	void draw(IRenderer& renderer) const final { renderer.draw(to_primitive(), get_instances()); }
+	[[nodiscard]] virtual auto get_geometry() const -> IGeometry const& = 0;
+	[[nodiscard]] virtual auto get_texture() const -> klib::Ptr<ITextureBase const> = 0;
 };
 
-/// \brief Base class for Draw Primitives using a single Render Instance.
-template <std::derived_from<IDrawPrimitive> Type>
-class SingleDrawPrimitive : public Type, public RenderInstance {
+/// \brief Concrete draw primitive storing GeometryT and pointer to texture.
+template <std::derived_from<IGeometry> GeometryT>
+class DrawGeometry : public IDrawPrimitive {
   public:
-	using Type::Type;
+	[[nodiscard]] auto get_geometry() const -> IGeometry const& final { return geometry; }
+	[[nodiscard]] auto get_texture() const -> klib::Ptr<ITextureBase const> final { return texture; }
 
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return {static_cast<RenderInstance const*>(this), 1}; }
-};
-
-/// \brief Base class for Draw Primitives using a vector of Render Instances.
-template <std::derived_from<IDrawPrimitive> Type>
-class InstancedDrawPrimitive : public Type {
-  public:
-	using Type::Type;
-
-	[[nodiscard]] auto get_instances() const -> std::span<RenderInstance const> final { return instances; }
-
-	std::vector<RenderInstance> instances{};
+	GeometryT geometry{};
+	klib::Ptr<ITextureBase const> texture{};
 };
 } // namespace le

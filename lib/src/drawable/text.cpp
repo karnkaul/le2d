@@ -1,15 +1,6 @@
 #include "le2d/drawable/text.hpp"
 
 namespace le::drawable {
-auto TextBase::to_primitive() const -> Primitive {
-	return Primitive{
-		.vertices = m_geometry.get_vertices(),
-		.indices = m_geometry.get_indices(),
-		.topology = m_geometry.get_topology(),
-		.texture = get_texture(),
-	};
-}
-
 void TextBase::set_string(IFont& font, std::string_view const line, Params const& params) {
 	m_geometry.clear_vertices();
 	m_glyph_layouts.clear();

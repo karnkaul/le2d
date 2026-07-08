@@ -146,9 +146,9 @@ class Terminal : public ITerminal {
 		refresh_tweak_entries();
 	}
 
-	[[nodiscard]] auto get_background() const -> kvf::Color final { return m_background.tint; }
+	[[nodiscard]] auto get_background() const -> kvf::Color final { return m_background.instance.tint; }
 
-	void set_background(kvf::Color const color) final { m_background.tint = color; }
+	void set_background(kvf::Color const color) final { m_background.instance.tint = color; }
 
 	void println(std::string_view const text) final {
 		Buffer::Printer{m_buffer}.print(text, m_info.colors.output);
@@ -209,8 +209,8 @@ class Terminal : public ITerminal {
 	void setup(IFont& font) {
 		m_input.set_interactive(false);
 
-		m_separator.tint = m_info.colors.separator;
-		m_background.tint = kvf::Color{0x301020cc}.to_linear();
+		m_separator.instance.tint = m_info.colors.separator;
+		m_background.instance.tint = kvf::Color{0x301020cc}.to_linear();
 
 		m_info.style.text_height = m_input.get_atlas().get_height();
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
@@ -225,7 +225,7 @@ class Terminal : public ITerminal {
 	void add_builtins() {
 		m_opacity.on_set([this](float const value) {
 			if (value < 0.0f || value > 1.0f) { return false; }
-			m_background.tint.w = kvf::Color::to_u8(value);
+			m_background.instance.tint.w = kvf::Color::to_u8(value);
 			return true;
 		});
 		add_tweakable("console.opacity", &m_opacity);
@@ -233,22 +233,22 @@ class Terminal : public ITerminal {
 
 	void resize() {
 		auto const width = m_framebuffer_size.x;
-		m_background.create({width, 0.5f * m_framebuffer_size.y});
-		m_separator.create({width, m_info.style.separator_height});
-		m_background.transform.position.y = 0.5f * m_background.get_size().y;
-		m_separator.transform.position.y = 1.5f * float(m_info.style.text_height);
+		m_background.geometry.create({width, 0.5f * m_framebuffer_size.y});
+		m_separator.geometry.create({width, m_info.style.separator_height});
+		m_background.instance.transform.position.y = 0.5f * m_background.geometry.get_size().y;
+		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
 		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
-		m_input.transform.position = m_caret.instance.transform.position;
-		m_input.transform.position.x += m_caret.text_x;
+		m_input.instance.transform.position = m_caret.instance.transform.position;
+		m_input.instance.transform.position.x += m_caret.text_x;
 		m_hide_y = -0.5f * m_framebuffer_size.y;
 		m_show_y = 0.0f;
-		m_buffer_max_y = m_separator.transform.position.y + (0.5f * float(m_info.style.text_height));
+		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
-		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.transform.position.y) / m_framebuffer_size.y;
+		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);

@@ -1,11 +1,10 @@
 project(le2d-example)
 
-add_executable(${PROJECT_NAME})
+function(add_exe name source)
+  add_executable(${name})
+  target_link_libraries(${name} le2d::le2d)
+  target_sources(${name} PRIVATE ${source})
+endfunction()
 
-target_link_libraries(${PROJECT_NAME}
-  le2d::le2d
-)
-
-target_sources(${PROJECT_NAME} PRIVATE
-  example.cpp
-)
+add_exe(quickstart quickstart.cpp)
+add_exe(example example.cpp)

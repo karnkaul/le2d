@@ -57,6 +57,7 @@ class IRenderer : public klib::Polymorphic {
 	/// \returns Unprojector for current view and viewport.
 	[[nodiscard]] virtual auto unprojector() const -> Unprojector = 0;
 
+	vk::PrimitiveTopology primitive_topology{vk::PrimitiveTopology::eTriangleList};
 	/// \brief Fill mode.
 	vk::PolygonMode polygon_mode{vk::PolygonMode::eFill};
 	/// \brief Scissor rect.

@@ -16,7 +16,7 @@ struct InputTextParams {
 
 namespace drawable {
 /// \brief Interactive input text with cursor.
-class InputText : public RenderInstance, public IDrawable {
+class InputText : public IDrawable {
   public:
 	using Params = InputTextParams;
 
@@ -50,6 +50,8 @@ class InputText : public RenderInstance, public IDrawable {
 
 	void tick(kvf::Seconds dt);
 	void draw(IRenderer& renderer) const override;
+
+	RenderInstance instance{};
 
   private:
 	void update();
