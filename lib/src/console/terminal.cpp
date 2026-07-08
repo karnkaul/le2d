@@ -279,6 +279,7 @@ class Terminal : public ITerminal {
 			if (key.action == GLFW_PRESS) {
 				switch (key.key) {
 				case GLFW_KEY_ENTER: on_enter(); break;
+				case GLFW_KEY_ESCAPE: on_escape(); break;
 				}
 			}
 			if (key.action != GLFW_RELEASE) {
@@ -321,6 +322,8 @@ class Terminal : public ITerminal {
 
 		m_input.clear();
 	}
+
+	void on_escape() { m_input.clear(); }
 
 	void try_run(std::string_view const text) {
 		auto const params = Params::create(text);
