@@ -5,9 +5,9 @@
 #include "klib/debug/assert.hpp"
 #include "klib/hash_combine.hpp"
 #include "kvf/device_waiter.hpp"
-#include "kvf/image.hpp"
 #include "kvf/image_bitmap.hpp"
 #include "kvf/render_device.hpp"
+#include "kvf/render_image.hpp"
 #include "kvf/render_pass.hpp"
 #include "kvf/util.hpp"
 #include "le2d/error.hpp"
@@ -233,7 +233,7 @@ class TextureBase {
   public:
 	explicit TextureBase(gsl::not_null<kvf::IRenderDevice*> render_device, gsl::not_null<ISamplerFactory*> sampler_factory, kvf::Bitmap const& bitmap,
 						 TextureSampler const& sampler)
-		: m_render_device(render_device), m_texture(kvf::IImage::create_texture(render_device, bitmap)), m_cached_sampler(sampler_factory, sampler) {
+		: m_render_device(render_device), m_texture(kvf::IRenderImage::create_texture(render_device, bitmap)), m_cached_sampler(sampler_factory, sampler) {
 		set_sampler(sampler);
 	}
 
@@ -258,7 +258,7 @@ class TextureBase {
   private:
 	gsl::not_null<kvf::IRenderDevice*> m_render_device;
 
-	std::unique_ptr<kvf::IImage> m_texture;
+	std::unique_ptr<kvf::IRenderImage> m_texture;
 	CachedSampler m_cached_sampler;
 };
 
@@ -546,8 +546,7 @@ class RenderPass : public IRenderPass {
 
 		[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final {
 			auto const ret = m_render_pass->render_texture_descriptor_info(m_cached_sampler.get_vk_sampler());
-			if (!ret.imageView) { return m_fallback_texture->descriptor_info(); }
-			return ret;
+			return ret.value_or(m_fallback_texture->descriptor_info());
 		}
 
 		[[nodiscard]] auto has_render_target() const -> bool final { return get_target_image(); }
