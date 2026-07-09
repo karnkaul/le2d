@@ -97,8 +97,8 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
 	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
+	[[nodiscard]] virtual auto get_render_pass() const -> IRenderPass const& = 0;
 	[[nodiscard]] virtual auto get_renderer() const -> IRenderer const& = 0;
-	[[nodiscard]] virtual auto get_render_texture() const -> IRenderTexture const& = 0;
 
 	/// \returns Window size as reported by GLFW.
 	[[nodiscard]] auto window_size() const -> glm::ivec2;

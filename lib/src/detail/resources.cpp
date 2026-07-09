@@ -529,6 +529,10 @@ class RenderPass : public IRenderPass {
 
 	[[nodiscard]] auto create_renderer() -> std::unique_ptr<IRenderer> final { return std::make_unique<Renderer>(m_render_pass.get(), m_resources); }
 
+	[[nodiscard]] auto raw_screenshot(glm::ivec2 const custom_size) const -> std::optional<kvf::ColorBitmap> final {
+		return m_render_pass->copy_render_texture(kvf::util::to_vk_extent(custom_size));
+	}
+
   private:
 	class RenderTexture : public IRenderTexture {
 	  public:

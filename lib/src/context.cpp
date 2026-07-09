@@ -174,7 +174,7 @@ class ContextImpl : public Context {
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_resources.audio_mixer; }
 	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resources.render_resources->get_default_shader(); }
 	[[nodiscard]] auto get_renderer() const -> IRenderer const& final { return *m_renderer; }
-	[[nodiscard]] auto get_render_texture() const -> IRenderTexture const& final { return m_render_pass->render_texture(); }
+	[[nodiscard]] auto get_render_pass() const -> IRenderPass const& final { return *m_render_pass; }
 
 	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
 	auto set_render_scale(float scale) -> bool final {

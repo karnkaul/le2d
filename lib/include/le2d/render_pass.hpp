@@ -1,8 +1,11 @@
 #pragma once
 #include "klib/base_types.hpp"
+#include "kvf/color_bitmap.hpp"
+#include "kvf/image_writer.hpp"
 #include "kvf/kvf_fwd.hpp"
 #include "le2d/renderer.hpp"
 #include <glm/vec2.hpp>
+#include <optional>
 
 namespace le {
 /// \brief Opaque interface for 2D render pass, owns a multi-sampled color RenderTarget.
@@ -32,5 +35,13 @@ class IRenderPass : public klib::Polymorphic {
 
 	/// \returns Concrete Renderer for this Render Pass instance.
 	[[nodiscard]] virtual auto create_renderer() -> std::unique_ptr<IRenderer> = 0;
+
+	[[nodiscard]] virtual auto raw_screenshot(glm::ivec2 custom_size = {}) const -> std::optional<kvf::ColorBitmap> = 0;
+
+	[[nodiscard]] auto compressed_screenshot(kvf::Encoding encoding, glm::ivec2 custom_size = {}) const -> std::vector<std::byte> {
+		auto const bitmap = raw_screenshot(custom_size);
+		if (!bitmap) { return {}; }
+		return kvf::ImageWriter{.bitmap = bitmap->bitmap()}.write(encoding);
+	}
 };
 } // namespace le
