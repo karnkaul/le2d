@@ -43,7 +43,7 @@ Drawing a quad is fairly straightforward: create a `le::drawable::Quad` instance
 // ...
 // create a quad.
 auto quad = le::drawable::Quad{};
-quad.create({100.0f, 100.0f});
+quad.geometry.create({100.0f, 100.0f});
 
 // loop while context is running (ie, window is open).
 while (context->is_running()) {
@@ -76,7 +76,7 @@ for (auto const& event : context->event_queue()) {
   // for example, if you want to close the window on Escape key press:
   if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
     if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
-      context->set_window_close(); // set the close flag.
+      context->set_window_should_close(); // set the close flag.
     }
   }
 }
@@ -84,7 +84,7 @@ for (auto const& event : context->event_queue()) {
 // ...
 ```
 
-Note that `le::Context::set_window_close()` doesn't immediately close the window, it just sets the close flag so that `le::Context::is_running()` returns `false` in the next game loop iteration. The same flag is set when the user clicks X / requests the window to be closed, and can thus be unset, eg for quit confirmation.
+Note that `le::Context::set_window_should_close()` doesn't immediately close the window, it just sets the close flag so that `le::Context::is_running()` returns `false` in the next game loop iteration. The same flag is set when the user clicks X / requests the window to be closed, and can thus be unset, eg for quit confirmation.
 
 ### Delta Time
 
@@ -145,7 +145,7 @@ auto const texture = asset_loader.load_texture("images/awesomeface.png");
 if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
 
 // ...
-quad.texture = texture.get();
+quad.instance.texture = texture.get();
 // ...
 ```
 
@@ -163,15 +163,15 @@ if (!font) { throw std::runtime_error{"Failed to load Font."}; }
 
 // ...
 // reposition it and set the loaded texture.
-quad.transform.position.y -= 30.0f;
-quad.texture = &texture;
+quad.instance.transform.position.y -= 30.0f;
+quad.texture = texture.get();
 
 // create a Text instance.
 auto text = le::drawable::Text{};
 text.set_string(*font, "hello from le2d!");
 // reposition and tint it.
-text.transform.position.y += 30.0f;
-text.tint = kvf::yellow_v;
+text.instance.transform.position.y += 30.0f;
+text.instance.tint = kvf::yellow_v;
 // ...
 ```
 

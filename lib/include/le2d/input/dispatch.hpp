@@ -1,4 +1,5 @@
 #pragma once
+#include "klib/ptr.hpp"
 #include "le2d/input/listener.hpp"
 #include <gsl/pointers>
 #include <vector>
@@ -32,7 +33,7 @@ class Dispatch {
   private:
 	enum class Type : std::int8_t { None, Keyboard, Mouse };
 
-	void update_listeners(Dispatch* target) const;
+	void update_listeners(klib::Ptr<Dispatch> target) const;
 
 	template <typename FPtr, typename T>
 	void dispatch(FPtr fptr, T const& event, Type type) const;

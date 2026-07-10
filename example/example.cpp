@@ -1,3 +1,4 @@
+#include "le2d/console/terminal_builder.hpp"
 #include "le2d/context.hpp"
 #include "le2d/drawable/shape.hpp"
 #include "le2d/drawable/text.hpp"
@@ -42,17 +43,17 @@ void run() {
 
 	// create a quad.
 	auto quad = le::drawable::Quad{};
-	quad.create({100.0f, 100.0f});
+	quad.geometry.create({100.0f, 100.0f});
 	// reposition it and set the loaded texture.
-	quad.transform.position.y -= 30.0f;
+	quad.instance.transform.position.y -= 30.0f;
 	quad.texture = texture.get();
 
 	// create a Text instance.
 	auto text = le::drawable::Text{};
 	text.set_string(*font, "hello from le2d!");
 	// reposition and tint it.
-	text.transform.position.y += 30.0f;
-	text.tint = kvf::yellow_v;
+	text.instance.transform.position.y += 30.0f;
+	text.instance.tint = kvf::yellow_v;
 
 	// loop while context is running (ie, window is open).
 	while (context->is_running()) {
@@ -63,22 +64,22 @@ void run() {
 		// compute the delta time (in float seconds).
 		auto const dt = delta_time.tick();
 
+		for (auto const& event : context->event_queue()) {
+			// handle events here.
+			// for example, if you want to close the window on Escape key press:
+			if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
+				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
+					context->set_window_should_close(); // set the close flag.
+				}
+			}
+		}
+
 		// update audio playback.
 		audio_wait -= dt;
 		if (audio_wait < 0s && !audio_played) {
 			// play the loaded audio buffer.
 			context->get_audio_mixer().play_sfx(audio_buffer.get());
 			audio_played = true;
-		}
-
-		for (auto const& event : context->event_queue()) {
-			// handle events here.
-			// for example, if you want to close the window on Escape key press:
-			if (auto const* key_event = std::get_if<le::event::Key>(&event)) {
-				if (key_event->key == GLFW_KEY_ESCAPE && key_event->action == GLFW_PRESS) {
-					context->set_window_close(); // set the close flag.
-				}
-			}
 		}
 
 		// begin the primary render pass.

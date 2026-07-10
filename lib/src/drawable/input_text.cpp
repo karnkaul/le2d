@@ -4,12 +4,12 @@
 #include <numbers>
 
 namespace le::drawable {
-InputText::InputText(gsl::not_null<IFont*> font, Params const& params)
-	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
+InputText::InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info)
+	: m_font(font), m_line_input(font, create_info.height), m_cursor_color(create_info.cursor_color), m_blink_period(create_info.blink_period) {
 	auto& atlas = m_line_input.get_atlas();
 
 	auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
-	atlas.push_layouts(layouts, {&params.cursor_symbol, 1}, 1.5f, false);
+	atlas.push_layouts(layouts, {&create_info.cursor_symbol, 1}, 1.5f, false);
 	m_cursor.append_glyphs(layouts);
 
 	auto const rect = kvf::ttf::glyph_bounds(layouts);
@@ -90,7 +90,7 @@ void InputText::tick(kvf::Seconds const dt) {
 
 void InputText::draw(IRenderer& renderer) const {
 	auto const line_primitive = m_line_input.to_primitive();
-	renderer.draw(line_primitive, {static_cast<RenderInstance const*>(this), 1});
+	renderer.draw(line_primitive, {&instance, 1});
 	if (!is_interactive()) { return; }
 
 	auto const cursor_primitive = Primitive{
@@ -100,7 +100,7 @@ void InputText::draw(IRenderer& renderer) const {
 		.texture = line_primitive.texture,
 	};
 	auto cursor_instance = RenderInstance{
-		.transform = transform,
+		.transform = instance.transform,
 		.tint = m_cursor_color,
 	};
 	cursor_instance.transform.position.x += m_line_input.get_cursor_x() + m_cursor_offset_x;

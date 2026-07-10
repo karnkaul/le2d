@@ -132,7 +132,7 @@ void App::try_exit() {
 	if (!m_applet->try_exit()) {
 		m_context->cancel_window_close();
 	} else {
-		m_context->set_window_close();
+		m_context->set_window_should_close();
 	}
 }
 } // namespace le::assed

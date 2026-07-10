@@ -1,1 +1,1 @@
-set(le2d_version "0.4.11")
+set(le2d_version "0.5.1")

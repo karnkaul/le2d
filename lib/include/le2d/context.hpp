@@ -1,7 +1,6 @@
 #pragma once
 #include "klib/enum/bitops.hpp"
 #include "kvf/render_device.hpp"
-#include "kvf/window.hpp"
 #include "le2d/asset/asset_loader.hpp"
 #include "le2d/audio_mixer.hpp"
 #include "le2d/build_version.hpp"
@@ -9,7 +8,7 @@
 #include "le2d/event.hpp"
 #include "le2d/frame_stats.hpp"
 #include "le2d/render_pass.hpp"
-#include "le2d/resource/resource_factory.hpp"
+#include "le2d/resource/factory.hpp"
 #include "le2d/unprojector.hpp"
 #include "le2d/vsync.hpp"
 #include <GLFW/glfw3.h>
@@ -71,8 +70,9 @@ struct ContextCreateInfo {
 	/// \brief Window creation parameters.
 	WindowCreateInfo window{WindowInfo{}};
 	/// \brief Render Device creation parameters.
+	/// kvf::RenderDeviceFlag::LinearBackbuffer is not supported (will automatically be reset).
 	kvf::RenderDeviceCreateInfo render_device{};
-	/// \brief Multi sampled anti-aliasing.
+	/// \brief Multi-sampling anti-aliasing.
 	vk::SampleCountFlagBits framebuffer_samples{vk::SampleCountFlagBits::e2};
 	/// \brief Number of SFX buffers (concurrently playable).
 	int sfx_buffers{16};
@@ -92,11 +92,12 @@ class Context : public klib::Polymorphic {
 
 	[[nodiscard]] static auto create(CreateInfo const& create_info = {}) -> std::unique_ptr<Context>;
 
-	[[nodiscard]] virtual auto get_window() const -> GLFWwindow* = 0;
-	[[nodiscard]] virtual auto get_render_device() const -> kvf::RenderDevice const& = 0;
+	[[nodiscard]] virtual auto get_window() const -> gsl::not_null<GLFWwindow*> = 0;
+	[[nodiscard]] virtual auto get_render_device() const -> kvf::IRenderDevice const& = 0;
 	[[nodiscard]] virtual auto get_resource_factory() const -> IResourceFactory const& = 0;
 	[[nodiscard]] virtual auto get_audio_mixer() const -> IAudioMixer& = 0;
 	[[nodiscard]] virtual auto get_default_shader() const -> IShader const& = 0;
+	[[nodiscard]] virtual auto get_render_pass() const -> IRenderPass const& = 0;
 	[[nodiscard]] virtual auto get_renderer() const -> IRenderer const& = 0;
 
 	/// \returns Window size as reported by GLFW.
@@ -126,7 +127,7 @@ class Context : public klib::Polymorphic {
 	/// \brief Show window and set fullscreen.
 	/// \param target Target monitor (optional).
 	/// \returns true if successful.
-	auto set_fullscreen(GLFWmonitor* target = nullptr) -> bool;
+	auto set_fullscreen(klib::Ptr<GLFWmonitor> target = nullptr) -> bool;
 	/// \brief Show window and set windowed with given size.
 	/// \param size Window size. Must be positive.
 	void set_windowed(glm::ivec2 size = {1280, 720});
@@ -141,7 +142,7 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] auto is_running() const -> bool;
 	/// \brief Set the Window close flag.
 	/// Note: the window will remain visible until this object is destroyed by owning code.
-	void set_window_close();
+	void set_window_should_close();
 	/// \brief Reset the Window close flag.
 	void cancel_window_close();
 
@@ -201,13 +202,12 @@ class Context::Waiter {
 
 	[[nodiscard]] auto is_active() const -> bool { return m_context != nullptr; }
 
-	[[nodiscard]] auto get_context() const -> Context* { return m_context.get(); }
+	[[nodiscard]] auto get_context() const -> klib::Ptr<Context> { return m_context.get(); }
 
   private:
 	struct Deleter {
 		void operator()(Context* ptr) const {
-			if (!ptr) { return; }
-			ptr->wait_idle();
+			if (ptr) { ptr->wait_idle(); }
 		}
 	};
 

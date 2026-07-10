@@ -6,10 +6,6 @@
 #include <vulkan/vulkan.hpp>
 #include <gsl/pointers>
 
-namespace kvf {
-class RenderPass;
-} // namespace kvf
-
 namespace le {
 /// \brief Interface for drawable texture.
 class ITextureBase : public IResource {
@@ -17,9 +13,10 @@ class ITextureBase : public IResource {
 	[[nodiscard]] virtual auto get_image() const -> vk::ImageView = 0;
 	[[nodiscard]] virtual auto get_size() const -> glm::ivec2 = 0;
 
-	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
+	[[nodiscard]] virtual auto get_sampler() const -> TextureSampler const& = 0;
+	virtual void set_sampler(TextureSampler const& sampler) = 0;
 
-	TextureSampler sampler{};
+	[[nodiscard]] virtual auto descriptor_info() const -> vk::DescriptorImageInfo = 0;
 };
 
 /// \brief Concrete drawable Texture.
@@ -47,22 +44,9 @@ class ITileSheet : public ITexture {
 
 /// \brief Wraps a RenderTarget as a texture.
 /// This is just a view type, it doesn't own any resources.
-class RenderTexture : public ITextureBase {
+class IRenderTexture : public ITextureBase {
   public:
-	/// \param render_pass RenderTarget source. Must outlive RenderTexture.
-	/// \param sampler Handle to Vulkan Sampler.
-	explicit RenderTexture(gsl::not_null<kvf::RenderPass const*> render_pass, vk::Sampler sampler);
-
-	[[nodiscard]] auto is_ready() const -> bool final;
-
-	[[nodiscard]] auto get_image() const -> vk::ImageView final;
-	[[nodiscard]] auto get_size() const -> glm::ivec2 final;
-
-	[[nodiscard]] auto descriptor_info() const -> vk::DescriptorImageInfo final;
-
-	vk::Sampler sampler{};
-
-  private:
-	gsl::not_null<kvf::RenderPass const*> m_render_pass;
+	/// \returns true if the associated IRenderPass has completed rendering.
+	[[nodiscard]] virtual auto has_render_target() const -> bool = 0;
 };
 } // namespace le

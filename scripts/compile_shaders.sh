@@ -9,6 +9,8 @@ vert=default.vert
 frag=default.frag
 ext=.spv
 compiler=glslc
+formatter=clang-format
+namespace=le
 
 hash $compiler &> /dev/null || { echo "$compiler not found"; exit 1; }
 [[ -d $src ]] || { echo "cannot locate '$src'"; exit 1; }
@@ -29,8 +31,8 @@ function compile() {
 }
 
 function embed() {
-  $tool -n=le::spirv -f=$2 $spirv_dst/$1$ext > $cpp_dst/$2.cpp || fail
-  clang-format -i $cpp_dst/$2.cpp || fail
+  $tool -n=$namespace::spirv -f=$2 $spirv_dst/$1$ext > $cpp_dst/$2.cpp || fail
+  $formatter -i $cpp_dst/$2.cpp || fail
   echo "== embedded '$1' into '$cpp_dst/$2.cpp' =="
 }
 

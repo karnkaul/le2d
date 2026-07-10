@@ -1,5 +1,4 @@
 #include "applet/tile_sheet_editor.hpp"
-#include "klib/debug/assert.hpp"
 #include "klib/string/fixed_string.hpp"
 #include "le2d/file_data_loader.hpp"
 #include "le2d/json_io.hpp"
@@ -8,7 +7,7 @@
 
 namespace le::assed {
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_texture(get_context().get_resource_factory().create_texture()) {
+	: Applet(services), m_texture(get_context().get_resource_factory().create_default_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};
@@ -163,7 +162,7 @@ void TileSheetEditor::set_tiles(std::span<Tile const> tiles) {
 void TileSheetEditor::set_texture(std::unique_ptr<ITexture> texture) {
 	wait_idle();
 	m_texture = std::move(texture);
-	m_drawer.quad.create(m_texture->get_size());
+	m_drawer.quad.geometry.create(m_texture->get_size());
 	m_drawer.quad.texture = m_texture.get();
 }
 

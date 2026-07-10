@@ -1,9 +1,6 @@
 #include "le2d/console/terminal.hpp"
-#include "klib/concepts.hpp"
 #include "klib/debug/assert.hpp"
 #include "klib/log/tagged.hpp"
-#include "klib/string/from_chars.hpp"
-#include "kvf/util.hpp"
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
@@ -18,7 +15,7 @@ namespace console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
-	ITexture const* texture{};
+	klib::Ptr<ITexture const> texture{};
 	RenderInstance instance{};
 	float text_x{};
 
@@ -101,11 +98,16 @@ auto const log = klib::log::Tagged{"le::console"};
 class Terminal : public ITerminal {
   public:
 	explicit Terminal(gsl::not_null<IFont*> font, TerminalCreateInfo const& info, bool const add_builtin_tweaks)
-		: m_info(info), m_input(font, to_input_text_params(info)),
+		: m_info(info), m_input(font, to_input_text_ci(info)),
 		  m_buffer(font->get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(*font);
 
 		if (add_builtin_tweaks) { add_builtins(); }
+
+		if (m_info.trigger <= 0 || m_info.trigger > GLFW_KEY_LAST) {
+			log.warn("Invalid trigger: '{}', resetting to: '`'", m_info.trigger);
+			m_info.trigger = GLFW_KEY_GRAVE_ACCENT;
+		}
 	}
 
   private:
@@ -122,8 +124,8 @@ class Terminal : public ITerminal {
 		}
 	};
 
-	static constexpr auto to_input_text_params(TerminalCreateInfo const& in) -> InputTextParams {
-		return InputTextParams{
+	static constexpr auto to_input_text_ci(TerminalCreateInfo const& in) -> InputTextCreateInfo {
+		return InputTextCreateInfo{
 			.height = in.style.text_height,
 			.cursor_symbol = in.style.cursor,
 			.cursor_color = in.colors.cursor,
@@ -149,9 +151,9 @@ class Terminal : public ITerminal {
 		refresh_tweak_entries();
 	}
 
-	[[nodiscard]] auto get_background() const -> kvf::Color final { return m_background.tint; }
+	[[nodiscard]] auto get_background() const -> kvf::Color final { return m_background.instance.tint; }
 
-	void set_background(kvf::Color const color) final { m_background.tint = color; }
+	void set_background(kvf::Color const color) final { m_background.instance.tint = color; }
 
 	void println(std::string_view const text) final {
 		Buffer::Printer{m_buffer}.print(text, m_info.colors.output);
@@ -212,8 +214,8 @@ class Terminal : public ITerminal {
 	void setup(IFont& font) {
 		m_input.set_interactive(false);
 
-		m_separator.tint = m_info.colors.separator;
-		m_background.tint = kvf::Color{0x301020cc}.to_linear();
+		m_separator.instance.tint = m_info.colors.separator;
+		m_background.instance.tint = kvf::Color{0x301020cc}.to_linear();
 
 		m_info.style.text_height = m_input.get_atlas().get_height();
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
@@ -228,7 +230,7 @@ class Terminal : public ITerminal {
 	void add_builtins() {
 		m_opacity.on_set([this](float const value) {
 			if (value < 0.0f || value > 1.0f) { return false; }
-			m_background.tint.w = kvf::Color::to_u8(value);
+			m_background.instance.tint.w = kvf::Color::to_u8(value);
 			return true;
 		});
 		add_tweakable("console.opacity", &m_opacity);
@@ -236,22 +238,22 @@ class Terminal : public ITerminal {
 
 	void resize() {
 		auto const width = m_framebuffer_size.x;
-		m_background.create({width, 0.5f * m_framebuffer_size.y});
-		m_separator.create({width, m_info.style.separator_height});
-		m_background.transform.position.y = 0.5f * m_background.get_size().y;
-		m_separator.transform.position.y = 1.5f * float(m_info.style.text_height);
+		m_background.geometry.create({width, 0.5f * m_framebuffer_size.y});
+		m_separator.geometry.create({width, m_info.style.separator_height});
+		m_background.instance.transform.position.y = 0.5f * m_background.geometry.get_size().y;
+		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
 		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
-		m_input.transform.position = m_caret.instance.transform.position;
-		m_input.transform.position.x += m_caret.text_x;
+		m_input.instance.transform.position = m_caret.instance.transform.position;
+		m_input.instance.transform.position.x += m_caret.text_x;
 		m_hide_y = -0.5f * m_framebuffer_size.y;
 		m_show_y = 0.0f;
-		m_buffer_max_y = m_separator.transform.position.y + (0.5f * float(m_info.style.text_height));
+		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
-		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.transform.position.y) / m_framebuffer_size.y;
+		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);
@@ -275,13 +277,14 @@ class Terminal : public ITerminal {
 	}
 
 	void on_key(event::Key const& key) {
-		if (key.key == GLFW_KEY_GRAVE_ACCENT && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
+		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
 		if (!is_active()) { return; }
 
 		if (key.mods == 0) {
 			if (key.action == GLFW_PRESS) {
 				switch (key.key) {
 				case GLFW_KEY_ENTER: on_enter(); break;
+				case GLFW_KEY_ESCAPE: on_escape(); break;
 				}
 			}
 			if (key.action != GLFW_RELEASE) {
@@ -325,10 +328,12 @@ class Terminal : public ITerminal {
 		m_input.clear();
 	}
 
+	void on_escape() { m_input.clear(); }
+
 	void try_run(std::string_view const text) {
 		auto const params = Params::create(text);
 		if (params.id.empty()) { return; }
-		auto* tweakable = m_tweak_registry.find_tweakable(params.id);
+		auto const tweakable = m_tweak_registry.find_tweakable(params.id);
 		if (!tweakable) {
 			printerr(std::format("unrecognized identifier: {}", params.id));
 			return;

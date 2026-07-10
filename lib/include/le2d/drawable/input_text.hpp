@@ -7,7 +7,7 @@
 
 namespace le {
 /// \brief Input Text creation parameters.
-struct InputTextParams {
+struct InputTextCreateInfo {
 	TextHeight height{TextHeight::Default};
 	char cursor_symbol{'|'};
 	kvf::Color cursor_color{kvf::white_v};
@@ -16,11 +16,11 @@ struct InputTextParams {
 
 namespace drawable {
 /// \brief Interactive input text with cursor.
-class InputText : public RenderInstance, public IDrawable {
+class InputText : public IDrawable {
   public:
-	using Params = InputTextParams;
+	using CreateInfo = InputTextCreateInfo;
 
-	explicit InputText(gsl::not_null<IFont*> font, Params const& params = {});
+	explicit InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
 	[[nodiscard]] auto get_font() const -> IFont& { return *m_font; }
@@ -50,6 +50,8 @@ class InputText : public RenderInstance, public IDrawable {
 
 	void tick(kvf::Seconds dt);
 	void draw(IRenderer& renderer) const override;
+
+	RenderInstance instance{};
 
   private:
 	void update();

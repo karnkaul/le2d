@@ -1,5 +1,5 @@
 #pragma once
-#include "le2d/drawable/draw_primitive.hpp"
+#include "le2d/drawable/draw_instance.hpp"
 #include "le2d/resource/font.hpp"
 #include "le2d/text/text_geometry.hpp"
 
@@ -18,22 +18,22 @@ class TextBase : public IDrawPrimitive {
   public:
 	using Params = TextParams;
 
-	[[nodiscard]] auto to_primitive() const -> Primitive final;
+	[[nodiscard]] auto get_geometry() const -> IGeometry const& final { return m_geometry; }
+	[[nodiscard]] auto get_texture() const -> klib::Ptr<ITextureBase const> final { return m_texture; }
 
 	void set_string(IFont& font, std::string_view line, Params const& params = {});
 
 	[[nodiscard]] auto get_size() const -> glm::vec2 { return m_size; }
-	[[nodiscard]] auto get_texture() const -> ITexture const* { return m_texture; }
 
   private:
 	TextGeometry m_geometry{};
 	std::vector<kvf::ttf::GlyphLayout> m_glyph_layouts{};
-	ITexture const* m_texture{};
+	klib::Ptr<ITexture const> m_texture{};
 	glm::vec2 m_size{};
 };
 
-/// \brief Text Draw Primitive.
-class Text : public SingleDrawPrimitive<TextBase> {};
-/// \brief Instanced Text Draw Primitive.
-class InstancedText : public InstancedDrawPrimitive<TextBase> {};
+/// \brief Text drawable.
+class Text : public DrawInstance<TextBase> {};
+/// \brief Text drawable for multiple instances.
+class InstancedText : public DrawInstances<TextBase> {};
 } // namespace le::drawable

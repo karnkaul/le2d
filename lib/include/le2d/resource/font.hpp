@@ -10,8 +10,6 @@ class IFontAtlas : public IResource {
 	using Glyph = kvf::ttf::Glyph;
 	using GlyphLayout = kvf::ttf::GlyphLayout;
 
-	virtual auto build(gsl::not_null<kvf::ttf::Typeface*> face, TextHeight height) -> bool = 0;
-
 	[[nodiscard]] virtual auto get_glyphs() const -> std::span<Glyph const> = 0;
 	[[nodiscard]] virtual auto get_texture() const -> ITexture const& = 0;
 	[[nodiscard]] virtual auto get_height() const -> TextHeight = 0;
@@ -22,6 +20,8 @@ class IFontAtlas : public IResource {
 /// \brief Opaque interface for a Font.
 class IFont : public IResource {
   public:
+	/// \param font_bytes Copy of TTF / OTF data as bytes.
+	/// \returns true if successfully loaded.
 	virtual auto load_face(std::vector<std::byte> font_bytes) -> bool = 0;
 
 	[[nodiscard]] virtual auto get_name() const -> klib::CString = 0;

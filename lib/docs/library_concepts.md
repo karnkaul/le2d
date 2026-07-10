@@ -2,15 +2,15 @@
 
 ## Vulkan
 
-Vulkan is loaded dynamically at runtime, it is not linked to during a build. This allows applications to fail gracefully if Vulkan is not present (or if the driver is incompatible with Vulkan 1.3).
+Vulkan is loaded dynamically at runtime, it is not linked against at build-time. This allows applications to fail gracefully if Vulkan is not present, or if the loader/hardware/driver does not support Vulkan 1.3 (eg, virtual machines rarely offer Vulkan driver emulation).
 
 ### Validation Layers
 
-There is no validation layer code in the library or its dependencies. Users are expected to use Vulkan Configurator during development, and ensure that the layers are being loaded correctly. `le2d` is **NOT** designed to "evade" / wrap validation errors, it is **highly recommended** to always have the layers turned on during development. Even basic use of the engine warrants order-correct destruction of resources like `le::Texture`, where errors can slip by unless validation layers are enabled.
+There is no validation layer code in the library or its dependencies. Users are expected to use Vulkan Configurator during development, and ensure that the layers are being loaded correctly. `le2d` is **NOT** designed to "evade" / wrap validation errors, it is **highly recommended** to always have the layers turned on during development. Even basic use of the engine warrants order-correct destruction of resources like `le::ITexture`, where errors can slip by unless validation layers are enabled.
 
 ## Object Ownership
 
-All class-type objects returned by the library use RAII and clean up on destruction. There must be only a single `le::Context` object and it must outlive all `le::IResource` objects created since (eg `le::ITexture`). If a type requires observation of another as part of its invariant, it will take that as a `gsl::not_null<T*>` parameter in its constructor to indicate that the passed pointer will be stored and used later, thus must remain address-stable.
+All class-type objects returned by the library use RAII and clean up on destruction. There must be only a single `le::Context` object and it must outlive all `le::IResource` objects created since (eg `le::ITexture`). If a type requires observation of another as part of its invariant, it will take that as a `gsl::not_null<T*>` parameter in its constructor to indicate that the passed pointer may be stored and used later, thus must remain address-stable. Raw pointers (or `klib::Ptr`s) indicate `nullptr` as a valid value.
 
 ### Shared Resources
 

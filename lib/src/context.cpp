@@ -1,15 +1,10 @@
 #include "le2d/context.hpp"
-#include "detail/audio_mixer.hpp"
-#include "detail/render_pass.hpp"
-#include "detail/resource/resource_factory.hpp"
-#include "detail/resource/resource_pool.hpp"
+#include "detail/context_resources.hpp"
 #include "klib/debug/assert.hpp"
+#include "kvf/window.hpp"
 #include "le2d/asset/asset_type_loaders.hpp"
-#include "le2d/error.hpp"
-#include "resource/sampler_factory.hpp"
 #include <capo/engine.hpp>
 #include <log.hpp>
-#include <spirv.hpp>
 
 namespace le {
 namespace {
@@ -33,7 +28,7 @@ namespace {
 	}
 }
 
-[[nodiscard]] auto sanitize(kvf::RenderDevice::CreateInfo const& in) {
+[[nodiscard]] auto sanitize(kvf::IRenderDevice::CreateInfo const& in) {
 	auto ret = in;
 	ret.flags &= ~kvf::RenderDeviceFlag::LinearBackbuffer;
 	return ret;
@@ -89,10 +84,10 @@ auto fastest_display() {
 auto target_display(GLFWmonitor* desired) -> std::optional<Display> {
 	GLFWvidmode const* video_mode{};
 	if (desired == nullptr) {
-		auto const fastest_monitor = fastest_display();
-		if (!fastest_monitor) { return {}; }
-		desired = fastest_monitor->monitor;
-		video_mode = fastest_monitor->video_mode;
+		auto const fastest = fastest_display();
+		if (!fastest) { return {}; }
+		desired = fastest->monitor;
+		video_mode = fastest->video_mode;
 	}
 	if (video_mode == nullptr) {
 		video_mode = glfwGetVideoMode(desired);
@@ -108,11 +103,11 @@ auto get_glfw_vec2(GLFWwindow* window, F glfw_func) -> glm::ivec2 {
 	return ret;
 }
 
-[[nodiscard]] auto create_default_shader(IResourceFactory const& factory) -> std::unique_ptr<IShader> {
-	auto const vert_spirv = spirv::vert();
-	auto const frag_spirv = spirv::frag();
-	auto ret = factory.create_shader();
-	if (!ret->load(vert_spirv, frag_spirv)) { throw Error{"Failed to create default shader"}; }
+[[nodiscard]] auto build_supported_vsync(kvf::IRenderDevice const& render_device) {
+	auto ret = std::vector<Vsync>{};
+	auto const supported_present_modes = render_device.get_supported_present_modes();
+	ret.reserve(supported_present_modes.size());
+	for (auto const present_mode : supported_present_modes) { ret.push_back(to_vsync(present_mode)); }
 	return ret;
 }
 
@@ -140,20 +135,9 @@ class ContextImpl : public Context {
 
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
-		  m_render_device(std::make_unique<kvf::RenderDevice>(get_window(), sanitize(create_info.render_device))),
-		  m_sampler_factory(std::make_unique<detail::SamplerFactory>(m_render_device.get())),
-		  m_resource_factory(std::make_unique<detail::ResourceFactory>(m_render_device.get(), m_sampler_factory.get())) {
-
-		auto default_shader = create_default_shader(get_resource_factory());
-		m_resource_pool = std::make_unique<detail::ResourcePool>(m_render_device.get(), m_sampler_factory.get(), std::move(default_shader));
-		m_pass = create_render_pass(create_info.framebuffer_samples);
-		m_renderer = m_pass->create_renderer();
-		m_audio_mixer = std::make_unique<detail::AudioMixer>(create_info.sfx_buffers);
-
-		auto const supported_modes = m_render_device->get_supported_present_modes();
-		m_supported_vsync.reserve(supported_modes.size());
-		for (auto const mode : supported_modes) { m_supported_vsync.push_back(to_vsync(mode)); }
-
+		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
+		  m_resources(m_render_device.get(), create_info.sfx_buffers), m_render_pass(m_resources.create_render_pass(create_info.framebuffer_samples)),
+		  m_renderer(m_render_pass->create_renderer()), m_supported_vsync(build_supported_vsync(*m_render_device)) {
 		log.info("[{}] Context initialized, platform: {}", build_version_v, glfw_platform_str(glfwGetPlatform()));
 		m_on_destroy.reset(this);
 	}
@@ -184,12 +168,13 @@ class ContextImpl : public Context {
 		return fb_size / w_size;
 	}
 
-	[[nodiscard]] auto get_window() const -> GLFWwindow* final { return m_window.get(); }
-	[[nodiscard]] auto get_render_device() const -> kvf::RenderDevice const& final { return *m_render_device; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resource_factory; }
-	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resource_pool->get_default_shader(); }
+	[[nodiscard]] auto get_window() const -> gsl::not_null<GLFWwindow*> final { return m_window.get(); }
+	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice const& final { return *m_render_device; }
+	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resources.resource_factory; }
+	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_resources.audio_mixer; }
+	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resources.render_resources->get_default_shader(); }
 	[[nodiscard]] auto get_renderer() const -> IRenderer const& final { return *m_renderer; }
+	[[nodiscard]] auto get_render_pass() const -> IRenderPass const& final { return *m_render_pass; }
 
 	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
 	auto set_render_scale(float scale) -> bool final {
@@ -208,7 +193,7 @@ class ContextImpl : public Context {
 		return true;
 	}
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_pass->get_samples()); }
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
 		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
 	}
@@ -234,18 +219,19 @@ class ContextImpl : public Context {
 	}
 	void present() final {
 		m_renderer->end_render();
-		m_render_device->render(m_pass->get_render_target());
-		m_cmd = vk::CommandBuffer{};
 		m_frame_finish = kvf::Clock::now();
+		m_render_device->render(m_render_pass->get_render_target());
+		m_cmd = vk::CommandBuffer{};
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
 
 	[[nodiscard]] auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> final {
-		return std::make_unique<detail::RenderPass>(m_render_device.get(), m_resource_pool.get(), samples);
+		return m_resources.create_render_pass(samples);
 	}
+
 	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader final {
-		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resource_factory};
+		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resources.resource_factory};
 		return builder.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader,
 							 FlipbookAnimationLoader>();
 	}
@@ -255,7 +241,7 @@ class ContextImpl : public Context {
 
 		m_render_device->get_device().waitIdle();
 		if (m_requests.set_samples) {
-			m_pass->recreate(*m_requests.set_samples);
+			m_render_pass->recreate(*m_requests.set_samples);
 			m_requests.set_samples.reset();
 		}
 	}
@@ -354,16 +340,12 @@ class ContextImpl : public Context {
 	}
 
 	kvf::UniqueWindow m_window{};
-	std::unique_ptr<kvf::RenderDevice> m_render_device{};
-	std::unique_ptr<ISamplerFactory> m_sampler_factory{};
+	std::unique_ptr<kvf::IRenderDevice> m_render_device{};
+	detail::ContextResources m_resources;
 
-	std::unique_ptr<IRenderPass> m_pass{};
+	std::unique_ptr<IRenderPass> m_render_pass{};
 	std::unique_ptr<IRenderer> m_renderer{};
 	std::vector<Vsync> m_supported_vsync{};
-
-	std::unique_ptr<IResourceFactory> m_resource_factory{};
-	std::unique_ptr<detail::ResourcePool> m_resource_pool{};
-	std::unique_ptr<IAudioMixer> m_audio_mixer{};
 
 	std::vector<Event> m_event_queue{};
 	std::vector<std::string> m_drops{};
@@ -388,7 +370,7 @@ auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> 
 
 auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
 auto Context::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
-auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_framebuffer_extent(); }
+auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_swapchain_image_extent(); }
 auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
 auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
 
@@ -405,7 +387,7 @@ auto Context::get_refresh_rate() const -> std::int32_t {
 
 auto Context::is_fullscreen() const -> bool { return glfwGetWindowMonitor(get_window()) != nullptr; }
 
-auto Context::set_fullscreen(GLFWmonitor* target) -> bool {
+auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 	set_visible(true);
 	auto const display = target_display(target);
 	if (!display) { return false; }
@@ -441,7 +423,7 @@ void Context::lock_aspect_ratio(bool const lock) {
 
 auto Context::is_running() const -> bool { return glfwWindowShouldClose(get_window()) == GLFW_FALSE; }
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void Context::set_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
+void Context::set_window_should_close() { glfwSetWindowShouldClose(get_window(), GLFW_TRUE); }
 // NOLINTNEXTLINE(readability-make-member-function-const)
 void Context::cancel_window_close() { glfwSetWindowShouldClose(get_window(), GLFW_FALSE); }
 

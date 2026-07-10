@@ -11,7 +11,7 @@ jobs:
       pages: write  # To push to a GitHub Pages site
       id-token: write # To update the deployment status
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
       - name: init
@@ -19,11 +19,11 @@ jobs:
       - name: build docs
         run: cmake -P scripts/build_docs.cmake
       - name: setup pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
       - name: upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: 'docs/html'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

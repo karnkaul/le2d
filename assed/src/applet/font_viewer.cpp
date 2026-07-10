@@ -4,9 +4,7 @@
 #include <algorithm>
 
 namespace le::assed {
-FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(services), m_font(get_context().get_resource_factory().create_font()) {
-	m_drop_types = FileDrop::Type::Font;
-}
+FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(services) { m_drop_types = FileDrop::Type::Font; }
 
 auto FontViewer::consume_key(event::Key const& key) -> bool {
 	if (!m_input_text) { return false; }
@@ -46,10 +44,10 @@ void FontViewer::inspect() {
 	if (ImGui::Begin("Info")) {
 		if (ImGui::TreeNode("colors")) {
 			imcpp::color_edit("background", clear_color);
-			if (imcpp::color_edit("text", m_quad.tint) && m_input_text) { m_input_text->tint = m_quad.tint; }
+			if (imcpp::color_edit("text", m_quad.instance.tint) && m_input_text) { m_input_text->instance.tint = m_quad.instance.tint; }
 			ImGui::TreePop();
 		}
-		if (m_font->is_ready()) {
+		if (m_font) {
 			auto text_height = int(m_text_height);
 			if (ImGui::DragInt("height", &text_height, 5.0f, int(TextHeight::Min), int(TextHeight::Max))) { set_text_height(TextHeight(text_height)); }
 		}
@@ -75,7 +73,7 @@ void FontViewer::inspect_display() {
 }
 
 void FontViewer::inspect_input_text() {
-	ImGui::DragFloat2("position", &m_input_text->transform.position.x);
+	ImGui::DragFloat2("position", &m_input_text->instance.transform.position.x);
 	auto interactive = m_input_text->is_interactive();
 	if (ImGui::Checkbox("interactive", &interactive)) { m_input_text->set_interactive(interactive); }
 }
@@ -97,27 +95,28 @@ void FontViewer::try_load_font(Uri const& uri) {
 }
 
 void FontViewer::set_text_height(TextHeight const height) {
-	KLIB_ASSERT(m_font->is_ready());
+	if (!m_font) { return; }
 	m_text_height = std::clamp(height, TextHeight::Min, TextHeight::Max);
 	m_atlas = &m_font->get_atlas(m_text_height);
 	m_quad.texture = &m_atlas->get_texture();
-	m_quad.create(m_quad.texture->get_size());
+	m_quad.geometry.create(m_quad.texture->get_size());
 	create_input_text();
 }
 
 void FontViewer::create_input_text() {
+	if (!m_font) { return; }
 	auto text = std::string{};
 	auto position = glm::vec2{};
 	if (m_input_text) {
 		text = std::string{m_input_text->get_string()};
-		position = m_input_text->transform.position;
+		position = m_input_text->instance.transform.position;
 	}
-	auto const params = InputTextParams{
+	auto const input_text_ci = InputTextCreateInfo{
 		.height = m_text_height,
 	};
-	m_input_text.emplace(m_font.get(), params);
-	m_input_text->tint = m_quad.tint;
-	m_input_text->transform.position = position;
+	m_input_text.emplace(m_font.get(), input_text_ci);
+	m_input_text->instance.tint = m_quad.instance.tint;
+	m_input_text->instance.transform.position = position;
 	if (!text.empty()) { m_input_text->set_string(std::move(text)); }
 }
 

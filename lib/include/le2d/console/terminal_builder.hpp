@@ -3,6 +3,7 @@
 #include "kvf/time.hpp"
 #include "le2d/console/terminal.hpp"
 #include "le2d/text_height.hpp"
+#include <GLFW/glfw3.h>
 #include <gsl/pointers>
 
 namespace le {
@@ -38,6 +39,8 @@ struct TerminalCreateInfo {
 		kvf::Color output{0xccccccff};
 		kvf::Color error{kvf::red_v};
 	} colors{};
+
+	int trigger{GLFW_KEY_GRAVE_ACCENT};
 };
 
 class TerminalBuilder {
