@@ -537,7 +537,7 @@ class RenderPass : public IRenderPass {
 	class RenderTexture : public IRenderTexture {
 	  public:
 		explicit RenderTexture(gsl::not_null<ISamplerFactory*> sampler_factory, gsl::not_null<kvf::IRenderPass*> render_pass,
-							   gsl::not_null<ITexture const*> fallback_texture)
+							   gsl::not_null<ITextureBase const*> fallback_texture)
 			: m_render_pass(render_pass), m_fallback_texture(fallback_texture), m_cached_sampler(sampler_factory) {}
 
 	  private:
@@ -558,7 +558,7 @@ class RenderPass : public IRenderPass {
 		[[nodiscard]] auto get_target_image() const -> vk::ImageView { return m_render_pass->render_target().view; }
 
 		gsl::not_null<kvf::IRenderPass*> m_render_pass;
-		gsl::not_null<ITexture const*> m_fallback_texture;
+		gsl::not_null<ITextureBase const*> m_fallback_texture;
 		CachedSampler m_cached_sampler;
 	};
 
