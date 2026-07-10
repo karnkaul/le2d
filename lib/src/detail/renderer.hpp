@@ -13,6 +13,11 @@ class Renderer : public IRenderer {
 	explicit Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<IRenderResources*> resources);
 
   private:
+	struct Std430View {
+		glm::mat4 mat_v{1.0f};
+		glm::mat4 mat_p{1.0f};
+	};
+
 	static constexpr auto clamp_size(glm::ivec2 in) {
 		in.x = std::clamp(in.x, min_size_v, max_size_v);
 		in.y = std::clamp(in.y, min_size_v, max_size_v);
@@ -42,7 +47,9 @@ class Renderer : public IRenderer {
 
 	[[nodiscard]] auto unprojector() const -> Unprojector final;
 
-	void refresh_mat_vp();
+	void refresh_view_matrices();
+	void refresh_view_matrix();
+	void refresh_projection_matrix();
 
 	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
 
@@ -55,7 +62,7 @@ class Renderer : public IRenderer {
 
 	gsl::not_null<IShader const*> m_shader;
 	Transform m_view_transform{};
-	glm::mat4 m_mat_vp{1.0f};
+	Std430View m_view_matrices{};
 	Viewport m_viewport{viewport::Dynamic{}};
 	vk::Viewport m_vk_viewport{};
 	vk::Rect2D m_scissor{};

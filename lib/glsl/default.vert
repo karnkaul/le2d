@@ -13,7 +13,8 @@ layout (location = 0) out vec4 out_tint;
 layout (location = 1) out vec2 out_uv;
 
 layout (set = 0, binding = 0) uniform View {
-	mat4 mat_vp;
+  mat4 mat_view;
+  mat4 mat_proj;
 };
 
 layout (set = 1, binding = 0) readonly buffer Instances {
@@ -28,5 +29,5 @@ void main() {
 
 	const vec4 v_pos = vec4(a_pos, 0.0, 1.0);
 	const vec4 world_pos = instance.mat_world * v_pos;
-	gl_Position = mat_vp * world_pos;
+	gl_Position = mat_proj * mat_view * world_pos;
 }
