@@ -111,10 +111,10 @@ void FontViewer::create_input_text() {
 		text = std::string{m_input_text->get_string()};
 		position = m_input_text->instance.transform.position;
 	}
-	auto const params = InputTextParams{
+	auto const input_text_ci = InputTextCreateInfo{
 		.height = m_text_height,
 	};
-	m_input_text.emplace(m_font.get(), params);
+	m_input_text.emplace(m_font.get(), input_text_ci);
 	m_input_text->instance.tint = m_quad.instance.tint;
 	m_input_text->instance.transform.position = position;
 	if (!text.empty()) { m_input_text->set_string(std::move(text)); }

@@ -98,11 +98,16 @@ auto const log = klib::log::Tagged{"le::console"};
 class Terminal : public ITerminal {
   public:
 	explicit Terminal(gsl::not_null<IFont*> font, TerminalCreateInfo const& info, bool const add_builtin_tweaks)
-		: m_info(info), m_input(font, to_input_text_params(info)),
+		: m_info(info), m_input(font, to_input_text_ci(info)),
 		  m_buffer(font->get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
 		setup(*font);
 
 		if (add_builtin_tweaks) { add_builtins(); }
+
+		if (m_info.trigger <= 0 || m_info.trigger > GLFW_KEY_LAST) {
+			log.warn("Invalid trigger: '{}', resetting to: '`'", m_info.trigger);
+			m_info.trigger = GLFW_KEY_GRAVE_ACCENT;
+		}
 	}
 
   private:
@@ -119,8 +124,8 @@ class Terminal : public ITerminal {
 		}
 	};
 
-	static constexpr auto to_input_text_params(TerminalCreateInfo const& in) -> InputTextParams {
-		return InputTextParams{
+	static constexpr auto to_input_text_ci(TerminalCreateInfo const& in) -> InputTextCreateInfo {
+		return InputTextCreateInfo{
 			.height = in.style.text_height,
 			.cursor_symbol = in.style.cursor,
 			.cursor_color = in.colors.cursor,
@@ -272,7 +277,7 @@ class Terminal : public ITerminal {
 	}
 
 	void on_key(event::Key const& key) {
-		if (key.key == GLFW_KEY_GRAVE_ACCENT && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
+		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
 		if (!is_active()) { return; }
 
 		if (key.mods == 0) {

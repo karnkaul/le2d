@@ -4,12 +4,12 @@
 #include <numbers>
 
 namespace le::drawable {
-InputText::InputText(gsl::not_null<IFont*> font, Params const& params)
-	: m_font(font), m_line_input(font, params.height), m_cursor_color(params.cursor_color), m_blink_period(params.blink_period) {
+InputText::InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info)
+	: m_font(font), m_line_input(font, create_info.height), m_cursor_color(create_info.cursor_color), m_blink_period(create_info.blink_period) {
 	auto& atlas = m_line_input.get_atlas();
 
 	auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
-	atlas.push_layouts(layouts, {&params.cursor_symbol, 1}, 1.5f, false);
+	atlas.push_layouts(layouts, {&create_info.cursor_symbol, 1}, 1.5f, false);
 	m_cursor.append_glyphs(layouts);
 
 	auto const rect = kvf::ttf::glyph_bounds(layouts);
