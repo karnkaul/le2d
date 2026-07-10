@@ -6,5 +6,4 @@ function(add_exe name source)
   target_sources(${name} PRIVATE ${source})
 endfunction()
 
-add_exe(quickstart quickstart.cpp)
 add_exe(example example.cpp)
