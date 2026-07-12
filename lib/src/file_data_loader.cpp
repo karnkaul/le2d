@@ -1,8 +1,7 @@
 #include "le2d/file_data_loader.hpp"
-#include "kvf/util.hpp"
+#include "klib/file_io.hpp"
 #include <log.hpp>
 #include <filesystem>
-#include <fstream>
 
 namespace le {
 namespace fs = std::filesystem;
@@ -18,28 +17,20 @@ auto FileDataLoader::upfind(std::string_view const suffix, std::string_view leaf
 
 FileDataLoader::FileDataLoader(std::string_view const root_dir) { set_root_dir(root_dir); }
 
-auto FileDataLoader::try_load_bytes(std::vector<std::byte>& out, std::string_view const uri) const -> bool {
-	return from_file(out, uri, &kvf::util::bytes_from_file);
-}
+auto FileDataLoader::try_load_bytes(std::vector<std::byte>& out, std::string_view const uri) const -> bool { return try_load_to(out, uri); }
 
-auto FileDataLoader::try_load_spirv(std::vector<std::uint32_t>& out, std::string_view const uri) const -> bool {
-	return from_file(out, uri, &kvf::util::spirv_from_file);
-}
+auto FileDataLoader::try_load_spirv(std::vector<std::uint32_t>& out, std::string_view const uri) const -> bool { return try_load_to(out, uri); }
 
-auto FileDataLoader::try_load_string(std::string& out, std::string_view const uri) const -> bool { return from_file(out, uri, &kvf::util::string_from_file); }
+auto FileDataLoader::try_load_string(std::string& out, std::string_view const uri) const -> bool { return try_load_to(out, uri); }
 
 auto FileDataLoader::save_bytes(std::span<std::byte const> bytes, std::string_view const uri) const -> bool {
 	if (uri.empty()) { return false; }
-	auto file = std::ofstream{get_path(uri), std::ios::binary};
-	if (!file.is_open()) { return false; }
-	if (bytes.empty()) { return true; }
-	auto const* data = static_cast<void const*>(bytes.data());
-	return !!file.write(static_cast<char const*>(data), std::streamsize(bytes.size()));
+	return klib::write_bytes_to_file(bytes, get_path(uri));
 }
 
 auto FileDataLoader::save_string(std::string_view text, std::string_view const uri) const -> bool {
-	auto const* data = static_cast<void const*>(text.data());
-	return save_bytes(std::span{static_cast<std::byte const*>(data), text.size()}, uri);
+	if (uri.empty()) { return false; }
+	return klib::write_to_file(text, get_path(uri));
 }
 
 auto FileDataLoader::set_root_dir(std::string_view root_dir) -> bool {
@@ -62,12 +53,13 @@ auto FileDataLoader::get_uri(std::string_view const path) const -> std::string {
 	return ret;
 }
 
-template <typename T, typename F>
-auto FileDataLoader::from_file(T& out, std::string_view const uri, F func) const -> bool {
-	if (!func(out, get_path(uri).c_str())) {
-		return false;
-		log.warn("FileDataLoader: failed to load: '{}'", uri);
+template <typename T>
+auto FileDataLoader::try_load_to(T& out, std::string_view const uri) const -> bool {
+	auto const path = get_path(uri);
+	if constexpr (sizeof(typename T::value_type) > 1) {
+		return klib::copy_file_bytes_to(out, path);
+	} else {
+		return klib::read_file_bytes_to(out, path);
 	}
-	return true;
 }
 } // namespace le

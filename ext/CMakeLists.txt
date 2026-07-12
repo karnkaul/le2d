@@ -13,7 +13,7 @@ endif()
 message(STATUS "[kvf]")
 add_subdirectory(src/kvf)
 
-if(LE2D_BUILD_SPIRV2CPP OR LE2D_BUILD_ASSED)
+if(NOT TARGET clap::clap)
   message(STATUS "[clap]")
   add_subdirectory(src/clap)
 endif()
