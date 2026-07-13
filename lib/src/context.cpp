@@ -194,10 +194,10 @@ class ContextImpl : public Context {
 		return true;
 	}
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
 		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
 	}
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	auto set_samples(vk::SampleCountFlagBits const samples) -> bool final {
 		if (samples == get_samples()) { return true; }
 		if ((get_supported_samples() & samples) != samples) { return false; }

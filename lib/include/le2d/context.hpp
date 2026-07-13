@@ -164,10 +164,10 @@ class Context : public klib::Polymorphic {
 	/// \returns true if desired mode is supported.
 	virtual auto set_vsync(Vsync vsync) -> bool = 0;
 
-	/// \returns Current MSAA samples.
-	[[nodiscard]] virtual auto get_samples() const -> vk::SampleCountFlagBits = 0;
 	/// \returns Supported MSAA samples.
 	[[nodiscard]] virtual auto get_supported_samples() const -> vk::SampleCountFlags = 0;
+	/// \returns Current MSAA samples.
+	[[nodiscard]] virtual auto get_samples() const -> vk::SampleCountFlagBits = 0;
 	/// \brief Set desired MSAA samples.
 	/// RenderPass will be recreated on the next frame, not immediately.
 	/// \returns true unless not supported.
