@@ -5,6 +5,7 @@
 #include "le2d/asset/asset_type_loaders.hpp"
 #include <capo/engine.hpp>
 #include <log.hpp>
+#include <thread>
 
 namespace le {
 namespace {
@@ -204,6 +205,9 @@ class ContextImpl : public Context {
 		return true;
 	}
 
+	[[nodiscard]] auto get_max_framerate() const -> Framerate final { return Framerate{m_max_framerate}; }
+	void set_max_framerate(Framerate const framerate) final { m_max_framerate = std::max(std::int32_t(framerate), 0); }
+
 	auto next_frame() -> vk::CommandBuffer final {
 		m_event_queue.clear();
 		m_drops.clear();
@@ -212,16 +216,21 @@ class ContextImpl : public Context {
 		update_timings_and_stats(kvf::Clock::now());
 		return m_cmd;
 	}
+
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> final { return m_event_queue; }
+
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& final {
 		m_renderer->begin_render(m_cmd, main_pass_size(), clear);
 		return *m_renderer;
 	}
+
 	void present() final {
 		m_renderer->end_render();
 		m_frame_finish = kvf::Clock::now();
 		m_render_device->render(m_render_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
+
+		if (m_max_framerate > 0) { limit_framerate(); }
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
@@ -256,9 +265,17 @@ class ContextImpl : public Context {
 			m_fps.value = std::exchange(m_fps.counter, {});
 			m_fps.elapsed = {};
 		}
-		m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
+		m_frame_stats.framerate = m_fps.value == 0 ? Framerate{m_fps.counter} : Framerate{m_fps.value};
 		++m_frame_stats.total_frames;
 		m_frame_stats.run_time = now - m_runtime_start;
+	}
+
+	void limit_framerate() {
+		auto const min_frame_time = kvf::Seconds{1.0f / float(m_max_framerate)};
+		auto const frame_time = kvf::Clock::now() - m_frame_start;
+		auto const delta = min_frame_time - frame_time;
+		if (delta <= 0s) { return; }
+		std::this_thread::sleep_for(delta);
 	}
 
 	[[nodiscard]] static auto self(GLFWwindow* window) -> ContextImpl& { return *static_cast<ContextImpl*>(glfwGetWindowUserPointer(window)); }
@@ -359,6 +376,7 @@ class ContextImpl : public Context {
 	kvf::Clock::time_point m_frame_start{};
 	kvf::Clock::time_point m_frame_finish{};
 	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
+	std::int32_t m_max_framerate{};
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
 

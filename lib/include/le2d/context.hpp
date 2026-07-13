@@ -173,6 +173,13 @@ class Context : public klib::Polymorphic {
 	/// \returns true unless not supported.
 	virtual auto set_samples(vk::SampleCountFlagBits samples) -> bool = 0;
 
+	/// \returns 0 if no limit is set.
+	[[nodiscard]] virtual auto get_max_framerate() const -> Framerate = 0;
+	/// \brief Set a framerate limit.
+	/// Actual framerate may end up being lower than max. Works best with Vsync::Strict.
+	/// \param framerate Desired framerate limit. Pass non-positive to disable.
+	virtual void set_max_framerate(Framerate framerate) = 0;
+
 	/// \brief Begin the next frame.
 	/// Resets render resources and polls events.
 	/// \returns Current virtual frame's Command Buffer.
