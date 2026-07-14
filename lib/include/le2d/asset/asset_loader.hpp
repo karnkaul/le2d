@@ -28,15 +28,19 @@ class AssetLoader {
 	/// \returns Asset instance if loaded, otherwise null.
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto load(std::string_view const uri) const -> std::unique_ptr<AssetTypeT> {
-		auto ret = load_impl(typeid(AssetTypeT), uri);
+		auto ret = load_asset(typeid(AssetTypeT), uri);
 		if (!ret) { return {}; }
 		KLIB_ASSERT(dynamic_cast<AssetTypeT*>(ret.get()));
 		return std::unique_ptr<AssetTypeT>{dynamic_cast<AssetTypeT*>(ret.release())};
 	}
 
-  private:
-	[[nodiscard]] auto load_impl(std::type_info const& type, std::string_view uri) const -> std::unique_ptr<IAsset>;
+	/// \brief Lower level load API.
+	/// \param type typeid of the concrete asset type.
+	/// \param uri URI to load from.
+	/// \returns IAsset instance if loaded, otherwise null.
+	[[nodiscard]] auto load_asset(std::type_index type, std::string_view uri) const -> std::unique_ptr<IAsset>;
 
+  private:
 	std::unordered_map<std::type_index, std::unique_ptr<detail::IAssetTypeLoaderBase>> m_map{};
 };
 } // namespace le

@@ -5,7 +5,7 @@ include(version.cmake)
 set(project_name le2d)
 project(${project_name} VERSION ${le2d_version})
 
-option(LE2D_BUILD_EXAMPLE "Build le2d Example" ${PROJECT_IS_TOP_LEVEL})
+option(LE2D_BUILD_EXAMPLES "Build le2d examples" ${PROJECT_IS_TOP_LEVEL})
 option(LE2D_BUILD_ASSED "Build le2d Asset Editor" ${PROJECT_IS_TOP_LEVEL})
 option(LE2D_BUILD_SPIRV2CPP "Build spirv2cpp" ${PROJECT_IS_TOP_LEVEL})
 
@@ -18,8 +18,8 @@ add_subdirectory(ext)
 
 add_subdirectory(lib)
 
-if(LE2D_BUILD_EXAMPLE)
-  add_subdirectory(example)
+if(LE2D_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 if(LE2D_BUILD_ASSED)

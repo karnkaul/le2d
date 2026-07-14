@@ -9,7 +9,7 @@ class Uri {
 	Uri() = default;
 
 	template <std::convertible_to<std::string> Type>
-	/*implicit*/ Uri(Type t) : m_str(std::move(t)), m_hash(std::hash<std::string>{}(m_str)) {}
+	explicit(false) Uri(Type t) : m_str(std::move(t)), m_hash(std::hash<std::string>{}(m_str)) {}
 
 	[[nodiscard]] auto get_string() const -> std::string_view { return m_str; }
 	[[nodiscard]] auto get_hash() const -> std::size_t { return m_hash; }
