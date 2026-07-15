@@ -1,4 +1,5 @@
 #include "demo/scene/input_actions.hpp"
+#include "klib/string/fixed_string.hpp"
 #include <imgui.h>
 #include <algorithm>
 
@@ -84,6 +85,7 @@ void InputActions::render_main_pass(le::IRenderer& renderer) const { m_player.dr
 void InputActions::inspect() {
 	ImGui::SetNextWindowSize({400.0f, 300.0f});
 	ImGui::Begin("Editor");
+	ImGui::TextUnformatted(klib::FixedString{"controller: {}", le::input::device_name_map.to_name(m_controllers.current_device)}.c_str());
 	m_player.inspect();
 	ImGui::End();
 }

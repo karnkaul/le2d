@@ -55,12 +55,6 @@ void App::create_context() {
 void App::create_data_loader() {
 	auto assets_directory = le::FileDataLoader::upfind("assets", le::util::exe_path());
 	m_data_loader.emplace(std::move(assets_directory));
-
-	auto const controller_db = m_data_loader->load_string("gamecontrollerdb.txt");
-	if (!controller_db.empty()) {
-		//
-		glfwUpdateGamepadMappings(controller_db.c_str());
-	}
 }
 
 void App::add_scene_infos() {
