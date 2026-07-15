@@ -1,5 +1,4 @@
 #include "le2d/input/router.hpp"
-#include <ranges>
 
 namespace le::input {
 namespace {

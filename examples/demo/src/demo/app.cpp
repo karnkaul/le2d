@@ -1,8 +1,10 @@
 #include "demo/app.hpp"
 #include "clap/parser.hpp"
+#include "demo/scene/input_actions.hpp"
 #include "demo/scene/load_assets.hpp"
 #include "le2d/build_version.hpp"
 #include "le2d/util.hpp"
+#include <imgui.h>
 
 namespace demo {
 auto App::run(int const argc, char const* const* const argv) -> int {
@@ -11,9 +13,9 @@ auto App::run(int const argc, char const* const* const argv) -> int {
 
 	create_context();
 	create_data_loader();
-	// TEMP
-	m_active_scene = std::make_unique<scene::LoadAssets>(m_context.get(), &*m_data_loader);
-	m_context->set_title(std::format("le-demo - {} [{}]", m_active_scene->get_name(), le::build_version_v));
+	add_scene_infos();
+	set_active_scene(m_scene_infos.front().factory());
+
 	run_loop();
 
 	return EXIT_SUCCESS;
@@ -37,7 +39,7 @@ auto App::parse_args(int argc, char const* const* argv) -> clap::Result {
 }
 
 void App::create_context() {
-	auto window_info = le::WindowInfo{
+	auto const window_info = le::WindowInfo{
 		.size = {1280, 720},
 		.title = "le-demo",
 	};
@@ -53,19 +55,54 @@ void App::create_context() {
 void App::create_data_loader() {
 	auto assets_directory = le::FileDataLoader::upfind("assets", le::util::exe_path());
 	m_data_loader.emplace(std::move(assets_directory));
+
+	auto const controller_db = m_data_loader->load_string("gamecontrollerdb.txt");
+	if (!controller_db.empty()) {
+		//
+		glfwUpdateGamepadMappings(controller_db.c_str());
+	}
+}
+
+void App::add_scene_infos() {
+	m_scene_infos.push_back(create_scene_info<scene::LoadAssets>());
+	m_scene_infos.push_back(create_scene_info<scene::InputActions>());
+}
+
+void App::set_active_scene(std::unique_ptr<Scene> scene) {
+	m_active_scene = std::move(scene);
+	m_context->set_title(std::format("le-demo - {} [{}]", m_active_scene->get_name(), le::build_version_v));
 }
 
 void App::run_loop() {
 	auto delta_time = kvf::DeltaTime{};
 	while (m_context->is_running()) {
 		m_context->next_frame();
-
 		auto const dt = delta_time.tick();
-		m_active_scene->tick_frame(dt);
 
+		m_active_scene->tick_frame(dt);
 		m_active_scene->render_frame();
 
+		inspect_main_menu();
+
 		m_context->present();
+	}
+}
+
+void App::inspect_main_menu() {
+	if (!ImGui::BeginMainMenuBar()) { return; }
+
+	auto selected = klib::Ptr<SceneInfo>{};
+	if (ImGui::BeginMenu("Scenes")) {
+		for (auto& info : m_scene_infos) {
+			if (ImGui::MenuItem(info.name.data())) { selected = &info; }
+		}
+		ImGui::EndMenu();
+	}
+	ImGui::EndMainMenuBar();
+
+	if (selected) {
+		m_context->wait_idle();
+		set_active_scene(selected->factory());
 	}
 }
 } // namespace demo

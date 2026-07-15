@@ -41,6 +41,8 @@ An `le::input::Router` stores a mutable stack of weak pointers to input mappings
 
 Most of the time a single persistent mapping will be sufficient, the stack is useful for eg having a different mapping for menu navigation.
 
+See the `demo::InputActions` scene for a demonstration.
+
 ## Console
 
 WIP

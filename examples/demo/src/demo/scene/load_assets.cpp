@@ -83,7 +83,7 @@ auto AssetInfo::create(std::string_view const uri, AssetType const type) -> Asse
 }
 
 LoadAssets::LoadAssets(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader)
-	: Scene(context, data_loader, "LoadAssets"), m_map(context) {
+	: Scene(context, data_loader, name_v), m_map(context) {
 	create_loaders();
 }
 

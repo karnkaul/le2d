@@ -3,6 +3,7 @@
 #include "demo/scene/scene.hpp"
 #include "le2d/context.hpp"
 #include "le2d/file_data_loader.hpp"
+#include <functional>
 
 namespace demo {
 class App {
@@ -10,6 +11,11 @@ class App {
 	auto run(int argc, char const* const* argv) -> int;
 
   private:
+	struct SceneInfo {
+		std::string_view name{};
+		std::move_only_function<std::unique_ptr<Scene>()> factory{};
+	};
+
 	struct Params {
 		bool force_x11{};
 	};
@@ -18,11 +24,26 @@ class App {
 
 	void create_context();
 	void create_data_loader();
+	void add_scene_infos();
+
+	template <std::derived_from<Scene> SceneTypeT>
+	[[nodiscard]] auto create_scene_info() const -> SceneInfo {
+		return SceneInfo{
+			.name = SceneTypeT::name_v,
+			.factory = [this] { return std::make_unique<SceneTypeT>(m_context.get(), &*m_data_loader); },
+		};
+	}
+
+	void set_active_scene(std::unique_ptr<Scene> scene);
+
 	void run_loop();
+
+	void inspect_main_menu();
 
 	Params m_params{};
 
 	std::unique_ptr<le::Context> m_context{};
+	std::vector<SceneInfo> m_scene_infos{};
 	std::unique_ptr<Scene> m_active_scene{};
 	std::optional<le::FileDataLoader> m_data_loader{};
 };

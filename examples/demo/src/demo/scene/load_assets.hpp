@@ -22,6 +22,8 @@ struct AssetInfo {
 
 class LoadAssets : public Scene {
   public:
+	static constexpr std::string_view name_v{"LoadAssets"};
+
 	explicit LoadAssets(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader);
 
   private:
