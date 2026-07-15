@@ -9,24 +9,6 @@
 
 namespace le::input {
 namespace action {
-class Value;
-} // namespace action
-
-/// \brief Base class for all actions.
-class IAction : public klib::Polymorphic {
-  public:
-	virtual void on_key(event::Key const& key) = 0;
-	virtual void on_mouse_button(event::MouseButton const& mb) = 0;
-	virtual void on_scroll(event::Scroll const& scroll) = 0;
-	virtual void on_cursor_pos(event::CursorPos const& cursor_pos) = 0;
-	virtual void update_gamepad(Gamepad const& gamepad) = 0;
-	virtual void disengage() = 0;
-	[[nodiscard]] virtual auto should_dispatch() const -> bool = 0;
-	[[nodiscard]] virtual auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> = 0;
-	[[nodiscard]] virtual auto get_value() const -> action::Value = 0;
-};
-
-namespace action {
 /// \brief Concept for gettable Value types.
 template <typename Type>
 concept ValueTypeT = std::same_as<Type, bool> || std::same_as<Type, float> || std::same_as<Type, glm::vec2>;
@@ -55,7 +37,23 @@ class Value {
   private:
 	glm::vec2 m_value{};
 };
+} // namespace action
 
+/// \brief Base class for all actions.
+class IAction : public klib::Polymorphic {
+  public:
+	virtual void on_key(event::Key const& key) = 0;
+	virtual void on_mouse_button(event::MouseButton const& mb) = 0;
+	virtual void on_scroll(event::Scroll const& scroll) = 0;
+	virtual void on_cursor_pos(event::CursorPos const& cursor_pos) = 0;
+	virtual void update_gamepad(Gamepad const& gamepad) = 0;
+	virtual void disengage() = 0;
+	[[nodiscard]] virtual auto should_dispatch() const -> bool = 0;
+	[[nodiscard]] virtual auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> = 0;
+	[[nodiscard]] virtual auto get_value() const -> action::Value = 0;
+};
+
+namespace action {
 /// \brief Alias for Count binary states.
 template <std::size_t Count>
 using Bits = std::bitset<Count>;
