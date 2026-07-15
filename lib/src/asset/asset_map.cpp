@@ -2,7 +2,7 @@
 
 namespace le {
 void AssetMap::store_asset(Uri uri, std::unique_ptr<IAsset> asset) {
-	if (!asset) { return; }
+	if (uri.get_string().empty() || !asset) { return; }
 	m_map.insert_or_assign(std::move(uri), std::move(asset));
 }
 

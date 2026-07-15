@@ -34,7 +34,6 @@ class LoadAssets : public Scene {
 
 	void start_loading();
 
-	le::AssetLoader m_asset_loader{};
 	std::unique_ptr<le::IManifestLoader> m_manifest_loader{};
 	le::AssetMap m_map;
 

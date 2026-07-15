@@ -409,7 +409,7 @@ auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 	set_visible(true);
 	auto const display = target_display(target);
 	if (!display) { return false; }
-	auto const* vm = display->video_mode.get();
+	auto const vm = display->video_mode;
 	glfwSetWindowMonitor(get_window(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
 	return true;
 }

@@ -7,11 +7,13 @@
 #include <unordered_map>
 
 namespace le {
+/// \brief View of IAsset and its Uri.
 struct AssetView {
 	gsl::not_null<Uri const*> uri;
 	gsl::not_null<IAsset*> asset;
 };
 
+/// \brief Storage for IAsset instances.
 class AssetMap : public klib::Pinned {
   public:
 	explicit AssetMap(gsl::not_null<Context*> context) : m_waiter(context->create_waiter()) {}

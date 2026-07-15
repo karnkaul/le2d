@@ -19,7 +19,7 @@ auto Dispatch::operator=(Dispatch&& rhs) noexcept -> Dispatch& {
 Dispatch::~Dispatch() { update_listeners(nullptr); }
 
 void Dispatch::attach(gsl::not_null<Listener*> listener) {
-	KLIB_ASSERT_DEBUG(std::ranges::find(m_listeners, listener.get()) == m_listeners.end());
+	KLIB_ASSERT_DEBUG(std::ranges::find(m_listeners, listener) == m_listeners.end());
 	m_listeners.push_back(listener);
 	listener->m_dispatch = this;
 }
@@ -54,11 +54,11 @@ void Dispatch::handle_events(glm::ivec2 const framebuffer_size, std::span<le::Ev
 }
 
 void Dispatch::disengage_all() {
-	for (auto* listener : m_listeners) { listener->disengage_input(); }
+	for (auto listener : m_listeners) { listener->disengage_input(); }
 }
 
 void Dispatch::update_listeners(klib::Ptr<Dispatch> target) const {
-	for (auto* listener : m_listeners) { listener->m_dispatch = target; }
+	for (auto listener : m_listeners) { listener->m_dispatch = target; }
 }
 
 template <typename FPtr, typename T>
@@ -78,7 +78,7 @@ void Dispatch::dispatch(FPtr const fptr, T const& event, Type const type) const 
 	}
 
 	auto consumed = false;
-	for (auto* listener : std::views::reverse(m_listeners)) {
+	for (auto listener : std::views::reverse(m_listeners)) {
 		if (!consumed) {
 			consumed = std::invoke(fptr, listener, event);
 		} else {

@@ -8,7 +8,7 @@ namespace demo {
 class Scene : public klib::Polymorphic {
   public:
 	explicit Scene(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader, std::string_view name)
-		: m_context(context), m_data_loader(data_loader), m_name(name) {}
+		: m_context(context), m_data_loader(data_loader), m_name(name), m_asset_loader(context->create_asset_loader(m_data_loader)) {}
 
 	[[nodiscard]] auto get_name() const -> std::string_view { return m_name; }
 
@@ -19,6 +19,7 @@ class Scene : public klib::Polymorphic {
 	[[nodiscard]] auto get_context() const -> le::Context& { return *m_context; }
 	[[nodiscard]] auto get_data_loader() const -> le::IDataLoader const& { return *m_data_loader; }
 	[[nodiscard]] auto get_file_data_loader() const -> le::FileDataLoader const& { return *m_data_loader; }
+	[[nodiscard]] auto get_asset_loader() const -> le::AssetLoader const& { return m_asset_loader; }
 
 	virtual void tick(kvf::Seconds dt);
 
@@ -31,5 +32,7 @@ class Scene : public klib::Polymorphic {
 	gsl::not_null<le::Context*> m_context;
 	gsl::not_null<le::FileDataLoader const*> m_data_loader;
 	std::string_view m_name{};
+
+	le::AssetLoader m_asset_loader{};
 };
 } // namespace demo

@@ -38,6 +38,6 @@ class Dispatch {
 	template <typename FPtr, typename T>
 	void dispatch(FPtr fptr, T const& event, Type type) const;
 
-	std::vector<Listener*> m_listeners{};
+	std::vector<gsl::not_null<Listener*>> m_listeners{};
 };
 } // namespace le::input

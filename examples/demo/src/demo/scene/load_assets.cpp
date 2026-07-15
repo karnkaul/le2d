@@ -88,8 +88,7 @@ LoadAssets::LoadAssets(gsl::not_null<le::Context*> context, gsl::not_null<le::Fi
 }
 
 void LoadAssets::create_loaders() {
-	m_asset_loader = get_context().create_asset_loader(&get_data_loader());
-	m_manifest_loader = le::IManifestLoader::create(&m_asset_loader);
+	m_manifest_loader = le::IManifestLoader::create(&get_asset_loader());
 
 	m_ui_manifest = {
 		AssetInfo::create("images/awesomeface.png", AssetType::Texture),

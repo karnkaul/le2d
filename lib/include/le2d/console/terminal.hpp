@@ -1,9 +1,7 @@
 #pragma once
-#include "klib/concepts.hpp"
 #include "kvf/time.hpp"
 #include "le2d/drawable/drawable.hpp"
 #include "le2d/event.hpp"
-#include "le2d/resource/font.hpp"
 #include "le2d/tweak/store.hpp"
 #include <cstdint>
 #include <string_view>
