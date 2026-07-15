@@ -11,9 +11,9 @@ class IMapping : public klib::Polymorphic {
 	/// \brief Process events and dispatch callbacks.
 	/// \param events List of events for this frame.
 	/// \param gamepads Gamepad manager instance.
-	virtual void dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) = 0;
+	virtual void dispatch_events(std::span<le::Event const> events, Gamepad::Manager const& gamepads) = 0;
 
 	/// \brief Disengage all bindings.
-	virtual void disengage() = 0;
+	virtual void disengage_input() = 0;
 };
 } // namespace le::input

@@ -1,6 +1,7 @@
 #pragma once
 #include "le2d/input/device.hpp"
 #include "le2d/input/mapping.hpp"
+#include <memory>
 #include <optional>
 
 namespace le::input {
@@ -10,13 +11,10 @@ class Router {
 	/// \brief Push a mapping to the top.
 	/// \param mapping Mapping to push.
 	/// Disengages the existing topmost mapping before pushing.
-	void push_mapping(gsl::not_null<IMapping*> mapping);
+	void push_mapping(std::shared_ptr<IMapping> const& mapping);
 
 	/// \brief Pop the topmost mapping, if any.
 	void pop_mapping();
-
-	/// \brief Remove a particular mapping, if mapped.
-	void remove_mapping(gsl::not_null<IMapping const*> mapping);
 
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
@@ -39,10 +37,13 @@ class Router {
 	float nonzero_dead_zone{Gamepad::nonzero_dead_zone_v};
 
   private:
-	template <typename F>
-	void do_dispatch(F func);
+	void pre_dispatch();
 
-	std::vector<gsl::not_null<IMapping*>> m_mappings{};
+	template <typename F>
+	void invoke_if_top(F func);
+
+	std::vector<std::weak_ptr<IMapping>> m_mappings{};
+	std::shared_ptr<IMapping> m_top{};
 
 	Gamepad::Manager m_gamepad_manager{};
 	std::optional<Device> m_last_used_device{};

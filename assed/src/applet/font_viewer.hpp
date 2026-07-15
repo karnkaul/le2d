@@ -17,8 +17,8 @@ class FontViewer : public Applet {
   private:
 	enum class Display : std::int8_t { Atlas, InputText, COUNT_ };
 
-	auto consume_key(event::Key const& key) -> bool final;
-	auto consume_codepoint(event::Codepoint codepoint) -> bool final;
+	void on_key(event::Key const& key);
+	void on_codepoint(event::Codepoint codepoint);
 
 	void tick(kvf::Seconds dt) final;
 	void render(IRenderer& renderer) const final;

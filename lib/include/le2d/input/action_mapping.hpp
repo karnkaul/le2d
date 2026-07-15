@@ -29,10 +29,10 @@ class ActionMapping : public IMapping {
 	/// \brief Process events and dispatch callbacks.
 	/// \param events List of events for this frame.
 	/// \param gamepads Gamepad manager instance.
-	void dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) override;
+	void dispatch_events(std::span<le::Event const> events, Gamepad::Manager const& gamepads) override;
 
 	/// \brief Disengage all bindings.
-	void disengage() override;
+	void disengage_input() override;
 
   private:
 	template <typename F>

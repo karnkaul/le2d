@@ -11,17 +11,16 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};
+
+	m_input_mapping->on_cursor_pos = [this](event::CursorPos const& e) { on_cursor_pos(e); };
+	m_input_mapping->on_mouse_button = [this](event::MouseButton const& e) { on_mouse_button(e); };
 }
 
-auto TileSheetEditor::consume_cursor_move(glm::vec2 const cursor) -> bool {
-	m_cursor_pos = cursor;
-	return true;
-}
+void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) { m_cursor_pos = cursor.normalized.to_target(get_framebuffer_size()); }
 
-auto TileSheetEditor::consume_mouse_button(event::MouseButton const& button) -> bool {
-	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) { return false; }
+void TileSheetEditor::on_mouse_button(event::MouseButton const& button) {
+	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) { return; }
 	on_click();
-	return true;
 }
 
 void TileSheetEditor::tick(kvf::Seconds const /*dt*/) {

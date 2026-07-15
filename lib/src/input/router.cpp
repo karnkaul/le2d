@@ -1,4 +1,5 @@
 #include "le2d/input/router.hpp"
+#include <ranges>
 
 namespace le::input {
 namespace {
@@ -8,7 +9,8 @@ constexpr auto holds_any_of(Event const& e) {
 }
 } // namespace
 
-void Router::push_mapping(gsl::not_null<IMapping*> mapping) {
+void Router::push_mapping(std::shared_ptr<IMapping> const& mapping) {
+	if (!mapping) { return; }
 	disengage();
 	m_mappings.push_back(mapping);
 }
@@ -16,10 +18,6 @@ void Router::push_mapping(gsl::not_null<IMapping*> mapping) {
 void Router::pop_mapping() {
 	if (m_mappings.empty()) { return; }
 	m_mappings.pop_back();
-}
-
-void Router::remove_mapping(gsl::not_null<IMapping const*> mapping) {
-	std::erase_if(m_mappings, [mapping](gsl::not_null<IMapping*> m) { return m == mapping; });
 }
 
 void Router::dispatch(std::span<Event const> events) {
@@ -36,21 +34,32 @@ void Router::dispatch(std::span<Event const> events) {
 
 	if (m_gamepad_manager.update(nonzero_dead_zone)) { m_last_used_device = Device::Gamepad; }
 
+	pre_dispatch();
 	if (should_disengage) {
 		disengage();
 	} else {
-		do_dispatch([&](IMapping& mapping) { mapping.dispatch(events, m_gamepad_manager); });
+		invoke_if_top([&](IMapping& mapping) { mapping.dispatch_events(events, m_gamepad_manager); });
 	}
+
+	m_top = {};
 }
 
 void Router::disengage() {
-	do_dispatch([](IMapping& mapping) { mapping.disengage(); });
+	invoke_if_top([](IMapping& mapping) { mapping.disengage_input(); });
+}
+
+void Router::pre_dispatch() {
+	std::erase_if(m_mappings, [](auto const& ptr) { return ptr.expired(); });
+	if (m_mappings.empty()) {
+		m_top = {};
+		return;
+	}
+	m_top = m_mappings.back().lock();
 }
 
 template <typename F>
-void Router::do_dispatch(F func) {
-	if (m_mappings.empty()) { return; }
-	auto top = m_mappings.back();
-	func(*top);
+void Router::invoke_if_top(F func) {
+	if (!m_top) { return; }
+	func(*m_top);
 }
 } // namespace le::input

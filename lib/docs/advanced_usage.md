@@ -27,17 +27,23 @@ See the `demo::LoadAssets` scene for a demonstration.
 
 ## Input System
 
-WIP
+`le::Context::event_queue()` returns an ordered view into the window `le::Event`s for the current frame. This is generally fine for simple applications, but gets complicated with multiple scenes and dynamic + blocking UI, for which routing and action-binding systems are provided.
 
-### Router and Actions
+### Mappings, Actions, and Router
 
-For gameplay. One-way. Stack with single active receiver.
+An `le::input::IMapping` represents a consumer of events (and gamepad states). Input mappings are unidirectional and designed primarily for reactive gameplay, though they can very well be used for window-level responses too.
 
-### Dispatch and Listeners
+The simplest kind of mapping is `le::input::ListenerMapping`, which exposes optional callbacks for every `event` type.
 
-For UI / scenes. Two-way. Cascading stack.
+An `input::action` type represents one of various kinds of inputs (eg digital for off/on, axis for 0-1). Multiple actions can be bound to a callback each via an `le::input::ActionMapping`. Each callback is invoked with an `input::action::Value` which can be cast to a `bool` (digital), `float` (1D axis), or `glm::vec2` (2D axis).
+
+An `le::input::Router` stores a mutable stack of weak pointers to input mappings, with the top unexpired one being active and receiving input events. Instead of looping over the event queue, pass it to the router every frame via `le::input::Router::dispatch()`.
+
+Most of the time a single persistent mapping will be sufficient, the stack is useful for eg having a different mapping for menu navigation.
 
 ## Console
+
+WIP
 
 ## RenderPass and RenderTexture
 

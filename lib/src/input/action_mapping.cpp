@@ -17,7 +17,7 @@ void ActionMapping::unbind_action(gsl::not_null<IAction const*> action) {
 	std::erase_if(m_bindings, [action](Binding const& b) { return b.action == action; });
 }
 
-void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) {
+void ActionMapping::dispatch_events(std::span<le::Event const> events, Gamepad::Manager const& gamepads) {
 	auto const visitor = klib::SubVisitor{
 		[this](le::event::Key const& key) { iterate([key](IAction& action) { action.on_key(key); }); },
 		[this](le::event::MouseButton const& mb) { iterate([mb](IAction& action) { action.on_mouse_button(mb); }); },
@@ -31,7 +31,7 @@ void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad::Manager
 	}
 }
 
-void ActionMapping::disengage() {
+void ActionMapping::disengage_input() {
 	for (auto& binding : m_bindings) {
 		binding.action->disengage();
 		binding.dispatch();
