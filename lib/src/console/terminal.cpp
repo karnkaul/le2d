@@ -74,6 +74,22 @@ struct Buffer::Printer {
 	Buffer& m_buffer;
 };
 
+struct SizingState {
+	[[nodiscard]] auto has_size() const -> bool { return render_target_size.has_value(); }
+	[[nodiscard]] auto has_resized_once() const -> bool { return resized_once; }
+	[[nodiscard]] auto needs_resize() const -> bool { return !resized_once || !render_target_size || *render_target_size != previous_render_target_size; }
+
+	void on_resized() {
+		KLIB_ASSERT(render_target_size);
+		previous_render_target_size = *render_target_size;
+		resized_once = true;
+	}
+
+	mutable std::optional<glm::vec2> render_target_size{};
+	glm::vec2 previous_render_target_size{};
+	bool resized_once{};
+};
+
 constexpr auto longest_match(std::span<std::string_view const> candidates, std::string_view const current) {
 	if (candidates.size() < 2) { return current; }
 	auto const source = candidates.front();
@@ -181,14 +197,14 @@ class Terminal : public ITerminal {
 	}
 
 	void tick(kvf::Seconds const dt) final {
-		if (!m_resized_once) {
-			if (!m_render_target_size) { return; }
-			first_resize();
+		if (!m_sizing_state.has_resized_once()) {
+			if (!m_sizing_state.has_size()) { return; }
+			resize();
+			m_render_view.position.y = m_hide_y;
 		}
 
-		KLIB_ASSERT(m_render_target_size && m_prev_rt_size);
-		if (*m_prev_rt_size != *m_render_target_size) { resize(); }
-		*m_prev_rt_size = *m_render_target_size;
+		KLIB_ASSERT(m_sizing_state.has_size());
+		if (m_sizing_state.needs_resize()) { resize(); }
 
 		if (m_active) {
 			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
@@ -201,8 +217,8 @@ class Terminal : public ITerminal {
 	}
 
 	void draw(IRenderer& renderer) const final {
-		m_render_target_size = renderer.framebuffer_size();
-		if (!m_resized_once) { return; }
+		m_sizing_state.render_target_size = renderer.framebuffer_size();
+		if (!m_sizing_state.has_resized_once()) { return; }
 
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
 		auto const old_view = renderer.get_view();
@@ -241,32 +257,27 @@ class Terminal : public ITerminal {
 	}
 
 	void resize() {
-		KLIB_ASSERT(m_render_target_size);
-		auto const width = m_render_target_size->x;
-		m_background.geometry.create({width, 0.5f * m_render_target_size->y});
-		m_separator.geometry.create({width, m_info.style.separator_height});
+		KLIB_ASSERT(m_sizing_state.has_size());
+		auto const size = *m_sizing_state.render_target_size;
+		m_background.geometry.create({size.x, 0.5f * size.y});
+		m_separator.geometry.create({size.x, m_info.style.separator_height});
 		m_background.instance.transform.position.y = 0.5f * m_background.geometry.get_size().y;
 		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
-		m_caret.instance.transform.position = {(-0.5f * width) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
+		m_caret.instance.transform.position = {(-0.5f * size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
 		m_input.instance.transform.position = m_caret.instance.transform.position;
 		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -0.5f * m_render_target_size->y;
+		m_hide_y = -0.5f * size.y;
 		m_show_y = 0.0f;
 		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
-	}
-
-	void first_resize() {
-		resize();
-		m_render_view.position.y = m_hide_y;
-		m_prev_rt_size = m_render_target_size;
-		m_resized_once = true;
+		m_sizing_state.on_resized();
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
-		KLIB_ASSERT(m_render_target_size);
-		auto const scissor_y = ((0.5f * m_render_target_size->y) - m_separator.instance.transform.position.y) / m_render_target_size->y;
+		KLIB_ASSERT(m_sizing_state.has_resized_once());
+		auto const size = *m_sizing_state.render_target_size;
+		auto const scissor_y = ((0.5f * size.y) - m_separator.instance.transform.position.y) / size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);
@@ -281,8 +292,8 @@ class Terminal : public ITerminal {
 	void move_buffer_y(float const dy) { set_buffer_y(m_buffer.position.y + dy); }
 
 	void set_buffer_y(float const value) {
-		if (!m_render_target_size) { return; }
-		auto const max_dy = m_buffer.get_height() - (0.5f * m_render_target_size->y);
+		if (!m_sizing_state.has_size()) { return; }
+		auto const max_dy = m_buffer.get_height() - (0.5f * m_sizing_state.render_target_size->y);
 		if (max_dy < 0.0f) {
 			m_buffer.position.y = m_buffer_max_y;
 			return;
@@ -323,8 +334,8 @@ class Terminal : public ITerminal {
 	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
 
 	void on_scroll(event::Scroll const scroll) {
-		if (!m_render_target_size) { return; }
-		if (!is_active() || (m_n_cursor_pos * m_render_target_size.value()).y < 0.0f) { return; }
+		if (!m_sizing_state.has_size()) { return; }
+		if (!is_active() || (m_n_cursor_pos * m_sizing_state.render_target_size.value()).y < 0.0f) { return; }
 		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
 	}
 
@@ -446,18 +457,17 @@ class Terminal : public ITerminal {
 	}
 
 	void page_up() {
-		if (!m_render_target_size) { return; }
-		move_buffer_y(-((0.5f * m_render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+		if (!m_sizing_state.has_size()) { return; }
+		move_buffer_y(-((0.5f * m_sizing_state.render_target_size->y) - (2.0f * float(m_info.style.text_height))));
 	}
 
 	void page_down() {
-		if (!m_render_target_size) { return; }
-		move_buffer_y(+((0.5f * m_render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+		if (!m_sizing_state.has_size()) { return; }
+		move_buffer_y(+((0.5f * m_sizing_state.render_target_size->y) - (2.0f * float(m_info.style.text_height))));
 	}
 
 	TerminalCreateInfo m_info;
-	mutable std::optional<glm::vec2> m_render_target_size{};
-	std::optional<glm::vec2> m_prev_rt_size{};
+	SizingState m_sizing_state{};
 	ndc::vec2 m_n_cursor_pos{};
 
 	tweak::Registry m_tweak_registry{};
@@ -471,8 +481,6 @@ class Terminal : public ITerminal {
 	Caret m_caret{};
 	drawable::InputText m_input;
 	Buffer m_buffer;
-
-	bool m_resized_once{};
 
 	float m_hide_y{};
 	float m_show_y{};
