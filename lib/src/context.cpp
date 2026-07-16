@@ -331,7 +331,7 @@ class ContextImpl : public Context {
 		});
 		glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) { push_event(window, event::Codepoint{codepoint}); });
 		glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowResize{x, y}); });
-		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::FramebufferResize{x, y}); });
+		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::SwapchainResize{x, y}); });
 		glfwSetWindowPosCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowPos{x, y}); });
 		glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int i) { push_event(window, to_focus<event::WindowIconify>(i)); });
 		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) { self(window).on_cursor_pos({x, y}); });
@@ -387,10 +387,10 @@ class ContextImpl : public Context {
 auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> { return std::make_unique<ContextImpl>(create_info); }
 
 auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
-auto Context::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
+auto Context::window_framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
 auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_swapchain_image_extent(); }
-auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
-auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
+auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{window_framebuffer_size()} * get_render_scale(); }
+auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), window_framebuffer_size()); }
 
 auto Context::get_title() const -> klib::CString { return glfwGetWindowTitle(get_window()); }
 

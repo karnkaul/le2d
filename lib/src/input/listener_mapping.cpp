@@ -31,7 +31,7 @@ void ListenerMapping::dispatch_events(std::span<le::Event const> events, Gamepad
 		[this](event::CursorFocus const& e) { invoke_if(Type::Mouse, on_cursor_focus, e); },
 		[this](event::WindowIconify const& e) { invoke_if(Type::None, on_window_iconify, e); },
 		[this](event::WindowResize const& e) { invoke_if(Type::None, on_window_resize, e); },
-		[this](event::FramebufferResize const& e) { invoke_if(Type::None, on_framebuffer_resize, e); },
+		[this](event::SwapchainResize const& e) { invoke_if(Type::None, on_swapchain_resize, e); },
 		[this](event::CursorPos const& e) { invoke_if(Type::Mouse, on_cursor_pos, e); },
 		[this](event::Codepoint const e) { invoke_if(Type::Keyboard, on_codepoint, e); },
 		[this](event::Key const& e) { invoke_if(Type::Keyboard, on_key, e); },

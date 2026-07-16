@@ -16,7 +16,7 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
 	m_input_mapping->on_mouse_button = [this](event::MouseButton const& e) { on_mouse_button(e); };
 }
 
-void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) { m_cursor_pos = cursor.normalized.to_target(get_framebuffer_size()); }
+void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) { m_cursor_pos = cursor.normalized.to_target(get_main_pass_size()); }
 
 void TileSheetEditor::on_mouse_button(event::MouseButton const& button) {
 	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) { return; }

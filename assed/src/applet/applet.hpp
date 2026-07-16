@@ -38,7 +38,7 @@ class Applet : public klib::Polymorphic {
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
 	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
 	[[nodiscard]] auto get_asset_loader() const -> AssetLoader const& { return get_services().get<AssetLoader>(); }
-	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().main_pass_size(); }
+	[[nodiscard]] auto get_main_pass_size() const -> glm::vec2 { return get_context().main_pass_size(); }
 
 	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;

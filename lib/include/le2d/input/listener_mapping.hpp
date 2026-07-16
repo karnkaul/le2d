@@ -12,7 +12,7 @@ class ListenerMapping : public IMapping {
 	void disengage_input() final;
 
 	Callback<> on_window_close{};
-	Callback<event::FramebufferResize> on_framebuffer_resize{};
+	Callback<event::SwapchainResize> on_swapchain_resize{};
 	Callback<event::WindowResize> on_window_resize{};
 	Callback<event::WindowFocus> on_window_focus{};
 	Callback<event::CursorFocus> on_cursor_focus{};

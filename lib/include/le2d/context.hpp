@@ -103,7 +103,7 @@ class Context : public klib::Polymorphic {
 	/// \returns Window size as reported by GLFW.
 	[[nodiscard]] auto window_size() const -> glm::ivec2;
 	/// \returns Framebuffer size as reported by GLFW.
-	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2;
+	[[nodiscard]] auto window_framebuffer_size() const -> glm::ivec2;
 	/// \returns Current Swapchain extent.
 	[[nodiscard]] auto swapchain_extent() const -> vk::Extent2D;
 	/// \returns Main Render Pass framebuffer size (scaled).

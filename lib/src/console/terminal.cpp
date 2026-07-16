@@ -183,10 +183,7 @@ class Terminal : public ITerminal {
 	void tick(kvf::Seconds const dt) final {
 		if (!m_resized_once) {
 			if (!m_render_target_size) { return; }
-			resize();
-			m_render_view.position.y = m_hide_y;
-			m_prev_rt_size = m_render_target_size;
-			m_resized_once = true;
+			first_resize();
 		}
 
 		KLIB_ASSERT(m_render_target_size && m_prev_rt_size);
@@ -258,6 +255,13 @@ class Terminal : public ITerminal {
 		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
+	}
+
+	void first_resize() {
+		resize();
+		m_render_view.position.y = m_hide_y;
+		m_prev_rt_size = m_render_target_size;
+		m_resized_once = true;
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
