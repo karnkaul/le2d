@@ -24,7 +24,7 @@ struct IndexedInspector {
 		auto const current = asset_type_name_map.to_name(out);
 		if (!ImGui::BeginCombo(type_label.c_str(), current.data())) { return; }
 
-		for (auto const [type, name] : asset_type_name_map.as_span()) {
+		for (auto const& [type, name] : asset_type_name_map.as_span()) {
 			if (ImGui::Selectable(name.data(), type == out)) { out = type; }
 		}
 		ImGui::EndCombo();
@@ -162,7 +162,7 @@ void LoadAssets::inspect_manifest() {
 
 void LoadAssets::inspect_map() const {
 	if (!ImGui::TreeNode("Assets")) { return; }
-	for (auto const asset_view : m_map.build_asset_views()) {
+	for (auto const& asset_view : m_map.build_asset_views()) {
 		auto const type = [&] {
 			if (dynamic_cast<le::IFont*>(asset_view.asset.get())) { return AssetType::Font; }
 			if (dynamic_cast<le::IAudioBuffer*>(asset_view.asset.get())) { return AssetType::AudioBuffer; }
