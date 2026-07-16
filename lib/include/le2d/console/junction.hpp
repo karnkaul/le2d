@@ -2,6 +2,7 @@
 #include "le2d/console/terminal.hpp"
 #include "le2d/input/router.hpp"
 #include <span>
+#include <vector>
 
 namespace le::console {
 /// \brief Dispatch events to terminal if active else to input router.
@@ -12,10 +13,12 @@ class Junction {
 	explicit Junction(gsl::not_null<input::Router*> router, gsl::not_null<ITerminal*> terminal) : m_router(router), m_terminal(terminal) {}
 
 	/// \param events Event queue.
-	void dispatch(std::span<Event const> events) const;
+	void dispatch(std::span<Event const> events);
 
   private:
 	gsl::not_null<input::Router*> m_router;
 	gsl::not_null<ITerminal*> m_terminal;
+
+	std::vector<Event> m_event_buffer{};
 };
 } // namespace le::console

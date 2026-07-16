@@ -40,7 +40,7 @@ struct TerminalCreateInfo {
 		kvf::Color error{kvf::red_v};
 	} colors{};
 
-	int trigger{GLFW_KEY_GRAVE_ACCENT};
+	int trigger{GLFW_KEY_F1};
 };
 
 class TerminalBuilder {

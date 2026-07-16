@@ -181,19 +181,15 @@ class Terminal : public ITerminal {
 		log.error("{}", text);
 	}
 
-	auto handle_events(std::span<Event const> events) -> StateChange final {
-		auto const was_active = is_active();
-		auto const visitor = klib::SubVisitor{
-			[this](event::Key const& key) { on_key(key); },
-			[this](event::Codepoint const codepoint) { on_codepoint(codepoint); },
-			[this](event::CursorPos const& cursor) { on_cursor_move(cursor); },
-			[this](event::Scroll const& scroll) { on_scroll(scroll); },
+	auto consume_event(Event const& event) -> bool final {
+		auto const visitor = klib::Visitor{
+			[this](event::Key const& key) { return on_key(key); },
+			[this](event::Codepoint const codepoint) { return on_codepoint(codepoint); },
+			[this](event::CursorPos const& cursor) { return on_cursor_move(cursor); },
+			[this](event::Scroll const& scroll) { return on_scroll(scroll); },
+			[](auto const& /*event*/) { return false; },
 		};
-		for (auto const& event : events) { std::visit(visitor, event); }
-
-		if (!was_active && is_active()) { return StateChange::Activated; }
-		if (was_active && !is_active()) { return StateChange::Deactivated; }
-		return StateChange::None;
+		return std::visit(visitor, event);
 	}
 
 	void tick(kvf::Seconds const dt) final {
@@ -301,9 +297,13 @@ class Terminal : public ITerminal {
 		m_buffer.position.y = std::clamp(value, -max_dy, m_buffer_max_y);
 	}
 
-	void on_key(event::Key const& key) {
-		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
-		if (!is_active()) { return; }
+	auto on_key(event::Key const& key) -> bool {
+		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) {
+			toggle_active();
+			return true;
+		}
+
+		if (!is_active()) { return false; }
 
 		if (key.mods == 0) {
 			if (key.action == GLFW_PRESS) {
@@ -323,20 +323,26 @@ class Terminal : public ITerminal {
 			}
 		}
 		m_input.on_key(key);
+		return true;
 	}
 
-	void on_codepoint(event::Codepoint const codepoint) {
-		if (!is_active() || codepoint == event::Codepoint('`')) { return; }
+	auto on_codepoint(event::Codepoint const codepoint) -> bool {
+		if (!is_active()) { return false; }
 		m_input.on_codepoint(codepoint);
 		stop_cycling();
+		return true;
 	}
 
-	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
+	auto on_cursor_move(event::CursorPos const& cursor_pos) -> bool {
+		m_n_cursor_pos = cursor_pos.normalized;
+		return is_active();
+	}
 
-	void on_scroll(event::Scroll const scroll) {
-		if (!m_sizing_state.has_size()) { return; }
-		if (!is_active() || (m_n_cursor_pos * m_sizing_state.render_target_size.value()).y < 0.0f) { return; }
+	auto on_scroll(event::Scroll const scroll) -> bool {
+		if (!m_sizing_state.has_size()) { return false; }
+		if (!is_active() || (m_n_cursor_pos * m_sizing_state.render_target_size.value()).y < 0.0f) { return false; }
 		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
+		return true;
 	}
 
 	void on_enter() {
@@ -507,7 +513,7 @@ struct NullTerminal : ITerminal {
 	[[nodiscard]] auto get_background() const -> kvf::Color final { return {}; }
 	void set_background(kvf::Color /*color*/) final {}
 
-	auto handle_events(std::span<Event const> /*events*/) -> StateChange final { return StateChange::None; }
+	auto consume_event(Event const& /*event*/) -> bool final { return false; }
 
 	void tick(kvf::Seconds /*dt*/) final {}
 	void draw(IRenderer& /*renderer*/) const final {}

@@ -3,12 +3,9 @@
 #include "le2d/drawable/drawable.hpp"
 #include "le2d/event.hpp"
 #include "le2d/tweak/store.hpp"
-#include <cstdint>
 #include <string_view>
 
 namespace le::console {
-enum class StateChange : std::int8_t { None, Activated, Deactivated };
-
 class ITerminal : public IDrawable, public tweak::IStore {
   public:
 	[[nodiscard]] virtual auto is_null() const -> bool = 0;
@@ -22,7 +19,7 @@ class ITerminal : public IDrawable, public tweak::IStore {
 	[[nodiscard]] virtual auto get_background() const -> kvf::Color = 0;
 	virtual void set_background(kvf::Color color) = 0;
 
-	virtual auto handle_events(std::span<Event const> events) -> StateChange = 0;
+	virtual auto consume_event(Event const& event) -> bool = 0;
 
 	virtual void tick(kvf::Seconds dt) = 0;
 };

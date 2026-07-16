@@ -1,20 +1,23 @@
 #include "demo/scene/console.hpp"
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/error.hpp"
+#include "le2d/input/listener_mapping.hpp"
 
 namespace demo::scene {
 Console::Console(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader) : Scene(context, data_loader, name_v) {
 	load_font();
 	create_terminal();
+	create_input_text();
 }
 
 void Console::tick(kvf::Seconds const dt) {
 	m_junction->dispatch(get_context().event_queue());
 	m_terminal->tick(dt);
+	m_input_text->tick(dt);
 }
 
 void Console::render_main_pass(le::IRenderer& renderer) const {
-	//
+	m_input_text->draw(renderer);
 	m_terminal->draw(renderer);
 }
 
@@ -28,5 +31,19 @@ void Console::create_terminal() {
 	auto builder = le::console::TerminalBuilder{};
 	m_terminal = builder.build(m_mono_font.get());
 	m_junction.emplace(&m_router, m_terminal.get());
+}
+
+void Console::create_input_text() {
+	m_input_text.emplace(m_mono_font.get());
+	m_mapping = create_mapping();
+	m_router.push_mapping(m_mapping);
+	m_input_text->set_interactive(true);
+}
+
+auto Console::create_mapping() -> std::shared_ptr<le::input::IMapping> {
+	auto ret = std::make_shared<le::input::ListenerMapping>();
+	ret->on_key = [this](le::event::Key const& key) { m_input_text->on_key(key); };
+	ret->on_codepoint = [this](le::event::Codepoint const codepoint) { m_input_text->on_codepoint(codepoint); };
+	return ret;
 }
 } // namespace demo::scene
