@@ -9,14 +9,13 @@ class Junction {
   public:
 	/// \param router Persistent pointer to input router.
 	/// \param terminal Persistent pointer to terminal instance.
-	explicit Junction(gsl::not_null<input::Router*> router, klib::Ptr<ITerminal> terminal = {}) : m_router(router), m_terminal(terminal) {}
+	explicit Junction(gsl::not_null<input::Router*> router, gsl::not_null<ITerminal*> terminal) : m_router(router), m_terminal(terminal) {}
 
 	/// \param events Event queue.
-	/// \param framebuffer_size Size of target framebuffer for terminal.
-	void dispatch(std::span<Event const> events, glm::ivec2 framebuffer_size) const;
+	void dispatch(std::span<Event const> events) const;
 
   private:
 	gsl::not_null<input::Router*> m_router;
-	klib::Ptr<ITerminal> m_terminal;
+	gsl::not_null<ITerminal*> m_terminal;
 };
 } // namespace le::console

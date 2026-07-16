@@ -100,7 +100,7 @@ class Terminal : public ITerminal {
 	explicit Terminal(gsl::not_null<IFont*> font, TerminalCreateInfo const& info, bool const add_builtin_tweaks)
 		: m_info(info), m_input(font, to_input_text_ci(info)),
 		  m_buffer(font->get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
-		setup(*font);
+		setup();
 
 		if (add_builtin_tweaks) { add_builtins(); }
 
@@ -165,7 +165,7 @@ class Terminal : public ITerminal {
 		log.error("{}", text);
 	}
 
-	auto handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events) -> StateChange final {
+	auto handle_events(std::span<Event const> events) -> StateChange final {
 		auto const was_active = is_active();
 		auto const visitor = klib::SubVisitor{
 			[this](event::Key const& key) { on_key(key); },
@@ -175,17 +175,24 @@ class Terminal : public ITerminal {
 		};
 		for (auto const& event : events) { std::visit(visitor, event); }
 
-		if (kvf::is_positive(framebuffer_size) && m_framebuffer_size != framebuffer_size) {
-			m_framebuffer_size = framebuffer_size;
-			resize();
-		}
-
 		if (!was_active && is_active()) { return StateChange::Activated; }
 		if (was_active && !is_active()) { return StateChange::Deactivated; }
 		return StateChange::None;
 	}
 
 	void tick(kvf::Seconds const dt) final {
+		if (!m_resized_once) {
+			if (!m_render_target_size) { return; }
+			resize();
+			m_render_view.position.y = m_hide_y;
+			m_prev_rt_size = m_render_target_size;
+			m_resized_once = true;
+		}
+
+		KLIB_ASSERT(m_render_target_size && m_prev_rt_size);
+		if (*m_prev_rt_size != *m_render_target_size) { resize(); }
+		*m_prev_rt_size = *m_render_target_size;
+
 		if (m_active) {
 			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::min(m_render_view.position.y, m_show_y);
@@ -197,6 +204,9 @@ class Terminal : public ITerminal {
 	}
 
 	void draw(IRenderer& renderer) const final {
+		m_render_target_size = renderer.framebuffer_size();
+		if (!m_resized_once) { return; }
+
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
 		auto const old_view = renderer.get_view();
 		renderer.set_view(m_render_view);
@@ -211,7 +221,7 @@ class Terminal : public ITerminal {
 		renderer.set_viewport(old_viewport);
 	}
 
-	void setup(IFont& font) {
+	void setup() {
 		m_input.set_interactive(false);
 
 		m_separator.instance.tint = m_info.colors.separator;
@@ -221,10 +231,7 @@ class Terminal : public ITerminal {
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
 		m_info.motion.scroll_speed = std::abs(m_info.motion.scroll_speed);
 
-		m_caret.create(font.get_atlas(m_info.style.text_height), m_info.style.caret);
-
-		resize();
-		m_render_view.position.y = m_hide_y;
+		m_caret.create(m_input.get_font().get_atlas(m_info.style.text_height), m_info.style.caret);
 	}
 
 	void add_builtins() {
@@ -237,15 +244,16 @@ class Terminal : public ITerminal {
 	}
 
 	void resize() {
-		auto const width = m_framebuffer_size.x;
-		m_background.geometry.create({width, 0.5f * m_framebuffer_size.y});
+		KLIB_ASSERT(m_render_target_size);
+		auto const width = m_render_target_size->x;
+		m_background.geometry.create({width, 0.5f * m_render_target_size->y});
 		m_separator.geometry.create({width, m_info.style.separator_height});
 		m_background.instance.transform.position.y = 0.5f * m_background.geometry.get_size().y;
 		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
-		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
+		m_caret.instance.transform.position = {(-0.5f * width) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
 		m_input.instance.transform.position = m_caret.instance.transform.position;
 		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -0.5f * m_framebuffer_size.y;
+		m_hide_y = -0.5f * m_render_target_size->y;
 		m_show_y = 0.0f;
 		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
@@ -253,7 +261,8 @@ class Terminal : public ITerminal {
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
-		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
+		KLIB_ASSERT(m_render_target_size);
+		auto const scissor_y = ((0.5f * m_render_target_size->y) - m_separator.instance.transform.position.y) / m_render_target_size->y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);
@@ -268,7 +277,8 @@ class Terminal : public ITerminal {
 	void move_buffer_y(float const dy) { set_buffer_y(m_buffer.position.y + dy); }
 
 	void set_buffer_y(float const value) {
-		auto const max_dy = m_buffer.get_height() - (0.5f * m_framebuffer_size.y);
+		if (!m_render_target_size) { return; }
+		auto const max_dy = m_buffer.get_height() - (0.5f * m_render_target_size->y);
 		if (max_dy < 0.0f) {
 			m_buffer.position.y = m_buffer_max_y;
 			return;
@@ -309,7 +319,8 @@ class Terminal : public ITerminal {
 	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
 
 	void on_scroll(event::Scroll const scroll) {
-		if (!is_active() || (m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
+		if (!m_render_target_size) { return; }
+		if (!is_active() || (m_n_cursor_pos * m_render_target_size.value()).y < 0.0f) { return; }
 		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
 	}
 
@@ -430,12 +441,19 @@ class Terminal : public ITerminal {
 		}
 	}
 
-	void page_up() { move_buffer_y(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_up() {
+		if (!m_render_target_size) { return; }
+		move_buffer_y(-((0.5f * m_render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+	}
 
-	void page_down() { move_buffer_y(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_down() {
+		if (!m_render_target_size) { return; }
+		move_buffer_y(+((0.5f * m_render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+	}
 
 	TerminalCreateInfo m_info;
-	glm::vec2 m_framebuffer_size{400.0f, 300.0f};
+	mutable std::optional<glm::vec2> m_render_target_size{};
+	std::optional<glm::vec2> m_prev_rt_size{};
 	ndc::vec2 m_n_cursor_pos{};
 
 	tweak::Registry m_tweak_registry{};
@@ -450,10 +468,13 @@ class Terminal : public ITerminal {
 	drawable::InputText m_input;
 	Buffer m_buffer;
 
+	bool m_resized_once{};
+
 	float m_hide_y{};
 	float m_show_y{};
 	float m_buffer_max_y{};
 	Transform m_render_view{};
+
 	bool m_active{};
 
 	std::optional<std::size_t> m_history_index{};
@@ -474,7 +495,7 @@ struct NullTerminal : ITerminal {
 	[[nodiscard]] auto get_background() const -> kvf::Color final { return {}; }
 	void set_background(kvf::Color /*color*/) final {}
 
-	auto handle_events(glm::vec2 /*framebuffer_size*/, std::span<Event const> /*events*/) -> StateChange final { return StateChange::None; }
+	auto handle_events(std::span<Event const> /*events*/) -> StateChange final { return StateChange::None; }
 
 	void tick(kvf::Seconds /*dt*/) final {}
 	void draw(IRenderer& /*renderer*/) const final {}

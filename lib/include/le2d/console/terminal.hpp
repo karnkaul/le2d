@@ -22,7 +22,7 @@ class ITerminal : public IDrawable, public tweak::IStore {
 	[[nodiscard]] virtual auto get_background() const -> kvf::Color = 0;
 	virtual void set_background(kvf::Color color) = 0;
 
-	virtual auto handle_events(glm::vec2 framebuffer_size, std::span<Event const> events) -> StateChange = 0;
+	virtual auto handle_events(std::span<Event const> events) -> StateChange = 0;
 
 	virtual void tick(kvf::Seconds dt) = 0;
 };

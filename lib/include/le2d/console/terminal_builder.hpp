@@ -49,8 +49,6 @@ class TerminalBuilder {
 
 	[[nodiscard]] auto build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal>;
 
-	[[nodiscard]] auto operator()(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> { return build(font); }
-
 	CreateInfo create_info{};
 	bool add_builtin_tweaks{true};
 };

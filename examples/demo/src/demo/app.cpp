@@ -1,5 +1,6 @@
 #include "demo/app.hpp"
 #include "clap/parser.hpp"
+#include "demo/scene/console.hpp"
 #include "demo/scene/input_actions.hpp"
 #include "demo/scene/load_assets.hpp"
 #include "le2d/build_version.hpp"
@@ -60,6 +61,7 @@ void App::create_data_loader() {
 void App::add_scene_infos() {
 	m_scene_infos.push_back(create_scene_info<scene::LoadAssets>());
 	m_scene_infos.push_back(create_scene_info<scene::InputActions>());
+	m_scene_infos.push_back(create_scene_info<scene::Console>());
 }
 
 void App::set_active_scene(std::unique_ptr<Scene> scene) {
