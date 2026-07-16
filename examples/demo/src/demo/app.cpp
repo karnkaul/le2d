@@ -1,9 +1,11 @@
 #include "demo/app.hpp"
 #include "clap/parser.hpp"
+#include "demo/log.hpp"
 #include "demo/scene/console.hpp"
 #include "demo/scene/input_actions.hpp"
 #include "demo/scene/load_assets.hpp"
 #include "le2d/build_version.hpp"
+#include "le2d/error.hpp"
 #include "le2d/util.hpp"
 #include <imgui.h>
 
@@ -59,8 +61,8 @@ void App::create_data_loader() {
 }
 
 void App::add_scene_infos() {
-	m_scene_infos.push_back(create_scene_info<scene::LoadAssets>());
 	m_scene_infos.push_back(create_scene_info<scene::InputActions>());
+	m_scene_infos.push_back(create_scene_info<scene::LoadAssets>());
 	m_scene_infos.push_back(create_scene_info<scene::Console>());
 }
 
@@ -98,7 +100,9 @@ void App::inspect_main_menu() {
 
 	if (selected) {
 		m_context->wait_idle();
-		set_active_scene(selected->factory());
+		try {
+			set_active_scene(selected->factory());
+		} catch (le::Error const& error) { log.error("Failed to create scene: '{}': {}", selected->name, error.what()); }
 	}
 }
 } // namespace demo
