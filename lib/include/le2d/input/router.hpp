@@ -19,6 +19,8 @@ class Router {
 	/// \brief Remove a particular mapping.
 	void remove_mapping(std::shared_ptr<IMapping> const& mapping);
 
+	[[nodiscard]] auto get_top_mapping() const -> std::weak_ptr<IMapping>;
+
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
 	/// \returns true if there are no mappings pushed.

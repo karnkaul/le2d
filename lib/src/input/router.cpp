@@ -20,11 +20,17 @@ void Router::pop_mapping() {
 }
 
 void Router::remove_mapping(std::shared_ptr<IMapping> const& mapping) {
+	if (!mapping) { return; }
 	auto const pred = [&](std::weak_ptr<IMapping> const& ptr) {
 		auto m = ptr.lock();
 		return !m || m == mapping;
 	};
 	std::erase_if(m_mappings, pred);
+}
+
+auto Router::get_top_mapping() const -> std::weak_ptr<IMapping> {
+	if (m_mappings.empty()) { return {}; }
+	return m_mappings.back();
 }
 
 void Router::dispatch(std::span<Event const> events) {

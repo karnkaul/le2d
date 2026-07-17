@@ -42,6 +42,7 @@ class TextBoxConsole : public Scene {
 
 	void load_font();
 	void create_terminal();
+	void create_mapping();
 	void create_text_box();
 	void setup_tweaks();
 
