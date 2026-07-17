@@ -29,6 +29,8 @@ See the `demo::LoadAssets` scene for a demonstration.
 
 `le::Context::event_queue()` returns an ordered view into the window `le::Event`s for the current frame. This is generally fine for simple applications, but gets complicated with multiple scenes and dynamic + blocking UI, for which routing and action-binding systems are provided.
 
+Use `le::input::KeyTrigger`, `le::input::MouseButtonTrigger`, `le::input::KeyChord`, and `le::input::MouseButtonChord` to reduce boilerplate. Triggers engage on key/button press and disengage on release, chords engage on a matching key/button action and support key modifiers.
+
 ### Mappings, Actions, and Router
 
 An `le::input::IMapping` represents a consumer of events (and gamepad states). Input mappings are unidirectional and designed primarily for reactive gameplay, though they can very well be used for window-level responses too.
