@@ -1,9 +1,9 @@
 #include "demo/app.hpp"
 #include "clap/parser.hpp"
 #include "demo/log.hpp"
-#include "demo/scene/console.hpp"
 #include "demo/scene/input_actions.hpp"
 #include "demo/scene/load_assets.hpp"
+#include "demo/scene/text_box_console.hpp"
 #include "le2d/build_version.hpp"
 #include "le2d/error.hpp"
 #include "le2d/util.hpp"
@@ -63,7 +63,7 @@ void App::create_data_loader() {
 void App::add_scene_infos() {
 	m_scene_infos.push_back(create_scene_info<scene::InputActions>());
 	m_scene_infos.push_back(create_scene_info<scene::LoadAssets>());
-	m_scene_infos.push_back(create_scene_info<scene::Console>());
+	m_scene_infos.push_back(create_scene_info<scene::TextBoxConsole>());
 }
 
 void App::set_active_scene(std::unique_ptr<Scene> scene) {
@@ -77,10 +77,10 @@ void App::run_loop() {
 		m_context->next_frame();
 		auto const dt = delta_time.tick();
 
+		inspect_main_menu();
+
 		m_active_scene->tick_frame(dt);
 		m_active_scene->render_frame();
-
-		inspect_main_menu();
 
 		m_context->present();
 	}

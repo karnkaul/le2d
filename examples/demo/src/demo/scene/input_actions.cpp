@@ -6,9 +6,9 @@
 namespace demo::scene {
 Player::Player() {
 	auto& vertices = triangle.geometry.vertices;
-	vertices[0].position = {-80.0f, 50.0f};
-	vertices[1].position = {-80.0f, -50.0f};
-	vertices[2].position = {80.0f, 0.0f};
+	vertices[0].position = {-40.0f, 30.0f};
+	vertices[1].position = {-40.0f, -30.0f};
+	vertices[2].position = {40.0f, 0.0f};
 }
 
 void Player::draw(le::IRenderer& renderer) const { triangle.draw(renderer); }

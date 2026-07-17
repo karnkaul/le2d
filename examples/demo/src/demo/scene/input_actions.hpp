@@ -66,7 +66,7 @@ class GamepadController : public IController {
 
 class InputActions : public Scene {
   public:
-	static constexpr std::string_view name_v{"InputActions"};
+	static constexpr std::string_view name_v{"Input Actions"};
 
 	explicit InputActions(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader);
 

@@ -10,17 +10,19 @@
 namespace demo::scene {
 class TextBox : public le::IDrawable {
   public:
-	explicit TextBox(gsl::not_null<le::IFont*> font);
+	explicit TextBox(gsl::not_null<le::IFont*> font, gsl::not_null<le::input::Router*> router);
 
 	void draw(le::IRenderer& renderer) const final;
 	void tick(kvf::Seconds dt);
 
-	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<le::input::IMapping> const& { return m_mapping; }
-	void set_interactive(bool const interactive) { m_input_text.set_interactive(interactive); }
+	void activate();
+	void deactivate();
 
   private:
 	void create_quads();
 	void create_mapping();
+
+	gsl::not_null<le::input::Router*> m_router;
 
 	le::drawable::Quad m_background{};
 	le::drawable::Quad m_baseline{};
@@ -28,11 +30,11 @@ class TextBox : public le::IDrawable {
 	std::shared_ptr<le::input::IMapping> m_mapping{};
 };
 
-class Console : public Scene {
+class TextBoxConsole : public Scene {
   public:
-	static constexpr std::string_view name_v{"Console"};
+	static constexpr std::string_view name_v{"TextBox & Console"};
 
-	explicit Console(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader);
+	explicit TextBoxConsole(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader);
 
   private:
 	void tick(kvf::Seconds dt) final;
@@ -49,6 +51,7 @@ class Console : public Scene {
 	le::input::Router m_router{};
 	std::optional<le::console::Junction> m_junction{};
 
+	std::shared_ptr<le::input::IMapping> m_mapping{};
 	std::optional<TextBox> m_text_box{};
 
 	le::Tweakable<kvf::Color> m_clear_color{};
