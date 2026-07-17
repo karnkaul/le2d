@@ -4,6 +4,7 @@
 #include "le2d/console/terminal.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/input/mapping.hpp"
+#include "le2d/tweak/tweakable.hpp"
 
 namespace demo::scene {
 class Console : public Scene {
@@ -19,6 +20,7 @@ class Console : public Scene {
 	void load_font();
 	void create_terminal();
 	void create_input_text();
+	void setup_tweaks();
 	[[nodiscard]] auto create_mapping() -> std::shared_ptr<le::input::IMapping>;
 
 	std::unique_ptr<le::IFont> m_mono_font{};
@@ -29,5 +31,7 @@ class Console : public Scene {
 
 	le::input::Router m_router{};
 	std::optional<le::console::Junction> m_junction{};
+
+	le::Tweakable<kvf::Color> m_clear_color{};
 };
 } // namespace demo::scene

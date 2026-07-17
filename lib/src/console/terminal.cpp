@@ -135,7 +135,7 @@ class Terminal : public ITerminal {
 			auto i = text.find_first_of(" =");
 			if (i == std::string_view::npos) { return Params{.id = text}; }
 			auto value = text.substr(i + 1);
-			while (!value.empty() && value.front() == ' ') { value = value.substr(1); }
+			while (!value.empty() && value.front() == ' ') { value.remove_prefix(1); }
 			return Params{.id = text.substr(0, i), .value = value};
 		}
 	};

@@ -1,6 +1,7 @@
 #pragma once
+#include "klib/string/from_chars.hpp"
+#include "kvf/color.hpp"
 #include <glm/vec2.hpp>
-#include <charconv>
 #include <format>
 #include <string>
 
@@ -47,11 +48,7 @@ struct Parser<Type> {
 		}
 	}
 
-	[[nodiscard]] static auto parse(std::string_view const in, Type& out) -> bool {
-		char const* end = in.data() + in.size();
-		auto const [ptr, ec] = std::from_chars(in.data(), end, out);
-		return ec == std::errc{} && ptr == end;
-	}
+	[[nodiscard]] static auto parse(std::string_view const in, Type& out) -> bool { return klib::try_parse_to(out, in); }
 
 	[[nodiscard]] static auto to_string(Type const value) -> std::string { return std::format("{}", value); }
 };
@@ -77,5 +74,12 @@ struct Parser<glm::tvec2<Type>> {
 	}
 
 	[[nodiscard]] static auto to_string(glm::tvec2<Type> const value) -> std::string { return std::format("{}x{}", value.x, value.y); }
+};
+
+template <>
+struct Parser<kvf::Color> {
+	[[nodiscard]] static constexpr auto type_name() -> std::string_view { return "color-hex"; }
+	[[nodiscard]] static auto parse(std::string_view in, kvf::Color& out) -> bool;
+	[[nodiscard]] static auto to_string(kvf::Color color) -> std::string;
 };
 } // namespace le::tweak
