@@ -8,8 +8,14 @@ constexpr auto max_scale_v{10.0f};
 } // namespace
 
 Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_input_mapping(std::make_shared<input::ListenerMapping>()), m_services(services) {
-	m_input_mapping->on_drop = [this](event::Drop const& e) { on_drop(e); };
-	m_input_mapping->on_scroll = [this](event::Scroll const& e) { on_scroll(e); };
+	m_input_mapping->on_drop = [this](event::Drop const& e) {
+		on_drop(e);
+		return true;
+	};
+	m_input_mapping->on_scroll = [this](event::Scroll const& e) {
+		on_scroll(e);
+		return true;
+	};
 
 	services->get<input::Router>().push_mapping(m_input_mapping);
 	m_save_modal.root_dir = services->get<FileDataLoader>().get_root_dir();

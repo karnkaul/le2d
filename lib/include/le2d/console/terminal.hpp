@@ -2,6 +2,7 @@
 #include "kvf/time.hpp"
 #include "le2d/drawable/drawable.hpp"
 #include "le2d/event.hpp"
+#include "le2d/input/mapping.hpp"
 #include "le2d/tweak/store.hpp"
 #include <string_view>
 
@@ -9,6 +10,8 @@ namespace le::console {
 class ITerminal : public IDrawable, public tweak::IStore {
   public:
 	[[nodiscard]] virtual auto is_null() const -> bool = 0;
+
+	[[nodiscard]] virtual auto get_mapping() const -> std::shared_ptr<input::IMapping> const& = 0;
 
 	[[nodiscard]] virtual auto is_active() const -> bool = 0;
 	virtual void toggle_active() = 0;

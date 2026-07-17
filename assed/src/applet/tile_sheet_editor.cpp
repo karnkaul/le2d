@@ -12,8 +12,14 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};
 
-	m_input_mapping->on_cursor_pos = [this](event::CursorPos const& e) { on_cursor_pos(e); };
-	m_input_mapping->on_mouse_button = [this](event::MouseButton const& e) { on_mouse_button(e); };
+	m_input_mapping->on_cursor_pos = [this](event::CursorPos const& e) {
+		on_cursor_pos(e);
+		return true;
+	};
+	m_input_mapping->on_mouse_button = [this](event::MouseButton const& e) {
+		on_mouse_button(e);
+		return true;
+	};
 }
 
 void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) { m_cursor_pos = cursor.normalized.to_target(get_main_pass_size()); }

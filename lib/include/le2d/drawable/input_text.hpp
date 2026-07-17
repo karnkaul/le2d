@@ -47,8 +47,8 @@ class InputText : public IDrawable {
 	void cursor_home() { set_cursor(0); }
 	void cursor_end() { set_cursor(int(get_string().size())); }
 
-	void on_key(event::Key const& key);
-	void on_codepoint(event::Codepoint codepoint);
+	auto consume_key(event::Key const& key) -> bool;
+	auto consume_codepoint(event::Codepoint codepoint) -> bool;
 
 	void tick(kvf::Seconds dt);
 	void draw(IRenderer& renderer) const override;

@@ -7,8 +7,14 @@ namespace le::assed {
 FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(services) {
 	m_drop_types = FileDrop::Type::Font;
 
-	m_input_mapping->on_key = [this](event::Key const& e) { on_key(e); };
-	m_input_mapping->on_codepoint = [this](event::Codepoint const e) { on_codepoint(e); };
+	m_input_mapping->on_key = [this](event::Key const& e) {
+		on_key(e);
+		return true;
+	};
+	m_input_mapping->on_codepoint = [this](event::Codepoint const e) {
+		on_codepoint(e);
+		return true;
+	};
 	m_input_mapping->on_disengage = [this] {
 		if (m_input_text) { m_input_text->set_interactive(false); }
 	};
@@ -16,12 +22,12 @@ FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(s
 
 void FontViewer::on_key(event::Key const& key) {
 	if (!m_input_text) { return; }
-	m_input_text->on_key(key);
+	m_input_text->consume_key(key);
 }
 
 void FontViewer::on_codepoint(event::Codepoint const codepoint) {
 	if (!m_input_text) { return; }
-	m_input_text->on_codepoint(codepoint);
+	m_input_text->consume_codepoint(codepoint);
 }
 
 void FontViewer::tick(kvf::Seconds const dt) {

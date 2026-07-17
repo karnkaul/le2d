@@ -81,11 +81,12 @@ void InputText::set_cursor(int const cursor) {
 	update();
 }
 
-void InputText::on_key(event::Key const& key) {
-	if (!is_interactive() || key.action == GLFW_RELEASE) { return; }
+auto InputText::consume_key(event::Key const& key) -> bool {
+	if (!is_interactive() || key.action == GLFW_RELEASE) { return false; }
 
 	auto const ctrl = key.mods == GLFW_MOD_CONTROL;
 
+	auto ret = true;
 	switch (key.key) {
 	case GLFW_KEY_LEFT: ctrl ? backward_word() : cursor_left(); break;
 	case GLFW_KEY_RIGHT: ctrl ? forward_word() : cursor_right(); break;
@@ -93,18 +94,24 @@ void InputText::on_key(event::Key const& key) {
 	case GLFW_KEY_END: cursor_end(); break;
 	case GLFW_KEY_BACKSPACE: backward_delete(); break;
 	case GLFW_KEY_DELETE: forward_delete(); break;
+	default: ret = false; break;
 	}
 
 	if (copy_to_clipboard(key)) {
 		glfwSetClipboardString(nullptr, get_string().data());
+		ret = true;
 	} else if (paste_from_clipboard(key)) {
 		append(glfwGetClipboardString(nullptr));
+		ret = true;
 	}
+
+	return ret;
 }
 
-void InputText::on_codepoint(event::Codepoint const codepoint) {
-	if (!is_interactive()) { return; }
+auto InputText::consume_codepoint(event::Codepoint const codepoint) -> bool {
+	if (!is_interactive()) { return false; }
 	write(char(codepoint));
+	return true;
 }
 
 void InputText::tick(kvf::Seconds const dt) {

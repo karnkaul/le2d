@@ -1,10 +1,11 @@
 #pragma once
 #include "demo/scene/scene.hpp"
-#include "le2d/console/junction.hpp"
 #include "le2d/console/terminal.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
+#include "le2d/input/chord.hpp"
 #include "le2d/input/mapping.hpp"
+#include "le2d/input/router.hpp"
 #include "le2d/tweak/tweakable.hpp"
 
 namespace demo::scene {
@@ -37,6 +38,9 @@ class TextBoxConsole : public Scene {
 	explicit TextBoxConsole(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader);
 
   private:
+	static constexpr auto enter_chord_v = le::input::KeyChord{GLFW_KEY_ENTER};
+	static constexpr auto escape_chord_v = le::input::KeyChord{GLFW_KEY_ESCAPE};
+
 	void tick(kvf::Seconds dt) final;
 	void render_main_pass(le::IRenderer& renderer) const final;
 
@@ -50,9 +54,9 @@ class TextBoxConsole : public Scene {
 	std::unique_ptr<le::console::ITerminal> m_terminal{};
 
 	le::input::Router m_router{};
-	std::optional<le::console::Junction> m_junction{};
 
 	std::shared_ptr<le::input::IMapping> m_mapping{};
+
 	std::optional<TextBox> m_text_box{};
 
 	le::Tweakable<kvf::Color> m_clear_color{};

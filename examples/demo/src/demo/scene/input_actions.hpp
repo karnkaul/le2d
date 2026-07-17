@@ -1,6 +1,7 @@
 #pragma once
 #include "demo/scene/scene.hpp"
 #include "le2d/drawable/shape.hpp"
+#include "le2d/input/action.hpp"
 #include "le2d/input/action_mapping.hpp"
 #include "le2d/input/router.hpp"
 

@@ -4,10 +4,10 @@
 #include "le2d/input/listener_mapping.hpp"
 
 namespace demo::scene {
-
 TextBox::TextBox(gsl::not_null<le::IFont*> font, gsl::not_null<le::input::Router*> router) : m_router(router), m_input_text(font) {
 	create_quads();
 	create_mapping();
+	m_input_text.set_interactive(false);
 }
 
 void TextBox::draw(le::IRenderer& renderer) const {
@@ -37,25 +37,21 @@ void TextBox::create_quads() {
 void TextBox::create_mapping() {
 	// TextBox's mapping forwards relevant events to InputText, and deactivates on Escape.
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
-	mapping->on_key = [this](le::event::Key const& key) {
-		if (key.mods == 0 && key.action == GLFW_PRESS && key.key == GLFW_KEY_ESCAPE) {
-			deactivate();
-			return;
-		}
-		m_input_text.on_key(key);
-	};
-	mapping->on_codepoint = [this](le::event::Codepoint const codepoint) { m_input_text.on_codepoint(codepoint); };
+	mapping->on_key = [this](le::event::Key const& key) { return m_input_text.consume_key(key); };
+	mapping->on_codepoint = [this](le::event::Codepoint const codepoint) { return m_input_text.consume_codepoint(codepoint); };
 	m_mapping = std::move(mapping);
 }
 
 void TextBox::activate() {
-	// Push mapping to capture all events.
+	if (m_input_text.is_interactive()) { return; }
+	// Push mapping to consume relevant events.
 	m_router->push_mapping(m_mapping);
 	m_input_text.set_interactive(true);
 }
 
 void TextBox::deactivate() {
-	// Remove mapping (and as a result set Scene mapping as top).
+	if (!m_input_text.is_interactive()) { return; }
+	// Remove mapping and stop consuming events.
 	m_router->remove_mapping(m_mapping);
 	m_input_text.set_interactive(false);
 }
@@ -70,7 +66,7 @@ TextBoxConsole::TextBoxConsole(gsl::not_null<le::Context*> context, gsl::not_nul
 }
 
 void TextBoxConsole::tick(kvf::Seconds const dt) {
-	m_junction->dispatch(get_context().event_queue());
+	m_router.dispatch(get_context().event_queue());
 	m_terminal->tick(dt);
 	m_text_box->tick(dt);
 }
@@ -89,15 +85,23 @@ void TextBoxConsole::load_font() {
 void TextBoxConsole::create_terminal() {
 	auto builder = le::console::TerminalBuilder{};
 	m_terminal = builder.build(m_mono_font.get());
-	m_junction.emplace(&m_router, m_terminal.get());
+	m_router.set_terminal_mapping(m_terminal->get_mapping());
+	// m_junction.emplace(&m_router, m_terminal.get());
 }
 
 void TextBoxConsole::create_mapping() {
 	// Scene's mapping activates TextBox on Enter.
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
 	mapping->on_key = [this](le::event::Key const& key) {
-		if (key.mods != 0 || key.action != GLFW_PRESS || key.key != GLFW_KEY_ENTER) { return; }
-		m_text_box->activate();
+		if (enter_chord_v.is_engaged(key)) {
+			m_text_box->activate();
+			return true;
+		}
+		if (escape_chord_v.is_engaged(key)) {
+			m_text_box->deactivate();
+			return true;
+		}
+		return false;
 	};
 	m_mapping = std::move(mapping);
 	m_router.push_mapping(m_mapping);

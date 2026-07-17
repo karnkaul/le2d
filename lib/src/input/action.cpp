@@ -7,22 +7,24 @@
 namespace le::input::action {
 namespace {
 template <std::size_t Count>
-constexpr void set_target_switch(Bits<Count>& state, std::array<int, Count> const& matches, int const actor, int const action) {
+constexpr auto set_target_switch(Bits<Count>& state, std::array<int, Count> const& matches, int const actor, int const action) -> bool {
 	auto const it = std::ranges::find(matches, actor);
-	if (it == matches.end()) { return; }
+	if (it == matches.end()) { return false; }
 	auto const index = std::distance(matches.begin(), it);
 	auto target = state[std::size_t(index)];
 	switch (action) {
 	case GLFW_PRESS: target = true; break;
 	case GLFW_RELEASE: target = false; break;
 	}
+	return true;
 }
 } // namespace
 
-void IDigital::on_input(int const actor, int const action) {
+auto IDigital::consume_input(int const actor, int const action) -> bool {
 	auto const old_state = m_state;
-	set_target_switch(m_state, std::array{match}, actor, action);
+	auto const ret = set_target_switch(m_state, std::array{match}, actor, action);
 	m_changed = old_state != m_state;
+	return ret;
 }
 
 void IDigital::disengage() {
@@ -34,7 +36,7 @@ void IDigital::disengage() {
 
 auto IDigital::should_dispatch() const -> bool { return std::exchange(m_changed, false); }
 
-void IBinaryAxis1D::on_input(int const actor, int const action) { set_target_switch(m_state, std::array{lo, hi}, actor, action); }
+auto IBinaryAxis1D::consume_input(int const actor, int const action) -> bool { return set_target_switch(m_state, std::array{lo, hi}, actor, action); }
 
 void IBinaryAxis1D::disengage() { m_state = {}; }
 
@@ -45,7 +47,9 @@ auto IBinaryAxis1D::get_value() const -> action::Value {
 	return ret;
 }
 
-void IBinaryAxis2D::on_input(int const actor, int const action) { set_target_switch(m_state, std::array{horz.x, horz.y, vert.x, vert.y}, actor, action); }
+auto IBinaryAxis2D::consume_input(int const actor, int const action) -> bool {
+	return set_target_switch(m_state, std::array{horz.x, horz.y, vert.x, vert.y}, actor, action);
+}
 
 void IBinaryAxis2D::disengage() { m_state = {}; }
 
@@ -60,7 +64,10 @@ auto IBinaryAxis2D::get_value() const -> action::Value {
 	return ret;
 }
 
-void MouseScrollBase::on_scroll(event::Scroll const& scroll) { m_value += static_cast<glm::vec2>(scroll); }
+auto MouseScrollBase::consume_scroll(event::Scroll const& scroll) -> bool {
+	m_value += static_cast<glm::vec2>(scroll);
+	return true;
+}
 
 auto MouseScrollBase::should_dispatch() const -> bool {
 	switch (m_dim) {
@@ -79,16 +86,17 @@ auto MouseScrollBase::get_value() const -> action::Value {
 	}
 }
 
-void Cursor::on_cursor_pos(event::CursorPos const& cursor_pos) {
+auto Cursor::consume_cursor_pos(event::CursorPos const& cursor_pos) -> bool {
 	m_value = cursor_pos.normalized;
 	m_changed = true;
+	return consume;
 }
 
 auto Cursor::should_dispatch() const -> bool { return std::exchange(m_changed, false); }
 
 void GamepadButton::update_gamepad(Gamepad const& gamepad) {
 	auto const is_pressed = gamepad.is_pressed(match);
-	on_input(match, is_pressed ? GLFW_PRESS : GLFW_RELEASE);
+	consume_input(match, is_pressed ? GLFW_PRESS : GLFW_RELEASE);
 }
 
 void GamepadAxis1D::update_gamepad(Gamepad const& gamepad) { m_value = gamepad.get_axis(axis, dead_zone); }

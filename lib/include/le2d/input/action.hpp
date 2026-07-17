@@ -64,10 +64,16 @@ class MouseScroll2D : public MouseScrollBase {
 
 /// \brief Mouse cursor.
 class Cursor : public IAction {
-	void on_key(event::Key const& /*mb*/) final {}
-	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
-	void on_scroll(event::Scroll const& /*scroll*/) final {}
-	void on_cursor_pos(event::CursorPos const& cursor_pos) final;
+  public:
+	explicit Cursor(bool const consume = false) : consume(consume) {}
+
+	bool consume{};
+
+  private:
+	auto consume_key(event::Key const& /*mb*/) -> bool final { return false; }
+	auto consume_mouse_button(event::MouseButton const& /*mb*/) -> bool final { return false; }
+	auto consume_scroll(event::Scroll const& /*scroll*/) -> bool final { return false; }
+	auto consume_cursor_pos(event::CursorPos const& cursor_pos) -> bool final;
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}
 	void disengage() final {}
 	[[nodiscard]] auto should_dispatch() const -> bool final;
@@ -89,10 +95,10 @@ class GamepadButton : public IDigital {
 	Gamepad::Binding binding{Gamepad::FirstUsed{}};
 
   private:
-	void on_key(event::Key const& /*mb*/) final {}
-	void on_mouse_button(event::MouseButton const& /*mb*/) final {}
-	void on_scroll(event::Scroll const& /*scroll*/) final {}
-	void on_cursor_pos(event::CursorPos const& /*cursor_pos*/) final {}
+	auto consume_key(event::Key const& /*mb*/) -> bool final { return false; }
+	auto consume_mouse_button(event::MouseButton const& /*mb*/) -> bool final { return false; }
+	auto consume_scroll(event::Scroll const& /*scroll*/) -> bool final { return false; }
+	auto consume_cursor_pos(event::CursorPos const& /*cursor_pos*/) -> bool final { return false; }
 	void update_gamepad(Gamepad const& gamepad) final;
 	[[nodiscard]] auto get_gamepad_binding() const -> std::optional<Gamepad::Binding> final { return binding; }
 };

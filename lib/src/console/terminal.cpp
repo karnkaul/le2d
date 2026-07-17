@@ -4,6 +4,7 @@
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
+#include "le2d/input/listener_mapping.hpp"
 #include "le2d/text/text_buffer.hpp"
 #include "le2d/tweak/registry.hpp"
 #include <GLFW/glfw3.h>
@@ -124,6 +125,8 @@ class Terminal : public ITerminal {
 			log.warn("Invalid trigger: '{}', resetting to: '`'", m_info.trigger);
 			m_info.trigger = GLFW_KEY_GRAVE_ACCENT;
 		}
+
+		create_mapping();
 	}
 
   private:
@@ -150,6 +153,8 @@ class Terminal : public ITerminal {
 	}
 
 	[[nodiscard]] auto is_null() const -> bool final { return false; }
+
+	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<input::IMapping> const& final { return m_mapping; }
 
 	[[nodiscard]] auto is_active() const -> bool final { return m_active; }
 
@@ -230,6 +235,15 @@ class Terminal : public ITerminal {
 		renderer.set_viewport(old_viewport);
 	}
 
+	void create_mapping() {
+		auto mapping = std::make_shared<input::ListenerMapping>();
+		mapping->on_codepoint = [this](event::Codepoint codepoint) { return on_codepoint(codepoint); };
+		mapping->on_key = [this](event::Key const& key) { return on_key(key); };
+		mapping->on_cursor_pos = [this](event::CursorPos const& cursor) { return on_cursor_move(cursor); };
+		mapping->on_scroll = [this](event::Scroll const& scroll) { return on_scroll(scroll); };
+		m_mapping = std::move(mapping);
+	}
+
 	void setup() {
 		m_input.set_interactive(false);
 
@@ -305,32 +319,37 @@ class Terminal : public ITerminal {
 
 		if (!is_active()) { return false; }
 
+		auto ret = false;
 		if (key.mods == 0) {
 			if (key.action == GLFW_PRESS) {
+				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_ENTER: on_enter(); break;
 				case GLFW_KEY_ESCAPE: on_escape(); break;
+				default: ret = false; break;
 				}
 			}
 			if (key.action != GLFW_RELEASE) {
+				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_UP: cycle_up(); break;
 				case GLFW_KEY_DOWN: cycle_down(); break;
 				case GLFW_KEY_TAB: autocomplete(); break;
 				case GLFW_KEY_PAGE_UP: page_up(); break;
 				case GLFW_KEY_PAGE_DOWN: page_down(); break;
+				default: ret = false; break;
 				}
 			}
 		}
-		m_input.on_key(key);
-		return true;
+		ret |= m_input.consume_key(key);
+		return ret;
 	}
 
 	auto on_codepoint(event::Codepoint const codepoint) -> bool {
 		if (!is_active()) { return false; }
-		m_input.on_codepoint(codepoint);
+		auto const ret = m_input.consume_codepoint(codepoint);
 		stop_cycling();
-		return true;
+		return ret;
 	}
 
 	auto on_cursor_move(event::CursorPos const& cursor_pos) -> bool {
@@ -472,6 +491,8 @@ class Terminal : public ITerminal {
 		move_buffer_y(+((0.5f * m_sizing_state.render_target_size->y) - (2.0f * float(m_info.style.text_height))));
 	}
 
+	std::shared_ptr<input::IMapping> m_mapping{};
+
 	TerminalCreateInfo m_info;
 	SizingState m_sizing_state{};
 	ndc::vec2 m_n_cursor_pos{};
@@ -501,6 +522,8 @@ class Terminal : public ITerminal {
 struct NullTerminal : ITerminal {
 	[[nodiscard]] auto is_null() const -> bool final { return true; }
 
+	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<input::IMapping> const& final { return mapping; }
+
 	[[nodiscard]] auto is_active() const -> bool final { return false; }
 	void toggle_active() final {}
 
@@ -517,6 +540,8 @@ struct NullTerminal : ITerminal {
 
 	void tick(kvf::Seconds /*dt*/) final {}
 	void draw(IRenderer& /*renderer*/) const final {}
+
+	std::shared_ptr<input::IMapping> mapping{std::make_shared<input::ListenerMapping>()};
 };
 } // namespace
 

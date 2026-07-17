@@ -19,7 +19,10 @@ class Router {
 	/// \brief Remove a particular mapping.
 	void remove_mapping(std::shared_ptr<IMapping> const& mapping);
 
-	[[nodiscard]] auto get_top_mapping() const -> std::weak_ptr<IMapping>;
+	[[nodiscard]] auto contains_mapping(std::shared_ptr<IMapping> const& mapping) const -> bool;
+
+	/// \brief If non-null, always on top.
+	void set_terminal_mapping(std::shared_ptr<IMapping> const& mapping);
 
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
@@ -42,13 +45,15 @@ class Router {
 	float nonzero_dead_zone{Gamepad::nonzero_dead_zone_v};
 
   private:
-	void pre_dispatch();
-
 	template <typename F>
-	void invoke_if_top(F func);
+	auto cascade_invoke_if(F func) const -> bool;
 
+	void pre_dispatch();
+	void dispatch_events(std::span<Event const> events);
+
+	std::weak_ptr<IMapping> m_terminal_mapping{};
 	std::vector<std::weak_ptr<IMapping>> m_mappings{};
-	std::shared_ptr<IMapping> m_top{};
+	std::vector<std::shared_ptr<IMapping>> m_mappings_buffer{};
 
 	Gamepad::Manager m_gamepad_manager{};
 	std::optional<Device> m_last_used_device{};
