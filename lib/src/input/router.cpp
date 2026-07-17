@@ -19,6 +19,14 @@ void Router::pop_mapping() {
 	m_mappings.pop_back();
 }
 
+void Router::remove_mapping(std::shared_ptr<IMapping> const& mapping) {
+	auto const pred = [&](std::weak_ptr<IMapping> const& ptr) {
+		auto m = ptr.lock();
+		return !m || m == mapping;
+	};
+	std::erase_if(m_mappings, pred);
+}
+
 void Router::dispatch(std::span<Event const> events) {
 	auto should_disengage = false;
 	for (auto const& event : events) {

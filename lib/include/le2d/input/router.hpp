@@ -16,6 +16,9 @@ class Router {
 	/// \brief Pop the topmost mapping, if any.
 	void pop_mapping();
 
+	/// \brief Remove a particular mapping.
+	void remove_mapping(std::shared_ptr<IMapping> const& mapping);
+
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
 	/// \returns true if there are no mappings pushed.
