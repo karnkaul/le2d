@@ -46,5 +46,7 @@ class App {
 	std::vector<SceneInfo> m_scene_infos{};
 	std::unique_ptr<Scene> m_active_scene{};
 	std::optional<le::FileDataLoader> m_data_loader{};
+
+	le::Context::Waiter m_waiter{};
 };
 } // namespace demo

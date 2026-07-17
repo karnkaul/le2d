@@ -53,6 +53,7 @@ void App::create_context() {
 	if (m_params.force_x11) { context_ci.platform_flags |= le::PlatformFlag::ForceX11; }
 
 	m_context = le::Context::create(context_ci);
+	m_waiter = m_context->create_waiter();
 }
 
 void App::create_data_loader() {

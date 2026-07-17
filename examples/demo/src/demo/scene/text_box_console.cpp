@@ -19,14 +19,16 @@ void TextBox::draw(le::IRenderer& renderer) const {
 	renderer.scissor_rect = scissor;
 }
 
-void TextBox::tick(kvf::Seconds const dt) { m_input_text.tick(dt); }
+void TextBox::tick(kvf::Seconds const dt) {
+	m_input_text.tick(dt);
+	m_background.instance.tint = m_input_text.is_interactive() ? kvf::Color{0x772222ff} : kvf::Color{0x222222ff};
+}
 
 void TextBox::create_quads() {
 	m_baseline.geometry.create({400.0f, 1.0f});
 	m_baseline.instance.tint = kvf::Color{0x777777ff};
 
 	m_background.geometry.create({m_baseline.geometry.get_size().x + 40.0f, 70.0f});
-	m_background.instance.tint = kvf::Color{0x222222ff};
 	m_background.instance.transform.position.y = (0.5f * m_background.geometry.get_size().y) - 20.0f;
 
 	m_input_text.instance.transform.position.x = (-0.5f * m_baseline.geometry.get_size().x) + 2.0f;
