@@ -26,8 +26,10 @@ class LineInput {
 	void append(std::string_view str);
 
 	void write(char ch);
-	void backspace();
-	void delete_front();
+	void backward_delete();
+	void forward_delete();
+	void forward_word();
+	void backward_word();
 
 	void set_cursor(int cursor);
 	void move_cursor(int delta);
@@ -36,6 +38,11 @@ class LineInput {
 	void update();
 
   private:
+	template <typename PredT>
+	[[nodiscard]] auto forward_from_if(int cursor, PredT pred) const -> int;
+	template <typename PredT>
+	[[nodiscard]] auto backward_from_if(int cursor, PredT pred) const -> int;
+
 	void update_cursor_x();
 
 	gsl::not_null<IFontAtlas*> m_atlas;

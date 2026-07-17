@@ -33,8 +33,10 @@ class InputText : public IDrawable {
 	void set_string(std::string line);
 	void append(std::string_view str);
 	void write(char ch);
-	void backspace();
-	void delete_front();
+	void backward_delete();
+	void forward_delete();
+	void backward_word();
+	void forward_word();
 	void clear();
 
 	[[nodiscard]] auto get_cursor() const -> int { return m_line_input.get_cursor(); }
