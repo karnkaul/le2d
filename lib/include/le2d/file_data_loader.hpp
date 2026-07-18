@@ -39,8 +39,8 @@ class FileDataLoader : public IDataLoader {
 	[[nodiscard]] auto get_uri(std::string_view path) const -> std::string;
 
   private:
-	template <typename T, typename F>
-	auto from_file(T& out, std::string_view uri, F func) const -> bool;
+	template <typename T>
+	auto try_load_to(T& out, std::string_view uri) const -> bool;
 
 	std::string m_root_dir{};
 };

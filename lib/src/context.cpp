@@ -5,6 +5,7 @@
 #include "le2d/asset/asset_type_loaders.hpp"
 #include <capo/engine.hpp>
 #include <log.hpp>
+#include <thread>
 
 namespace le {
 namespace {
@@ -193,16 +194,19 @@ class ContextImpl : public Context {
 		return true;
 	}
 
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
 		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
 	}
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
 	auto set_samples(vk::SampleCountFlagBits const samples) -> bool final {
 		if (samples == get_samples()) { return true; }
 		if ((get_supported_samples() & samples) != samples) { return false; }
 		m_requests.set_samples = samples;
 		return true;
 	}
+
+	[[nodiscard]] auto get_max_framerate() const -> Framerate final { return Framerate{m_max_framerate}; }
+	void set_max_framerate(Framerate const framerate) final { m_max_framerate = std::max(std::int32_t(framerate), 0); }
 
 	auto next_frame() -> vk::CommandBuffer final {
 		m_event_queue.clear();
@@ -212,16 +216,21 @@ class ContextImpl : public Context {
 		update_timings_and_stats(kvf::Clock::now());
 		return m_cmd;
 	}
+
 	[[nodiscard]] auto event_queue() const -> std::span<Event const> final { return m_event_queue; }
+
 	[[nodiscard]] auto begin_render(kvf::Color clear = kvf::black_v) -> IRenderer& final {
 		m_renderer->begin_render(m_cmd, main_pass_size(), clear);
 		return *m_renderer;
 	}
+
 	void present() final {
 		m_renderer->end_render();
 		m_frame_finish = kvf::Clock::now();
 		m_render_device->render(m_render_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
+
+		if (m_max_framerate > 0) { limit_framerate(); }
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
@@ -256,9 +265,17 @@ class ContextImpl : public Context {
 			m_fps.value = std::exchange(m_fps.counter, {});
 			m_fps.elapsed = {};
 		}
-		m_frame_stats.framerate = m_fps.value == 0 ? m_fps.counter : m_fps.value;
+		m_frame_stats.framerate = m_fps.value == 0 ? Framerate{m_fps.counter} : Framerate{m_fps.value};
 		++m_frame_stats.total_frames;
 		m_frame_stats.run_time = now - m_runtime_start;
+	}
+
+	void limit_framerate() {
+		auto const min_frame_time = kvf::Seconds{1.0f / float(m_max_framerate)};
+		auto const frame_time = kvf::Clock::now() - m_frame_start;
+		auto const delta = min_frame_time - frame_time;
+		if (delta <= 0s) { return; }
+		std::this_thread::sleep_for(delta);
 	}
 
 	[[nodiscard]] static auto self(GLFWwindow* window) -> ContextImpl& { return *static_cast<ContextImpl*>(glfwGetWindowUserPointer(window)); }
@@ -314,7 +331,7 @@ class ContextImpl : public Context {
 		});
 		glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) { push_event(window, event::Codepoint{codepoint}); });
 		glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowResize{x, y}); });
-		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::FramebufferResize{x, y}); });
+		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::SwapchainResize{x, y}); });
 		glfwSetWindowPosCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowPos{x, y}); });
 		glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int i) { push_event(window, to_focus<event::WindowIconify>(i)); });
 		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) { self(window).on_cursor_pos({x, y}); });
@@ -359,6 +376,7 @@ class ContextImpl : public Context {
 	kvf::Clock::time_point m_frame_start{};
 	kvf::Clock::time_point m_frame_finish{};
 	kvf::Clock::time_point m_runtime_start{kvf::Clock::now()};
+	std::int32_t m_max_framerate{};
 	Fps m_fps{};
 	FrameStats m_frame_stats{};
 
@@ -369,10 +387,10 @@ class ContextImpl : public Context {
 auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> { return std::make_unique<ContextImpl>(create_info); }
 
 auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
-auto Context::framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
+auto Context::window_framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
 auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_swapchain_image_extent(); }
-auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{framebuffer_size()} * get_render_scale(); }
-auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), framebuffer_size()); }
+auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{window_framebuffer_size()} * get_render_scale(); }
+auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), window_framebuffer_size()); }
 
 auto Context::get_title() const -> klib::CString { return glfwGetWindowTitle(get_window()); }
 
@@ -391,7 +409,7 @@ auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 	set_visible(true);
 	auto const display = target_display(target);
 	if (!display) { return false; }
-	auto const* vm = display->video_mode.get();
+	auto const vm = display->video_mode;
 	glfwSetWindowMonitor(get_window(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
 	return true;
 }

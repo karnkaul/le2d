@@ -66,7 +66,7 @@ class AudioMixer : public IAudioMixer {
 
 	void play_sfx(gsl::not_null<IAudioBuffer const*> buffer) final {
 		if (!m_engine) { return; }
-		auto* source = get_idle_source();
+		auto source = get_idle_source();
 		if (source == nullptr) { source = &get_oldest_source(); }
 		play_sfx(*source, [buffer](capo::ISource& source) { buffer->bind(source); });
 	}
@@ -137,7 +137,7 @@ class AudioMixer : public IAudioMixer {
 		stop_music();
 	}
 
-	[[nodiscard]] auto get_idle_source() -> SfxSource* {
+	[[nodiscard]] auto get_idle_source() -> klib::Ptr<SfxSource> {
 		for (auto& source : m_sfx_sources) {
 			if (!source.source->is_playing()) { return &source; }
 		}
@@ -145,7 +145,7 @@ class AudioMixer : public IAudioMixer {
 	}
 
 	[[nodiscard]] auto get_oldest_source() -> SfxSource& {
-		SfxSource* ret{};
+		auto ret = klib::Ptr<SfxSource>{};
 		for (auto& source : m_sfx_sources) {
 			if (ret == nullptr || source.timestamp < ret->timestamp) { ret = &source; }
 		}
@@ -324,7 +324,7 @@ class FontAtlas : public IFontAtlas {
 		return m_face->push_layouts(out, input, use_tofu);
 	}
 
-	kvf::ttf::Typeface* m_face{};
+	klib::Ptr<kvf::ttf::Typeface> m_face{};
 	Texture m_texture;
 	std::vector<Glyph> m_glyphs{};
 	TextHeight m_height{};

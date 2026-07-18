@@ -3,7 +3,7 @@
 #include "kvf/time.hpp"
 #include "le2d/context.hpp"
 #include "le2d/file_data_loader.hpp"
-#include "le2d/input/dispatch.hpp"
+#include "le2d/input/router.hpp"
 #include "le2d/service_locator.hpp"
 #include <memory>
 
@@ -40,7 +40,7 @@ class App : public klib::Pinned {
 	FileDataLoader m_data_loader;
 
 	std::unique_ptr<Context> m_context{};
-	input::Dispatch m_input_dispatch{};
+	input::Router m_input_router{};
 	AssetLoader m_asset_loader{};
 
 	ServiceLocator m_service_locator{};

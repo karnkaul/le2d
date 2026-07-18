@@ -2,7 +2,7 @@
 #include "kvf/time.hpp"
 #include "le2d/context.hpp"
 #include "le2d/file_data_loader.hpp"
-#include "le2d/input/listener.hpp"
+#include "le2d/input/listener_mapping.hpp"
 #include "le2d/renderer.hpp"
 #include "le2d/service_locator.hpp"
 #include <djson/json.hpp>
@@ -13,7 +13,7 @@
 #include <gsl/pointers>
 
 namespace le::assed {
-class Applet : public input::Listener {
+class Applet : public klib::Polymorphic {
   public:
 	explicit Applet(gsl::not_null<ServiceLocator const*> services);
 
@@ -31,14 +31,14 @@ class Applet : public input::Listener {
 	virtual void populate_file_menu() {}
 	virtual void populate_menu_bar() {}
 
-	auto consume_drop(event::Drop const& drop) -> bool override;
-	auto consume_scroll(event::Scroll const& scroll) -> bool override;
+	void on_drop(event::Drop const& drop);
+	void on_scroll(event::Scroll const& scroll);
 
 	[[nodiscard]] auto get_services() const -> ServiceLocator const& { return *m_services; }
 	[[nodiscard]] auto get_context() const -> Context& { return get_services().get<Context>(); }
 	[[nodiscard]] auto get_data_loader() const -> FileDataLoader const& { return get_services().get<FileDataLoader>(); }
 	[[nodiscard]] auto get_asset_loader() const -> AssetLoader const& { return get_services().get<AssetLoader>(); }
-	[[nodiscard]] auto get_framebuffer_size() const -> glm::vec2 { return get_context().main_pass_size(); }
+	[[nodiscard]] auto get_main_pass_size() const -> glm::vec2 { return get_context().main_pass_size(); }
 
 	[[nodiscard]] auto load_bytes(Uri const& uri) const -> std::vector<std::byte>;
 	[[nodiscard]] auto load_string(Uri const& uri) const -> std::string;
@@ -50,6 +50,8 @@ class Applet : public input::Listener {
 	void raise_error(std::string message) { raise_dialog(std::move(message), "Error!"); }
 
 	void set_title(std::string_view asset_uri = {}) const;
+
+	std::shared_ptr<input::ListenerMapping> m_input_mapping{};
 
 	FileDrop::Type m_drop_types{};
 	std::vector<std::string_view> m_json_types{};

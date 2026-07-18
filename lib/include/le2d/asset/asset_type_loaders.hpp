@@ -1,6 +1,6 @@
 #pragma once
 #include "le2d/anim/animation.hpp"
-#include "le2d/asset/asset_loader.hpp"
+#include "le2d/asset/asset_type_loader.hpp"
 #include "le2d/data_loader.hpp"
 #include "le2d/resource/audio_buffer.hpp"
 #include "le2d/resource/factory.hpp"
@@ -19,6 +19,12 @@ class IAssetTypeLoaderCommon : public IAssetTypeLoader<AssetTypeT> {
 		: m_data_loader(data_loader), m_resource_factory(resource_factory) {}
 
   protected:
+	template <std::derived_from<detail::IAssetTypeLoaderBase> T>
+		requires(std::constructible_from<T, IDataLoader const*, IResourceFactory const*>)
+	[[nodiscard]] auto create() const -> T {
+		return T{m_data_loader, m_resource_factory};
+	}
+
 	gsl::not_null<IDataLoader const*> m_data_loader;
 	gsl::not_null<IResourceFactory const*> m_resource_factory;
 };

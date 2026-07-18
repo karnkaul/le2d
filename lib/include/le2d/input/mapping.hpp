@@ -2,18 +2,34 @@
 #include "klib/base_types.hpp"
 #include "le2d/event.hpp"
 #include "le2d/input/gamepad.hpp"
-#include <span>
 
 namespace le::input {
-/// \brief Interface for a set of input bindings.
+/// \brief Interface for receiving input events.
+/// Consuming an event disengages the rest of the mappings lower down the stack,
+/// which do not receive that event either.
+/// Gamepads should generally not be consumed, except by eg GUI modals.
 class IMapping : public klib::Polymorphic {
   public:
-	/// \brief Process events and dispatch callbacks.
-	/// \param events List of events for this frame.
-	/// \param gamepads Gamepad manager instance.
-	virtual void dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) = 0;
+	virtual auto consume_event(event::WindowClose event) -> bool = 0;
+	virtual auto consume_event(event::SwapchainResize const& event) -> bool = 0;
+	virtual auto consume_event(event::WindowResize const& event) -> bool = 0;
+	virtual auto consume_event(event::WindowFocus event) -> bool = 0;
+	virtual auto consume_event(event::CursorFocus event) -> bool = 0;
+	virtual auto consume_event(event::WindowIconify event) -> bool = 0;
+	virtual auto consume_event(event::Drop const& event) -> bool = 0;
+	virtual auto consume_event(event::CursorPos const& event) -> bool = 0;
 
-	/// \brief Disengage all bindings.
-	virtual void disengage() = 0;
+	virtual auto consume_event(event::Codepoint event) -> bool = 0;
+	virtual auto consume_event(event::Key const& event) -> bool = 0;
+	virtual auto consume_event(event::MouseButton const& event) -> bool = 0;
+	virtual auto consume_event(event::Scroll const& event) -> bool = 0;
+
+	virtual auto consume_gamepads(Gamepad::Manager const& gamepads) -> bool = 0;
+
+	/// \brief Events finalized, execute dispatch (if relevant).
+	virtual void dispatch_events() = 0;
+
+	/// \brief Disengage and 0-reset any cached/computed input.
+	virtual void disengage_input() = 0;
 };
 } // namespace le::input

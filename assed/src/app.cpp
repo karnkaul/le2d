@@ -2,7 +2,6 @@
 #include "applet/flipbook_editor.hpp"
 #include "applet/font_viewer.hpp"
 #include "applet/tile_sheet_editor.hpp"
-#include "klib/visitor.hpp"
 #include "log.hpp"
 #include <imgui.h>
 #include <algorithm>
@@ -28,7 +27,7 @@ void App::run() {
 
 	m_service_locator.bind(&m_data_loader);
 	m_service_locator.bind(m_context.get());
-	m_service_locator.bind(&m_input_dispatch);
+	m_service_locator.bind(&m_input_router);
 	m_service_locator.bind(&m_asset_loader);
 	create_factories();
 
@@ -66,20 +65,7 @@ void App::swap_applet() {
 	set_applet(*it);
 }
 
-void App::handle_events() {
-	auto& dispatch = m_input_dispatch;
-	auto const fb_size = m_context->main_pass_size();
-	auto const visitor = klib::SubVisitor{
-		[this](event::WindowClose) { try_exit(); },
-		[&dispatch, fb_size](event::CursorPos const& cursor) { dispatch.on_cursor_move(cursor.normalized.to_target(fb_size)); },
-		[&dispatch](event::Codepoint const codepoint) { dispatch.on_codepoint(codepoint); },
-		[&dispatch](event::Key const& key) { dispatch.on_key(key); },
-		[&dispatch](event::MouseButton const& button) { dispatch.on_mouse_button(button); },
-		[&dispatch](event::Scroll const& scroll) { dispatch.on_scroll(scroll); },
-		[&dispatch](event::Drop const& drop) { dispatch.on_drop(drop); },
-	};
-	for (auto const& event : m_context->event_queue()) { std::visit(visitor, event); }
-}
+void App::handle_events() { m_input_router.dispatch(m_context->event_queue()); }
 
 void App::tick() {
 	auto const dt = m_delta_time.tick();

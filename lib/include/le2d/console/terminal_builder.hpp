@@ -40,7 +40,7 @@ struct TerminalCreateInfo {
 		kvf::Color error{kvf::red_v};
 	} colors{};
 
-	int trigger{GLFW_KEY_GRAVE_ACCENT};
+	int trigger{GLFW_KEY_F1};
 };
 
 class TerminalBuilder {
@@ -49,11 +49,7 @@ class TerminalBuilder {
 
 	[[nodiscard]] auto build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal>;
 
-	[[nodiscard]] auto operator()(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> { return build(font); }
-
 	CreateInfo create_info{};
 	bool add_builtin_tweaks{true};
 };
-
-[[nodiscard]] auto build_null_terminal() -> std::unique_ptr<ITerminal>;
 } // namespace le::console

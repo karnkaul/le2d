@@ -1,9 +1,24 @@
 #include "le2d/drawable/input_text.hpp"
+#include "le2d/input/chord.hpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <numbers>
 
 namespace le::drawable {
+namespace {
+[[nodiscard]] auto copy_to_clipboard(event::Key const& key) {
+	static constexpr auto ctrl_c = input::KeyChord{GLFW_KEY_C, GLFW_PRESS, GLFW_MOD_CONTROL};
+	static constexpr auto ctrl_insert = input::KeyChord{GLFW_KEY_INSERT, GLFW_PRESS, GLFW_MOD_CONTROL};
+	return ctrl_c.is_engaged(key) || ctrl_insert.is_engaged(key);
+}
+
+[[nodiscard]] auto paste_from_clipboard(event::Key const& key) {
+	static constexpr auto ctrl_v = input::KeyChord{GLFW_KEY_V, GLFW_PRESS, GLFW_MOD_CONTROL};
+	static constexpr auto shift_insert = input::KeyChord{GLFW_KEY_INSERT, GLFW_PRESS, GLFW_MOD_SHIFT};
+	return ctrl_v.is_engaged(key) || shift_insert.is_engaged(key);
+}
+} // namespace
+
 InputText::InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info)
 	: m_font(font), m_line_input(font, create_info.height), m_cursor_color(create_info.cursor_color), m_blink_period(create_info.blink_period) {
 	auto& atlas = m_line_input.get_atlas();
@@ -36,13 +51,23 @@ void InputText::write(char const ch) {
 	update();
 }
 
-void InputText::backspace() {
-	m_line_input.backspace();
+void InputText::backward_delete() {
+	m_line_input.backward_delete();
 	update();
 }
 
-void InputText::delete_front() {
-	m_line_input.delete_front();
+void InputText::forward_delete() {
+	m_line_input.forward_delete();
+	update();
+}
+
+void InputText::backward_word() {
+	m_line_input.backward_word();
+	update();
+}
+
+void InputText::forward_word() {
+	m_line_input.forward_word();
 	update();
 }
 
@@ -56,29 +81,37 @@ void InputText::set_cursor(int const cursor) {
 	update();
 }
 
-void InputText::on_key(event::Key const& key) {
-	if (!is_interactive() || key.action == GLFW_RELEASE) { return; }
+auto InputText::consume_key(event::Key const& key) -> bool {
+	if (!is_interactive() || key.action == GLFW_RELEASE) { return false; }
 
+	auto const ctrl = key.mods == GLFW_MOD_CONTROL;
+
+	auto ret = true;
 	switch (key.key) {
-	case GLFW_KEY_LEFT: cursor_left(); break;
-	case GLFW_KEY_RIGHT: cursor_right(); break;
+	case GLFW_KEY_LEFT: ctrl ? backward_word() : cursor_left(); break;
+	case GLFW_KEY_RIGHT: ctrl ? forward_word() : cursor_right(); break;
 	case GLFW_KEY_HOME: cursor_home(); break;
 	case GLFW_KEY_END: cursor_end(); break;
-	case GLFW_KEY_BACKSPACE: backspace(); break;
-	case GLFW_KEY_DELETE: delete_front(); break;
+	case GLFW_KEY_BACKSPACE: backward_delete(); break;
+	case GLFW_KEY_DELETE: forward_delete(); break;
+	default: ret = false; break;
 	}
 
-	if (key.mods == GLFW_MOD_CONTROL) {
-		switch (key.key) {
-		case GLFW_KEY_C: glfwSetClipboardString(nullptr, get_string().data()); break;
-		case GLFW_KEY_V: append(glfwGetClipboardString(nullptr)); break;
-		}
+	if (copy_to_clipboard(key)) {
+		glfwSetClipboardString(nullptr, get_string().data());
+		ret = true;
+	} else if (paste_from_clipboard(key)) {
+		append(glfwGetClipboardString(nullptr));
+		ret = true;
 	}
+
+	return ret;
 }
 
-void InputText::on_codepoint(event::Codepoint const codepoint) {
-	if (!is_interactive()) { return; }
+auto InputText::consume_codepoint(event::Codepoint const codepoint) -> bool {
+	if (!is_interactive()) { return false; }
 	write(char(codepoint));
+	return true;
 }
 
 void InputText::tick(kvf::Seconds const dt) {

@@ -1,5 +1,4 @@
 #include "le2d/input/action_mapping.hpp"
-#include "klib/visitor.hpp"
 
 namespace le::input {
 void ActionMapping::bind_action(gsl::not_null<IAction*> action, OnAction on_action) {
@@ -17,21 +16,32 @@ void ActionMapping::unbind_action(gsl::not_null<IAction const*> action) {
 	std::erase_if(m_bindings, [action](Binding const& b) { return b.action == action; });
 }
 
-void ActionMapping::dispatch(std::span<le::Event const> events, Gamepad::Manager const& gamepads) {
-	auto const visitor = klib::SubVisitor{
-		[this](le::event::Key const& key) { iterate([key](IAction& action) { action.on_key(key); }); },
-		[this](le::event::MouseButton const& mb) { iterate([mb](IAction& action) { action.on_mouse_button(mb); }); },
-		[this](le::event::Scroll const& scroll) { iterate([scroll](IAction& action) { action.on_scroll(scroll); }); },
-		[this](le::event::CursorPos const& pos) { iterate([pos](IAction& action) { action.on_cursor_pos(pos); }); },
-	};
-	for (auto const& event : events) { std::visit(visitor, event); }
-	for (auto& binding : m_bindings) {
-		binding.update_gamepad(gamepads);
-		binding.dispatch();
-	}
+auto ActionMapping::consume_event(event::Key const& key) -> bool {
+	return consume_action_any([&key](IAction& action) { return action.consume_key(key); });
 }
 
-void ActionMapping::disengage() {
+auto ActionMapping::consume_event(event::MouseButton const& button) -> bool {
+	return consume_action_any([&button](IAction& action) { return action.consume_mouse_button(button); });
+}
+
+auto ActionMapping::consume_event(event::Scroll const& scroll) -> bool {
+	return consume_action_any([&scroll](IAction& action) { return action.consume_scroll(scroll); });
+}
+
+auto ActionMapping::consume_event(event::CursorPos const& pos) -> bool {
+	return consume_action_any([&pos](IAction& action) { return action.consume_cursor_pos(pos); });
+}
+
+auto ActionMapping::consume_gamepads(Gamepad::Manager const& gamepads) -> bool {
+	for (auto& binding : m_bindings) { binding.update_gamepads(gamepads); }
+	return false;
+}
+
+void ActionMapping::dispatch_events() {
+	for (auto& binding : m_bindings) { binding.dispatch(); }
+}
+
+void ActionMapping::disengage_input() {
 	for (auto& binding : m_bindings) {
 		binding.action->disengage();
 		binding.dispatch();
@@ -39,11 +49,13 @@ void ActionMapping::disengage() {
 }
 
 template <typename F>
-void ActionMapping::iterate(F func) const {
-	for (auto const& binding : m_bindings) { func(*binding.action); }
+auto ActionMapping::consume_action_any(F func) const -> bool {
+	auto ret = false;
+	for (auto const& binding : m_bindings) { ret |= func(*binding.action); }
+	return ret;
 }
 
-void ActionMapping::Binding::update_gamepad(Gamepad::Manager const& gamepads) const {
+void ActionMapping::Binding::update_gamepads(Gamepad::Manager const& gamepads) const {
 	auto const binding = action->get_gamepad_binding();
 	if (!binding) { return; }
 	auto const& gamepad = gamepads.get(*binding);

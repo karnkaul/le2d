@@ -12,8 +12,8 @@ class TileSheetEditor : public Applet {
 	explicit TileSheetEditor(gsl::not_null<ServiceLocator const*> services);
 
   private:
-	auto consume_cursor_move(glm::vec2 cursor) -> bool final;
-	auto consume_mouse_button(event::MouseButton const& button) -> bool final;
+	void on_cursor_pos(event::CursorPos const& cursor);
+	void on_mouse_button(event::MouseButton const& button);
 
 	void tick(kvf::Seconds dt) final;
 	void render(IRenderer& renderer) const final;

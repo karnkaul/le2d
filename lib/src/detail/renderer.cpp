@@ -210,3 +210,14 @@ auto Renderer::bake_instances(std::span<RenderInstance const> instances) const -
 	return m_resources->render_instance_buffer;
 }
 } // namespace le::detail
+
+namespace le {
+auto IRenderer::world_to_scissor(kvf::Rect<> const& rect) const -> kvf::UvRect {
+	glm::vec2 const fb_size = framebuffer_size();
+	auto const ndc_rect = kvf::Rect<>{
+		.lt = rect.lt / fb_size,
+		.rb = rect.rb / fb_size,
+	};
+	return kvf::util::ndc_to_uv(ndc_rect);
+}
+} // namespace le

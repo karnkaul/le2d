@@ -12,7 +12,9 @@ void AssetLoader::add_loader(std::unique_ptr<detail::IAssetTypeLoaderBase> loade
 	m_map.insert_or_assign(index, std::move(loader));
 }
 
-auto AssetLoader::load_impl(std::type_info const& type, std::string_view const uri) const -> std::unique_ptr<IAsset> {
+auto AssetLoader::load_asset(std::type_index const type, std::string_view const uri) const -> std::unique_ptr<IAsset> {
+	if (uri.empty()) { return {}; }
+
 	auto const it = m_map.find(type);
 	if (it == m_map.end()) {
 		log.error("'{}' Missing AssetTypeLoader for '{}'", uri, klib::demangled_name(type));

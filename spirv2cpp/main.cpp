@@ -139,7 +139,7 @@ auto run(int argc, char** argv) -> int {
 	if (parse_result.should_early_exit()) { return parse_result.return_code(); }
 
 	auto code = std::vector<std::uint32_t>{};
-	if (!klib::read_file_bytes_into(code, path.data())) {
+	if (!klib::copy_file_bytes_to(code, path.data())) {
 		std::println(stderr, "ERROR: failed to open file: {}", path);
 		return EXIT_FAILURE;
 	}

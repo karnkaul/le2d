@@ -4,14 +4,14 @@
 #include "le2d/console/terminal_builder.hpp"
 #include "le2d/drawable/input_text.hpp"
 #include "le2d/drawable/shape.hpp"
+#include "le2d/input/listener_mapping.hpp"
 #include "le2d/text/text_buffer.hpp"
 #include "le2d/tweak/registry.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <ranges>
 
-namespace le {
-namespace console {
+namespace le::console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
@@ -74,6 +74,22 @@ struct Buffer::Printer {
 	Buffer& m_buffer;
 };
 
+struct SizingState {
+	[[nodiscard]] auto has_size() const -> bool { return render_target_size.has_value(); }
+	[[nodiscard]] auto has_resized_once() const -> bool { return resized_once; }
+	[[nodiscard]] auto needs_resize() const -> bool { return !resized_once || !render_target_size || *render_target_size != previous_render_target_size; }
+
+	void on_resized() {
+		KLIB_ASSERT(render_target_size);
+		previous_render_target_size = *render_target_size;
+		resized_once = true;
+	}
+
+	mutable std::optional<glm::vec2> render_target_size{};
+	glm::vec2 previous_render_target_size{};
+	bool resized_once{};
+};
+
 constexpr auto longest_match(std::span<std::string_view const> candidates, std::string_view const current) {
 	if (candidates.size() < 2) { return current; }
 	auto const source = candidates.front();
@@ -100,7 +116,7 @@ class Terminal : public ITerminal {
 	explicit Terminal(gsl::not_null<IFont*> font, TerminalCreateInfo const& info, bool const add_builtin_tweaks)
 		: m_info(info), m_input(font, to_input_text_ci(info)),
 		  m_buffer(font->get_atlas(m_info.style.text_height), m_info.storage.buffer, m_info.style.line_spacing) {
-		setup(*font);
+		setup();
 
 		if (add_builtin_tweaks) { add_builtins(); }
 
@@ -108,6 +124,8 @@ class Terminal : public ITerminal {
 			log.warn("Invalid trigger: '{}', resetting to: '`'", m_info.trigger);
 			m_info.trigger = GLFW_KEY_GRAVE_ACCENT;
 		}
+
+		create_mapping();
 	}
 
   private:
@@ -119,7 +137,7 @@ class Terminal : public ITerminal {
 			auto i = text.find_first_of(" =");
 			if (i == std::string_view::npos) { return Params{.id = text}; }
 			auto value = text.substr(i + 1);
-			while (!value.empty() && value.front() == ' ') { value = value.substr(1); }
+			while (!value.empty() && value.front() == ' ') { value.remove_prefix(1); }
 			return Params{.id = text.substr(0, i), .value = value};
 		}
 	};
@@ -134,6 +152,8 @@ class Terminal : public ITerminal {
 	}
 
 	[[nodiscard]] auto is_null() const -> bool final { return false; }
+
+	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<input::IMapping> const& final { return m_mapping; }
 
 	[[nodiscard]] auto is_active() const -> bool final { return m_active; }
 
@@ -165,27 +185,27 @@ class Terminal : public ITerminal {
 		log.error("{}", text);
 	}
 
-	auto handle_events(glm::vec2 const framebuffer_size, std::span<Event const> events) -> StateChange final {
-		auto const was_active = is_active();
-		auto const visitor = klib::SubVisitor{
-			[this](event::Key const& key) { on_key(key); },
-			[this](event::Codepoint const codepoint) { on_codepoint(codepoint); },
-			[this](event::CursorPos const& cursor) { on_cursor_move(cursor); },
-			[this](event::Scroll const& scroll) { on_scroll(scroll); },
+	auto consume_event(Event const& event) -> bool final {
+		auto const visitor = klib::Visitor{
+			[this](event::Key const& key) { return on_key(key); },
+			[this](event::Codepoint const codepoint) { return on_codepoint(codepoint); },
+			[this](event::CursorPos const& cursor) { return on_cursor_move(cursor); },
+			[this](event::Scroll const& scroll) { return on_scroll(scroll); },
+			[](auto const& /*event*/) { return false; },
 		};
-		for (auto const& event : events) { std::visit(visitor, event); }
-
-		if (kvf::is_positive(framebuffer_size) && m_framebuffer_size != framebuffer_size) {
-			m_framebuffer_size = framebuffer_size;
-			resize();
-		}
-
-		if (!was_active && is_active()) { return StateChange::Activated; }
-		if (was_active && !is_active()) { return StateChange::Deactivated; }
-		return StateChange::None;
+		return std::visit(visitor, event);
 	}
 
 	void tick(kvf::Seconds const dt) final {
+		if (!m_sizing_state.has_resized_once()) {
+			if (!m_sizing_state.has_size()) { return; }
+			resize();
+			m_render_view.position.y = m_hide_y;
+		}
+
+		KLIB_ASSERT(m_sizing_state.has_size());
+		if (m_sizing_state.needs_resize()) { resize(); }
+
 		if (m_active) {
 			if (m_render_view.position.y < m_show_y) { m_render_view.position.y += m_info.motion.slide_speed * dt.count(); }
 			m_render_view.position.y = std::min(m_render_view.position.y, m_show_y);
@@ -197,6 +217,9 @@ class Terminal : public ITerminal {
 	}
 
 	void draw(IRenderer& renderer) const final {
+		m_sizing_state.render_target_size = renderer.framebuffer_size();
+		if (!m_sizing_state.has_resized_once()) { return; }
+
 		if (!m_active && m_render_view.position.y <= m_hide_y) { return; }
 		auto const old_view = renderer.get_view();
 		renderer.set_view(m_render_view);
@@ -211,7 +234,16 @@ class Terminal : public ITerminal {
 		renderer.set_viewport(old_viewport);
 	}
 
-	void setup(IFont& font) {
+	void create_mapping() {
+		auto mapping = std::make_shared<input::ListenerMapping>();
+		mapping->on_codepoint = [this](event::Codepoint codepoint) { return on_codepoint(codepoint); };
+		mapping->on_key = [this](event::Key const& key) { return on_key(key); };
+		mapping->on_cursor_pos = [this](event::CursorPos const& cursor) { return on_cursor_move(cursor); };
+		mapping->on_scroll = [this](event::Scroll const& scroll) { return on_scroll(scroll); };
+		m_mapping = std::move(mapping);
+	}
+
+	void setup() {
 		m_input.set_interactive(false);
 
 		m_separator.instance.tint = m_info.colors.separator;
@@ -221,10 +253,7 @@ class Terminal : public ITerminal {
 		m_info.motion.slide_speed = std::abs(m_info.motion.slide_speed);
 		m_info.motion.scroll_speed = std::abs(m_info.motion.scroll_speed);
 
-		m_caret.create(font.get_atlas(m_info.style.text_height), m_info.style.caret);
-
-		resize();
-		m_render_view.position.y = m_hide_y;
+		m_caret.create(m_input.get_font().get_atlas(m_info.style.text_height), m_info.style.caret);
 	}
 
 	void add_builtins() {
@@ -237,23 +266,27 @@ class Terminal : public ITerminal {
 	}
 
 	void resize() {
-		auto const width = m_framebuffer_size.x;
-		m_background.geometry.create({width, 0.5f * m_framebuffer_size.y});
-		m_separator.geometry.create({width, m_info.style.separator_height});
+		KLIB_ASSERT(m_sizing_state.has_size());
+		auto const size = *m_sizing_state.render_target_size;
+		m_background.geometry.create({size.x, 0.5f * size.y});
+		m_separator.geometry.create({size.x, m_info.style.separator_height});
 		m_background.instance.transform.position.y = 0.5f * m_background.geometry.get_size().y;
 		m_separator.instance.transform.position.y = 1.5f * float(m_info.style.text_height);
-		m_caret.instance.transform.position = {(-0.5f * m_framebuffer_size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
+		m_caret.instance.transform.position = {(-0.5f * size.x) + m_info.style.x_pad, 0.5f * float(m_info.style.text_height)};
 		m_input.instance.transform.position = m_caret.instance.transform.position;
 		m_input.instance.transform.position.x += m_caret.text_x;
-		m_hide_y = -0.5f * m_framebuffer_size.y;
+		m_hide_y = -0.5f * size.y;
 		m_show_y = 0.0f;
 		m_buffer_max_y = m_separator.instance.transform.position.y + (0.5f * float(m_info.style.text_height));
 		m_buffer.position.x = m_caret.instance.transform.position.x;
 		set_buffer_y(m_buffer.position.y);
+		m_sizing_state.on_resized();
 	}
 
 	void draw_buffer(IRenderer& renderer) const {
-		auto const scissor_y = ((0.5f * m_framebuffer_size.y) - m_separator.instance.transform.position.y) / m_framebuffer_size.y;
+		KLIB_ASSERT(m_sizing_state.has_resized_once());
+		auto const size = *m_sizing_state.render_target_size;
+		auto const scissor_y = ((0.5f * size.y) - m_separator.instance.transform.position.y) / size.y;
 		auto const rect = kvf::Rect<>{.rb = {1.0f, scissor_y}};
 		renderer.scissor_rect = rect;
 		m_buffer.draw(renderer);
@@ -268,7 +301,8 @@ class Terminal : public ITerminal {
 	void move_buffer_y(float const dy) { set_buffer_y(m_buffer.position.y + dy); }
 
 	void set_buffer_y(float const value) {
-		auto const max_dy = m_buffer.get_height() - (0.5f * m_framebuffer_size.y);
+		if (!m_sizing_state.has_size()) { return; }
+		auto const max_dy = m_buffer.get_height() - (0.5f * m_sizing_state.render_target_size->y);
 		if (max_dy < 0.0f) {
 			m_buffer.position.y = m_buffer_max_y;
 			return;
@@ -276,41 +310,57 @@ class Terminal : public ITerminal {
 		m_buffer.position.y = std::clamp(value, -max_dy, m_buffer_max_y);
 	}
 
-	void on_key(event::Key const& key) {
-		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) { toggle_active(); }
-		if (!is_active()) { return; }
+	auto on_key(event::Key const& key) -> bool {
+		if (key.key == m_info.trigger && key.action == GLFW_PRESS && key.mods == 0) {
+			toggle_active();
+			return true;
+		}
 
+		if (!is_active()) { return false; }
+
+		auto ret = false;
 		if (key.mods == 0) {
 			if (key.action == GLFW_PRESS) {
+				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_ENTER: on_enter(); break;
 				case GLFW_KEY_ESCAPE: on_escape(); break;
+				default: ret = false; break;
 				}
 			}
 			if (key.action != GLFW_RELEASE) {
+				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_UP: cycle_up(); break;
 				case GLFW_KEY_DOWN: cycle_down(); break;
 				case GLFW_KEY_TAB: autocomplete(); break;
 				case GLFW_KEY_PAGE_UP: page_up(); break;
 				case GLFW_KEY_PAGE_DOWN: page_down(); break;
+				default: ret = false; break;
 				}
 			}
 		}
-		m_input.on_key(key);
+		ret |= m_input.consume_key(key);
+		return ret;
 	}
 
-	void on_codepoint(event::Codepoint const codepoint) {
-		if (!is_active() || codepoint == event::Codepoint('`')) { return; }
-		m_input.on_codepoint(codepoint);
+	auto on_codepoint(event::Codepoint const codepoint) -> bool {
+		if (!is_active()) { return false; }
+		auto const ret = m_input.consume_codepoint(codepoint);
 		stop_cycling();
+		return ret;
 	}
 
-	void on_cursor_move(event::CursorPos const& cursor_pos) { m_n_cursor_pos = cursor_pos.normalized; }
+	auto on_cursor_move(event::CursorPos const& cursor_pos) -> bool {
+		m_n_cursor_pos = cursor_pos.normalized;
+		return is_active();
+	}
 
-	void on_scroll(event::Scroll const scroll) {
-		if (!is_active() || (m_n_cursor_pos * m_framebuffer_size).y < 0.0f) { return; }
+	auto on_scroll(event::Scroll const scroll) -> bool {
+		if (!m_sizing_state.has_size()) { return false; }
+		if (!is_active() || (m_n_cursor_pos * m_sizing_state.render_target_size.value()).y < 0.0f) { return false; }
 		move_buffer_y(m_info.motion.scroll_speed * -scroll.y);
+		return true;
 	}
 
 	void on_enter() {
@@ -430,12 +480,20 @@ class Terminal : public ITerminal {
 		}
 	}
 
-	void page_up() { move_buffer_y(-((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_up() {
+		if (!m_sizing_state.has_size()) { return; }
+		move_buffer_y(-((0.5f * m_sizing_state.render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+	}
 
-	void page_down() { move_buffer_y(+((0.5f * m_framebuffer_size.y) - (2.0f * float(m_info.style.text_height)))); }
+	void page_down() {
+		if (!m_sizing_state.has_size()) { return; }
+		move_buffer_y(+((0.5f * m_sizing_state.render_target_size->y) - (2.0f * float(m_info.style.text_height))));
+	}
+
+	std::shared_ptr<input::IMapping> m_mapping{};
 
 	TerminalCreateInfo m_info;
-	glm::vec2 m_framebuffer_size{400.0f, 300.0f};
+	SizingState m_sizing_state{};
 	ndc::vec2 m_n_cursor_pos{};
 
 	tweak::Registry m_tweak_registry{};
@@ -454,37 +512,14 @@ class Terminal : public ITerminal {
 	float m_show_y{};
 	float m_buffer_max_y{};
 	Transform m_render_view{};
+
 	bool m_active{};
 
 	std::optional<std::size_t> m_history_index{};
-};
-
-struct NullTerminal : ITerminal {
-	[[nodiscard]] auto is_null() const -> bool final { return true; }
-
-	[[nodiscard]] auto is_active() const -> bool final { return false; }
-	void toggle_active() final {}
-
-	void add_tweakable(std::string_view /*id*/, gsl::not_null<ITweakable*> /*tweakable*/) final {}
-	void remove_tweakable(std::string_view /*id*/) final {}
-
-	void println(std::string_view /*text*/) final {}
-	void printerr(std::string_view /*text*/) final {}
-
-	[[nodiscard]] auto get_background() const -> kvf::Color final { return {}; }
-	void set_background(kvf::Color /*color*/) final {}
-
-	auto handle_events(glm::vec2 /*framebuffer_size*/, std::span<Event const> /*events*/) -> StateChange final { return StateChange::None; }
-
-	void tick(kvf::Seconds /*dt*/) final {}
-	void draw(IRenderer& /*renderer*/) const final {}
 };
 } // namespace
 
 auto TerminalBuilder::build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> {
 	return std::make_unique<Terminal>(font, create_info, add_builtin_tweaks);
 }
-} // namespace console
-
-auto console::build_null_terminal() -> std::unique_ptr<ITerminal> { return std::make_unique<NullTerminal>(); }
-} // namespace le
+} // namespace le::console

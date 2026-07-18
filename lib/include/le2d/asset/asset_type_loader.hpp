@@ -1,6 +1,6 @@
 #pragma once
+#include "klib/demangle.hpp"
 #include "le2d/asset/asset.hpp"
-#include "le2d/util.hpp"
 #include <gsl/pointers>
 #include <memory>
 #include <string_view>
@@ -26,8 +26,8 @@ class IAssetTypeLoader : public detail::IAssetTypeLoaderBase {
 	[[nodiscard]] virtual auto load_asset(std::string_view uri) const -> std::unique_ptr<AssetTypeT> = 0;
 
   private:
-	[[nodiscard]] auto type_name() const -> std::string_view final { return util::demangled_name<AssetTypeT>(); }
-	[[nodiscard]] auto type_index() const -> std::type_index final { return std::type_index{typeid(AssetTypeT)}; }
-	[[nodiscard]] auto load_base(std::string_view uri) const -> std::unique_ptr<IAsset> final { return load_asset(uri); }
+	[[nodiscard]] auto type_name() const -> std::string_view final { return klib::demangled_name<AssetTypeT>(); }
+	[[nodiscard]] auto type_index() const -> std::type_index final { return typeid(AssetTypeT); }
+	[[nodiscard]] auto load_base(std::string_view const uri) const -> std::unique_ptr<IAsset> final { return load_asset(uri); }
 };
 } // namespace le

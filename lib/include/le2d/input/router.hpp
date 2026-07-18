@@ -1,22 +1,27 @@
 #pragma once
 #include "le2d/input/device.hpp"
 #include "le2d/input/mapping.hpp"
+#include <memory>
 #include <optional>
 
 namespace le::input {
-/// \brief Stack of mappings, routes events to the topmost one.
+/// \brief Stack of IMapping weak-pointers.
+/// An Event is routed in (reverse) order of bound mappings until one consumes it.
 class Router {
   public:
-	/// \brief Push a mapping to the top.
-	/// \param mapping Mapping to push.
-	/// Disengages the existing topmost mapping before pushing.
-	void push_mapping(gsl::not_null<IMapping*> mapping);
+	/// \brief Push a mapping to the top of the stack.
+	/// \param mapping Mapping to push. Router will own a weak-pointer until it expires.
+	/// Disengages existing mappings before pushing.
+	void push_mapping(std::shared_ptr<IMapping> const& mapping);
 
 	/// \brief Pop the topmost mapping, if any.
 	void pop_mapping();
 
-	/// \brief Remove a particular mapping, if mapped.
-	void remove_mapping(gsl::not_null<IMapping const*> mapping);
+	/// \brief Remove a particular mapping.
+	void remove_mapping(std::shared_ptr<IMapping> const& mapping);
+
+	/// \returns true if mapping is bound (and unexpired).
+	[[nodiscard]] auto contains_mapping(std::shared_ptr<IMapping> const& mapping) const -> bool;
 
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
@@ -38,11 +43,18 @@ class Router {
 	/// \brief Dead zone for setting first/last used Gamepad.
 	float nonzero_dead_zone{Gamepad::nonzero_dead_zone_v};
 
+	/// \brief If non-null, always on top.
+	std::weak_ptr<IMapping> terminal_mapping{};
+
   private:
 	template <typename F>
-	void do_dispatch(F func);
+	auto cascade_invoke_if(F func) const -> bool;
 
-	std::vector<gsl::not_null<IMapping*>> m_mappings{};
+	void pre_dispatch();
+	void dispatch_events(std::span<Event const> events);
+
+	std::vector<std::weak_ptr<IMapping>> m_mappings{};
+	std::vector<std::shared_ptr<IMapping>> m_mappings_buffer{};
 
 	Gamepad::Manager m_gamepad_manager{};
 	std::optional<Device> m_last_used_device{};

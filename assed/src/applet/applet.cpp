@@ -1,5 +1,5 @@
 #include "applet/applet.hpp"
-#include "le2d/input/dispatch.hpp"
+#include "le2d/input/router.hpp"
 
 namespace le::assed {
 namespace {
@@ -7,45 +7,51 @@ constexpr auto min_scale_v{0.1f};
 constexpr auto max_scale_v{10.0f};
 } // namespace
 
-Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_services(services) {
-	services->get<input::Dispatch>().attach(this);
+Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_input_mapping(std::make_shared<input::ListenerMapping>()), m_services(services) {
+	m_input_mapping->on_drop = [this](event::Drop const& e) {
+		on_drop(e);
+		return true;
+	};
+	m_input_mapping->on_scroll = [this](event::Scroll const& e) {
+		on_scroll(e);
+		return true;
+	};
+
+	services->get<input::Router>().push_mapping(m_input_mapping);
 	m_save_modal.root_dir = services->get<FileDataLoader>().get_root_dir();
 }
 
-auto Applet::consume_scroll(event::Scroll const& scroll) -> bool {
+void Applet::on_scroll(event::Scroll const& scroll) {
 	if (m_zoom_speed > 0.0f) {
 		m_render_view.scale.x += scroll.y * m_zoom_speed;
 
 		m_render_view.scale.x = std::clamp(m_render_view.scale.x, min_scale_v, max_scale_v);
 		m_render_view.scale.y = m_render_view.scale.x;
 	}
-
-	return true;
 }
 
-auto Applet::consume_drop(event::Drop const& drop) -> bool {
+void Applet::on_drop(event::Drop const& drop) {
 	KLIB_ASSERT(!drop.paths.empty());
 	auto const& first_path = drop.paths.front();
 	auto const file_drop = FileDrop::create(get_data_loader(), first_path);
 	if (!file_drop) {
 		raise_error(std::format("Path is not in asset directory\n{}", first_path));
-		return true;
+		return;
 	}
 
 	if ((file_drop.type & m_drop_types) != file_drop.type) {
 		raise_error(std::format("Unsupported file type: {}", file_drop.uri.get_string()));
-		return true;
+		return;
 	}
 
 	if (file_drop.type == FileDrop::Type::Json) {
 		if (std::ranges::find(m_json_types, file_drop.json_type) == m_json_types.end()) {
 			raise_error(std::format("Unsupported asset type: {}", file_drop.json_type));
-			return true;
+			return;
 		}
 	}
 
 	on_drop(file_drop);
-	return true;
 }
 
 auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> { return get_data_loader().load_bytes(uri.get_string()); }

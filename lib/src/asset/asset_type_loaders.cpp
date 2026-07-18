@@ -96,9 +96,8 @@ auto TileSheetLoader::load_asset(std::string_view const uri) const -> std::uniqu
 
 	auto const& tile_set_json = json["tile_set"];
 	if (tile_set_json.is_string()) {
-		auto tile_set = json_to_asset<TileSet>(*m_data_loader, tile_set_json.as_string_view());
-		if (!tile_set) { return {}; }
-		ret->tile_set = std::move(*tile_set);
+		auto tile_set = create<TileSetLoader>().load_asset(tile_set_json.as_string_view());
+		if (tile_set) { ret->tile_set = std::move(*tile_set); }
 	} else {
 		from_json(tile_set_json, ret->tile_set);
 	}
