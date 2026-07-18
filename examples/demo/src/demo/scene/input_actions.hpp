@@ -2,7 +2,6 @@
 #include "demo/scene/scene.hpp"
 #include "le2d/drawable/shape.hpp"
 #include "le2d/input/action.hpp"
-#include "le2d/input/action_mapping.hpp"
 #include "le2d/input/router.hpp"
 
 namespace demo::scene {
@@ -20,9 +19,8 @@ class Player {
 
 class IController : public klib::Polymorphic {
   public:
-	[[nodiscard]] virtual auto get_device() const -> le::input::Device = 0;
-
-	void bind_actions(le::input::ActionMapping& out_mapping);
+	void initialize();
+	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<le::input::IMapping> const& { return m_mapping; }
 
 	void tick(kvf::Seconds dt);
 
@@ -33,17 +31,12 @@ class IController : public klib::Polymorphic {
 	virtual auto get_movement_action() -> le::input::IAction& = 0;
 
 	klib::Ptr<Player> m_player{};
+	std::shared_ptr<le::input::IMapping> m_mapping{};
 
 	glm::vec2 m_delta_xy{};
 };
 
 class KeyboardController : public IController {
-  public:
-	static constexpr auto device_v{le::input::Device::Keyboard};
-
-	[[nodiscard]] auto get_device() const -> le::input::Device final { return device_v; }
-
-  private:
 	auto get_movement_action() -> le::input::IAction& final { return m_actions.movement; }
 
 	struct {
@@ -52,12 +45,6 @@ class KeyboardController : public IController {
 };
 
 class GamepadController : public IController {
-  public:
-	static constexpr auto device_v{le::input::Device::Gamepad};
-
-	[[nodiscard]] auto get_device() const -> le::input::Device final { return device_v; }
-
-  private:
 	auto get_movement_action() -> le::input::IAction& final { return m_actions.movement; }
 
 	struct {
@@ -77,19 +64,11 @@ class InputActions : public Scene {
 	void tick(kvf::Seconds dt) final;
 	void render_main_pass(le::IRenderer& renderer) const final;
 
-	void set_active_controller(gsl::not_null<IController*> controller);
-	void update_active_controller();
-
 	void inspect();
 
 	le::input::Router m_router{};
-	std::shared_ptr<le::input::ActionMapping> m_mapping{std::make_shared<le::input::ActionMapping>()};
 
-	struct {
-		std::vector<std::unique_ptr<IController>> storage{};
-		klib::Ptr<IController> active{};
-		le::input::Device current_device{le::input::Device::Keyboard};
-	} m_controllers{};
+	std::vector<std::unique_ptr<IController>> m_controllers{};
 
 	Player m_player{};
 };
