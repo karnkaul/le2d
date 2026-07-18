@@ -33,22 +33,26 @@ Use `le::input::KeyTrigger`, `le::input::MouseButtonTrigger`, `le::input::KeyCho
 
 ### Mappings, Actions, and Router
 
-An `le::input::IMapping` represents a consumer of events (and gamepad states). Input mappings are unidirectional and designed primarily for reactive gameplay, though they can very well be used for window-level responses too.
+An `le::input::IMapping` represents a consumer of events (and gamepad states). An incoming event can be observed, or "consumed" - in which case it will not propagate any further. (This is irrelevant unless multiple mappings are active and bound simultaneously.) Mappings can combine multiple input events into a higher-level construct (eg a 2D axis), which is why `le::input::IMapping::dispatch_events()` exists, and is called after all events have been processed.
 
-The simplest kind of mapping is `le::input::ListenerMapping`, which exposes optional callbacks for every `event` type.
+The most direct kind of mapping is `le::input::ListenerMapping`, which exposes optional callbacks for each `le::input::IMapping` customization point.
 
-An `input::action` type represents one of various kinds of inputs (eg digital for off/on, axis for 0-1). An action can be bound to a callback via an `le::input::ActionMapping` instance. Each callback is invoked with an `input::action::Value` which can be cast to a `bool` (digital), `float` (1D axis), or `glm::vec2` (2D axis).
+An `input::action` type represents one of various kinds of device inputs (eg digital for off/on, axis for 0-1). An action can be bound to a callback via an `le::input::ActionMapping` instance. Each callback is invoked with an `input::action::Value` which can be cast to a `bool` (digital), `float` (1D axis), or `glm::vec2` (2D axis).
 
-An `le::input::Router` stores a mutable stack of weak pointers to input mappings, with the top unexpired one being active and receiving input events. Instead of looping over the event queue, pass it to the router every frame via `le::input::Router::dispatch()`.
+An `le::input::Router` stores a mutable stack of weak-pointers to input mappings. The stack is cycled (in reverse) for each event, until a mapping consumes it. Instead of looping over the event queue, pass it to the router every frame via `le::input::Router::dispatch()`.
 
-Most of the time a single persistent mapping will be sufficient, the stack is useful for eg having a different mapping for popup/modal navigation.
+Most of the time a single persistent mapping will be sufficient, the stack is useful for eg having a different mapping for popup/modal navigation or multiple active (non-overlapping) device controllers.
 
 See the `demo::InputActions` scene for a demonstration.
 
 ## Console
 
-WIP
+`le::console::ITerminal` is a interface to a basic command-line terminal with text input. A monospace font is recommended for use with it. Bind its input mapping via `le::console::ITerminal::get_mapping()` to `le::input::Router::terminal_mapping` for automatic event routing between the console and other bound mappings.
+
+See the `demo::TextBoxConsole` scene for a demonstration.
 
 ## RenderPass and RenderTexture
+
+WIP
 
 ## Animations

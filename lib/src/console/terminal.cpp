@@ -11,8 +11,7 @@
 #include <algorithm>
 #include <ranges>
 
-namespace le {
-namespace console {
+namespace le::console {
 namespace {
 struct Caret {
 	TextGeometry geometry{};
@@ -518,37 +517,9 @@ class Terminal : public ITerminal {
 
 	std::optional<std::size_t> m_history_index{};
 };
-
-struct NullTerminal : ITerminal {
-	[[nodiscard]] auto is_null() const -> bool final { return true; }
-
-	[[nodiscard]] auto get_mapping() const -> std::shared_ptr<input::IMapping> const& final { return mapping; }
-
-	[[nodiscard]] auto is_active() const -> bool final { return false; }
-	void toggle_active() final {}
-
-	void add_tweakable(std::string_view /*id*/, gsl::not_null<ITweakable*> /*tweakable*/) final {}
-	void remove_tweakable(std::string_view /*id*/) final {}
-
-	void println(std::string_view /*text*/) final {}
-	void printerr(std::string_view /*text*/) final {}
-
-	[[nodiscard]] auto get_background() const -> kvf::Color final { return {}; }
-	void set_background(kvf::Color /*color*/) final {}
-
-	auto consume_event(Event const& /*event*/) -> bool final { return false; }
-
-	void tick(kvf::Seconds /*dt*/) final {}
-	void draw(IRenderer& /*renderer*/) const final {}
-
-	std::shared_ptr<input::IMapping> mapping{std::make_shared<input::ListenerMapping>()};
-};
 } // namespace
 
 auto TerminalBuilder::build(gsl::not_null<IFont*> font) const -> std::unique_ptr<ITerminal> {
 	return std::make_unique<Terminal>(font, create_info, add_builtin_tweaks);
 }
-} // namespace console
-
-auto console::build_null_terminal() -> std::unique_ptr<ITerminal> { return std::make_unique<NullTerminal>(); }
-} // namespace le
+} // namespace le::console

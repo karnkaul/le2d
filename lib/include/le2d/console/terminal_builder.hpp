@@ -52,6 +52,4 @@ class TerminalBuilder {
 	CreateInfo create_info{};
 	bool add_builtin_tweaks{true};
 };
-
-[[nodiscard]] auto build_null_terminal() -> std::unique_ptr<ITerminal>;
 } // namespace le::console

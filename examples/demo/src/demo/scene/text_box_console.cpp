@@ -35,7 +35,7 @@ void TextBox::create_quads() {
 }
 
 void TextBox::create_mapping() {
-	// TextBox's mapping forwards relevant events to InputText, and deactivates on Escape.
+	// TextBox's mapping forwards relevant events to InputText.
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
 	mapping->on_key = [this](le::event::Key const& key) { return m_input_text.consume_key(key); };
 	mapping->on_codepoint = [this](le::event::Codepoint const codepoint) { return m_input_text.consume_codepoint(codepoint); };
@@ -89,7 +89,7 @@ void TextBoxConsole::create_terminal() {
 }
 
 void TextBoxConsole::create_mapping() {
-	// Scene's mapping activates TextBox on Enter.
+	// Scene's mapping activates/deactivates TextBox on Enter/Escape.
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
 	mapping->on_key = [this](le::event::Key const& key) {
 		if (enter_chord_v.is_engaged(key)) {
