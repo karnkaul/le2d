@@ -5,12 +5,13 @@
 #include <optional>
 
 namespace le::input {
-/// \brief Stack of mappings, routes events to the topmost one.
+/// \brief Stack of IMapping weak-pointers.
+/// An Event is routed in (reverse) order of bound mappings until one consumes it.
 class Router {
   public:
-	/// \brief Push a mapping to the top.
-	/// \param mapping Mapping to push.
-	/// Disengages the existing topmost mapping before pushing.
+	/// \brief Push a mapping to the top of the stack.
+	/// \param mapping Mapping to push. Router will own a weak-pointer until it expires.
+	/// Disengages existing mappings before pushing.
 	void push_mapping(std::shared_ptr<IMapping> const& mapping);
 
 	/// \brief Pop the topmost mapping, if any.
@@ -19,10 +20,8 @@ class Router {
 	/// \brief Remove a particular mapping.
 	void remove_mapping(std::shared_ptr<IMapping> const& mapping);
 
+	/// \returns true if mapping is bound (and unexpired).
 	[[nodiscard]] auto contains_mapping(std::shared_ptr<IMapping> const& mapping) const -> bool;
-
-	/// \brief If non-null, always on top.
-	void set_terminal_mapping(std::shared_ptr<IMapping> const& mapping);
 
 	/// \brief Clear all mappings.
 	void clear_stack() { m_mappings.clear(); }
@@ -44,6 +43,9 @@ class Router {
 	/// \brief Dead zone for setting first/last used Gamepad.
 	float nonzero_dead_zone{Gamepad::nonzero_dead_zone_v};
 
+	/// \brief If non-null, always on top.
+	std::weak_ptr<IMapping> terminal_mapping{};
+
   private:
 	template <typename F>
 	auto cascade_invoke_if(F func) const -> bool;
@@ -51,7 +53,6 @@ class Router {
 	void pre_dispatch();
 	void dispatch_events(std::span<Event const> events);
 
-	std::weak_ptr<IMapping> m_terminal_mapping{};
 	std::vector<std::weak_ptr<IMapping>> m_mappings{};
 	std::vector<std::shared_ptr<IMapping>> m_mappings_buffer{};
 

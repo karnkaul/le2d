@@ -54,8 +54,6 @@ auto Router::contains_mapping(std::shared_ptr<IMapping> const& mapping) const ->
 	return std::ranges::any_of(m_mappings, [&mapping](auto const& ptr) { return ptr.lock() == mapping; });
 }
 
-void Router::set_terminal_mapping(std::shared_ptr<IMapping> const& mapping) { m_terminal_mapping = mapping; }
-
 void Router::dispatch(std::span<Event const> events) {
 	auto should_disengage = false;
 	for (auto const& event : events) {
@@ -103,7 +101,7 @@ void Router::pre_dispatch() {
 		m_mappings_buffer.push_back(std::move(mapping));
 		return false;
 	});
-	if (auto terminal_mapping = m_terminal_mapping.lock()) { m_mappings_buffer.push_back(std::move(terminal_mapping)); }
+	if (auto mapping = terminal_mapping.lock()) { m_mappings_buffer.push_back(std::move(mapping)); }
 }
 
 void Router::dispatch_events(std::span<Event const> events) {

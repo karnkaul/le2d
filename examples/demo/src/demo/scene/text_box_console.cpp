@@ -85,8 +85,7 @@ void TextBoxConsole::load_font() {
 void TextBoxConsole::create_terminal() {
 	auto builder = le::console::TerminalBuilder{};
 	m_terminal = builder.build(m_mono_font.get());
-	m_router.set_terminal_mapping(m_terminal->get_mapping());
-	// m_junction.emplace(&m_router, m_terminal.get());
+	m_router.terminal_mapping = m_terminal->get_mapping();
 }
 
 void TextBoxConsole::create_mapping() {
