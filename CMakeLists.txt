@@ -29,3 +29,6 @@ endif()
 if(LE2D_BUILD_SPIRV2CPP)
   add_subdirectory(spirv2cpp)
 endif()
+
+# TEMP
+add_subdirectory(cards)

@@ -1,0 +1,39 @@
+#include "cards/catalog/catalog_parser.hpp"
+#include "le2d/json_io.hpp"
+
+namespace cards {
+namespace {
+[[nodiscard]] auto to_entry(dj::Json const& uri) -> catalog::Entry { return catalog::Entry{.uri = uri.as<std::string>()}; }
+} // namespace
+
+void Catalog::Parser::parse(dj::Json const& json) {
+	parse_images(json["images"]);
+	parse_config(json["config"]);
+}
+
+void Catalog::Parser::parse_images(dj::Json const& json) {
+	for (auto const& entry : json["covers"].as_array()) { m_catalog->m_cover.entries.push_back(to_entry(entry)); }
+	for (auto const& entry : json["jokers"].as_array()) { m_catalog->m_joker.entries.push_back(to_entry(entry)); }
+	for (auto const& entry : json["overlays"].as_array()) { m_catalog->m_overlay.entries.push_back(to_entry(entry)); }
+
+	for (auto const& [suit, name] : suit_name_map.as_span()) { parse_suit(json[name], suit); }
+}
+
+void Catalog::Parser::parse_suit(dj::Json const& json, Suit const suit) {
+	auto const it = m_catalog->m_suit_groups.find(suit);
+	KLIB_ASSERT(it != m_catalog->m_suit_groups.end());
+
+	auto& group_suit = it->second;
+	for (auto const& [key, in_entry] : json.as_object()) {
+		auto const value = value_name_map.to_enum(key);
+		if (!value) { continue; }
+		group_suit.entries.insert_or_assign(*value, to_entry(in_entry));
+	}
+}
+
+void Catalog::Parser::parse_config(dj::Json const& json) {
+	if (auto const& n_spacing = json["n_spacing"]) { le::from_json(n_spacing, m_catalog->m_config.n_spacing); }
+	if (auto const& cover_index = json["cover_index"]) { from_json(cover_index, m_catalog->m_config.cover_index); }
+	if (auto const& select_overlay_index = json["select_overlay_index"]) { from_json(select_overlay_index, m_catalog->m_config.select_overlay_index); }
+}
+} // namespace cards
