@@ -4,9 +4,9 @@
 #include "le2d/drawable/sprite.hpp"
 
 namespace cards {
-class CardSprite : public le::IDrawable {
+class Card : public le::IDrawable {
   public:
-	explicit CardSprite(Catalog const& catalog, Denomination denomination);
+	explicit Card(Catalog const& catalog, Denomination denomination);
 
 	void draw(le::IRenderer& renderer) const final;
 
@@ -20,7 +20,7 @@ class CardSprite : public le::IDrawable {
 	[[nodiscard]] auto get_sprite() const -> le::drawable::Sprite const& { return m_sprite; }
 	[[nodiscard]] auto& instance(this auto&& self) { return self.m_sprite.instance; }
 
-	Location location{};
+	Seat seat{};
 
   private:
 	struct Textures {

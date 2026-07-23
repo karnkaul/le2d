@@ -35,5 +35,7 @@ void Catalog::Parser::parse_config(dj::Json const& json) {
 	if (auto const& n_spacing = json["n_spacing"]) { le::from_json(n_spacing, m_catalog->m_config.n_spacing); }
 	if (auto const& cover_index = json["cover_index"]) { from_json(cover_index, m_catalog->m_config.cover_index); }
 	if (auto const& select_overlay_index = json["select_overlay_index"]) { from_json(select_overlay_index, m_catalog->m_config.select_overlay_index); }
+	if (auto const& hand_n_canvas_width = json["hand_n_canvas_width"]) { from_json(hand_n_canvas_width, m_catalog->m_config.hand_n_canvas_width); }
+	if (auto const& n_card_height = json["n_card_height"]) { from_json(n_card_height, m_catalog->m_config.n_card_height); }
 }
 } // namespace cards

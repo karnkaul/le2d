@@ -1,4 +1,5 @@
 #pragma once
+#include "cards/game/world_space.hpp"
 #include "cards/types.hpp"
 #include "le2d/asset/asset_map.hpp"
 #include "le2d/resource/texture.hpp"
@@ -52,9 +53,13 @@ class SuitGroup {
 } // namespace catalog
 
 struct Config {
+	[[nodiscard]] constexpr auto get_card_height() const -> float { return n_card_height * world_space_v.y; }
+
 	glm::vec2 n_spacing{0.2f};
 	std::size_t cover_index{0uz};
 	std::size_t select_overlay_index{0uz};
+	float hand_n_canvas_width{1.0f};
+	float n_card_height{0.2f};
 };
 
 class Catalog {

@@ -26,9 +26,29 @@ inline constexpr auto standard_denominations_v = [] {
 	return ret;
 }();
 
-inline constexpr auto all_locations_v = enumerated_array<Location>();
+inline constexpr auto all_seats_v = enumerated_array<Seat>();
+
+[[nodiscard]] constexpr auto next_seat(Seat const current) -> Seat {
+	switch (current) {
+	case Seat::South: return Seat::East;
+	case Seat::North: return Seat::West;
+	case Seat::West: return Seat::South;
+	case Seat::East: return Seat::North;
+	default: return Seat::South;
+	}
+}
+
+[[nodiscard]] constexpr auto opposite_seat(Seat const seat) -> Seat {
+	switch (seat) {
+	case Seat::South: return Seat::North;
+	case Seat::North: return Seat::South;
+	case Seat::West: return Seat::East;
+	case Seat::East: return Seat::West;
+	default: return Seat::South;
+	}
+}
 
 void shuffle(std::span<Denomination> denominations);
 
-[[nodiscard]] auto render_view_orientation(Location location) -> le::nvec2;
+[[nodiscard]] auto render_view_orientation(Seat seat) -> le::nvec2;
 } // namespace cards::util

@@ -37,7 +37,7 @@ void App::run() {
 
 		m_input_router->dispatch(m_context->event_queue());
 
-		m_scene->tick_frame(m_context->get_frame_stats().frame_dt);
+		m_scene->tick_frame(m_context->get_frame_stats().total_dt);
 		m_scene->render_frame();
 
 		m_context->present();
