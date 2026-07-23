@@ -9,31 +9,44 @@ class Hand : public le::IDrawable {
 	void draw(le::IRenderer& renderer) const final;
 
 	[[nodiscard]] auto get_seat() const -> Seat { return m_seat; }
-
-	[[nodiscard]] auto get_denominations() const -> std::span<Denomination const> { return m_denominations; }
-
-	[[nodiscard]] auto at_cursor(glm::vec2 world_position) const -> std::optional<Denomination>;
-
-	[[nodiscard]] auto get_selected() const -> std::optional<Denomination>;
-	void select_card(Denomination denomination);
-	void unselect_card();
+	[[nodiscard]] auto get_cards() const -> std::span<Card const> { return m_cards; }
 
 	void add_card(Denomination denomination, Face face = Face::Up);
 	auto remove_card(Denomination denomination) -> std::optional<Card>;
 	void clear_cards();
 
-  private:
-	void synchronize();
+  protected:
+	virtual void on_cards_changed() {}
+	virtual void synchronize();
+
+	[[nodiscard]] auto find_hovered(glm::vec2 cursor_position) -> klib::Ptr<Card>;
 
 	gsl::not_null<Catalog const*> m_catalog;
+
+  private:
+	void spread_horizontal();
+	void spread_vertical();
+
 	Seat m_seat;
-	float m_n_canvas_width;
-	float m_card_height{200.0f};
-	le::Transform m_render_view{};
+
+	glm::vec2 m_datum{};
 
 	std::vector<Card> m_cards{};
-	std::vector<Denomination> m_denominations{};
+};
 
-	klib::Ptr<Card> m_selected{};
+class PlayerHand : public Hand {
+  public:
+	static constexpr auto seat_v{Seat::South};
+
+	explicit PlayerHand(gsl::not_null<Catalog const*> catalog);
+
+	[[nodiscard]] auto get_hovered() const -> klib::Ptr<Card const> { return m_hovered; }
+	auto set_hovered(glm::vec2 cursor_position) -> klib::Ptr<Card const>;
+
+  private:
+	void on_cards_changed() final;
+	void synchronize() final;
+
+	klib::Ptr<Card> m_hovered{};
 };
 } // namespace cards::game

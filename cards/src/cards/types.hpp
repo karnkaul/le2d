@@ -52,23 +52,23 @@ struct Denomination {
 	Value value{Value::Ace};
 };
 
-enum class Seat : std::int8_t { South, North, West, East, Count_ };
+enum class Seat : std::int8_t { South, East, North, West, Count_ };
 inline auto const seat_name_map = klib::EnumNameMap<Seat>{
 	{Seat::South, "south"},
+	{Seat::East, "east"},
 	{Seat::North, "north"},
 	{Seat::West, "west"},
-	{Seat::East, "east"},
 };
 
 // can be weakly ordered: accumulates over rounds.
 enum struct CardPoint : int {};
-[[nodiscard]] constexpr auto default_card_point(Value const value) -> CardPoint {
-	static_assert(Value::Ace == Value{0});
-	if (value == Value::Ace) { return CardPoint{int(Value::King) + 2}; }
-	return CardPoint{int(value) + 1};
-}
+inline constexpr auto default_card_point_v = CardPoint{1};
 
 // must be strongly ordered: determines round winner.
 enum struct Rank : int {};
-[[nodiscard]] constexpr auto default_rank(Value const value) -> Rank { return static_cast<Rank>(default_card_point(value)); }
+[[nodiscard]] constexpr auto default_rank(Value const value) -> Rank {
+	static_assert(Value::Ace == Value{0});
+	if (value == Value::Ace) { return Rank{int(Value::King) + 2}; }
+	return Rank{int(value) + 1};
+}
 } // namespace cards

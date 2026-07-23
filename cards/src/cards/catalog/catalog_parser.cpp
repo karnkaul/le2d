@@ -1,9 +1,10 @@
 #include "cards/catalog/catalog_parser.hpp"
-#include "le2d/json_io.hpp"
 
 namespace cards {
 namespace {
 [[nodiscard]] auto to_entry(dj::Json const& uri) -> catalog::Entry { return catalog::Entry{.uri = uri.as<std::string>()}; }
+
+void from_json(dj::Json const& json, kvf::Seconds& out) { out = kvf::Seconds{json.as<float>()}; }
 } // namespace
 
 void Catalog::Parser::parse(dj::Json const& json) {
@@ -32,10 +33,15 @@ void Catalog::Parser::parse_suit(dj::Json const& json, Suit const suit) {
 }
 
 void Catalog::Parser::parse_config(dj::Json const& json) {
-	if (auto const& n_spacing = json["n_spacing"]) { le::from_json(n_spacing, m_catalog->m_config.n_spacing); }
-	if (auto const& cover_index = json["cover_index"]) { from_json(cover_index, m_catalog->m_config.cover_index); }
-	if (auto const& select_overlay_index = json["select_overlay_index"]) { from_json(select_overlay_index, m_catalog->m_config.select_overlay_index); }
-	if (auto const& hand_n_canvas_width = json["hand_n_canvas_width"]) { from_json(hand_n_canvas_width, m_catalog->m_config.hand_n_canvas_width); }
-	if (auto const& n_card_height = json["n_card_height"]) { from_json(n_card_height, m_catalog->m_config.n_card_height); }
+	auto& config = m_catalog->m_config;
+	if (auto const& cover_index = json["cover_index"]) { from_json(cover_index, config.cover_index); }
+	if (auto const& select_overlay_index = json["select_overlay_index"]) { from_json(select_overlay_index, config.select_overlay_index); }
+	if (auto const& hand_n_canvas_length = json["hand_n_canvas_length"]) { from_json(hand_n_canvas_length, config.hand_n_canvas_length); }
+	if (auto const& n_card_height = json["n_card_height"]) { from_json(n_card_height, config.n_card_height); }
+	if (auto const& n_select_offset = json["n_select_offset"]) { from_json(n_select_offset, config.n_select_offset); }
+	if (auto const& deal_rate = json["deal_rate_secs"]) { from_json(deal_rate, config.deal_rate); }
+	if (auto const& submit_ttl = json["submit_ttl_secs"]) { from_json(submit_ttl, config.submit_ttl); }
+	if (auto const& discard_delay = json["discard_delay_secs"]) { from_json(discard_delay, config.discard_delay); }
+	if (auto const& discard_ttl = json["discard_ttl_secs"]) { from_json(discard_ttl, config.discard_ttl); }
 }
 } // namespace cards

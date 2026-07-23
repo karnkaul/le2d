@@ -1,10 +1,10 @@
 #include "cards/game/card.hpp"
 
-namespace cards {
+namespace cards::game {
 Card::Card(Catalog const& catalog, Denomination const denomination)
 	: m_textures(catalog.get_suit_group(denomination.suit).texture_if(denomination.value), catalog.get_cover_texture()), m_denomination(denomination) {
 	m_sprite.set_resize_aspect(kvf::ResizeAspect::FixHeight);
-	set_height(200.0f);
+	set_height(catalog.get_config().get_card_height());
 	set_face(Face::Up);
 }
 
@@ -22,4 +22,4 @@ void Card::set_face(Face const face) {
 }
 
 Card::Textures::Textures(gsl::not_null<le::ITexture const*> face_up, gsl::not_null<le::ITexture const*> face_down) : face_up(face_up), face_down(face_down) {}
-} // namespace cards
+} // namespace cards::game

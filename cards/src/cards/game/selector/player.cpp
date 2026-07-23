@@ -1,31 +1,31 @@
 #include "cards/game/selector/player.hpp"
 #include "le2d/input/listener_mapping.hpp"
 
-namespace cards::game::selector {
-Player::Player(gsl::not_null<IServices const*> services, gsl::not_null<Hand*> hand, gsl::not_null<PlayState const*> play_state)
-	: Selector(hand, play_state), m_services(services) {
+namespace cards::game {
+PlayerSelector::PlayerSelector(gsl::not_null<IServices const*> services, gsl::not_null<PlayerHand*> player_hand, gsl::not_null<PlayState const*> play_state)
+	: Selector(player_hand, play_state), m_services(services), m_player_hand(player_hand) {
 	bind_mapping();
 }
 
-auto Player::select_submit() -> std::optional<Card> {
-	if (!m_play_state->submit_selected) { return {}; }
+auto PlayerSelector::select_submit() -> std::optional<Card> {
+	if (!m_submit) { return {}; }
 
-	auto const selected = m_hand->get_selected();
-	if (!selected) { return {}; }
+	auto const hovered = m_player_hand->get_hovered();
+	if (!hovered) { return {}; }
 
-	if (!m_play_state->is_valid_submit(*selected, m_hand->get_denominations())) { return {}; }
+	if (!m_play_state->is_valid_submit(hovered->get_denomination(), m_player_hand->get_cards())) { return {}; }
 
-	return remove_and_submit(*selected);
+	return remove_and_submit(hovered->get_denomination());
 }
 
-void Player::tick([[maybe_unused]] kvf::Seconds const dt) {}
+void PlayerSelector::tick([[maybe_unused]] kvf::Seconds const dt) { m_submit = false; }
 
-void Player::bind_mapping() {
+void PlayerSelector::bind_mapping() {
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
 
 	mapping->on_cursor_pos = [this](le::event::CursorPos const& cursor_pos) {
 		auto const world_position = m_services->get_unprojector().to_target(cursor_pos.normalized);
-		m_hovered = m_hand->at_cursor(world_position);
+		m_player_hand->set_hovered(world_position);
 		return false;
 	};
 
@@ -38,16 +38,9 @@ void Player::bind_mapping() {
 	m_services->get_input_router().push_mapping(m_mapping);
 }
 
-auto Player::consume_mouse_click() -> bool {
-	if (!m_hovered) { return false; }
-
-	auto selected = m_hand->get_selected();
-	if (selected && selected == m_hovered) {
-		m_hand->unselect_card();
-	} else {
-		m_hand->select_card(*m_hovered);
-	}
-
+auto PlayerSelector::consume_mouse_click() -> bool {
+	if (!m_player_hand->get_hovered()) { return false; }
+	m_submit = true;
 	return true;
 }
-} // namespace cards::game::selector
+} // namespace cards::game

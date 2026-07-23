@@ -16,8 +16,9 @@ class Board : public le::IDrawable {
 
 	void distribute(std::span<Denomination const> denominations);
 
-	[[nodiscard]] auto& get_hand(this auto&& self, Seat const seat) { return self.m_hands.at(seat).value(); }
-	[[nodiscard]] auto& get_player_hand(this auto&& self) { return self.get_hand(player_seat_v); }
+	[[nodiscard]] auto get_player_hand() const -> PlayerHand& { return *m_player_hand; }
+
+	[[nodiscard]] auto get_hand(Seat const seat) const -> Hand& { return *m_hands.at(seat); }
 
 	game::Trick trick{};
 	std::vector<Card> discarded{};
@@ -25,7 +26,10 @@ class Board : public le::IDrawable {
 	std::optional<Seat> current_seat{};
 
   private:
-	PerSeat<std::optional<Hand>> m_hands{};
+	void draw_indicator(le::IRenderer& renderer) const;
+
+	PerSeat<std::unique_ptr<Hand>> m_hands{};
+	klib::Ptr<PlayerHand> m_player_hand{};
 	le::drawable::Triangle m_indicator{};
 };
 } // namespace cards::game

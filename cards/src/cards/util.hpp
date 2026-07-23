@@ -28,25 +28,21 @@ inline constexpr auto standard_denominations_v = [] {
 
 inline constexpr auto all_seats_v = enumerated_array<Seat>();
 
-[[nodiscard]] constexpr auto next_seat(Seat const current) -> Seat {
-	switch (current) {
-	case Seat::South: return Seat::East;
-	case Seat::North: return Seat::West;
-	case Seat::West: return Seat::South;
-	case Seat::East: return Seat::North;
-	default: return Seat::South;
+[[nodiscard]] constexpr auto next_seat(Seat const current) -> Seat { return Seat((int(current) + 1) % int(Seat::Count_)); }
+[[nodiscard]] constexpr auto opposite_seat(Seat const seat) -> Seat { return Seat((int(seat) + 2) % int(Seat::Count_)); }
+
+[[nodiscard]] constexpr auto seat_direction(Seat const seat) -> glm::vec2 {
+	switch (seat) {
+	default:
+	case Seat::South: return -le::up_v;
+	case Seat::East: return le::right_v;
+	case Seat::North: return le::up_v;
+	case Seat::West: return -le::right_v;
 	}
 }
 
-[[nodiscard]] constexpr auto opposite_seat(Seat const seat) -> Seat {
-	switch (seat) {
-	case Seat::South: return Seat::North;
-	case Seat::North: return Seat::South;
-	case Seat::West: return Seat::East;
-	case Seat::East: return Seat::West;
-	default: return Seat::South;
-	}
-}
+[[nodiscard]] constexpr auto is_vertical(Seat const seat) -> bool { return seat == Seat::South || seat == Seat::North; }
+[[nodiscard]] constexpr auto is_horizontal(Seat const seat) -> bool { return seat == Seat::East || seat == Seat::West; }
 
 void shuffle(std::span<Denomination> denominations);
 

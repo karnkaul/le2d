@@ -3,7 +3,7 @@
 #include "cards/types.hpp"
 #include "le2d/drawable/sprite.hpp"
 
-namespace cards {
+namespace cards::game {
 class Card : public le::IDrawable {
   public:
 	explicit Card(Catalog const& catalog, Denomination denomination);
@@ -20,8 +20,6 @@ class Card : public le::IDrawable {
 	[[nodiscard]] auto get_sprite() const -> le::drawable::Sprite const& { return m_sprite; }
 	[[nodiscard]] auto& instance(this auto&& self) { return self.m_sprite.instance; }
 
-	Seat seat{};
-
   private:
 	struct Textures {
 		explicit Textures(gsl::not_null<le::ITexture const*> face_up, gsl::not_null<le::ITexture const*> face_down);
@@ -35,4 +33,4 @@ class Card : public le::IDrawable {
 	le::drawable::Sprite m_sprite{};
 	Face m_face{};
 };
-} // namespace cards
+} // namespace cards::game

@@ -2,7 +2,7 @@
 
 namespace cards::game {
 auto Tally::to_card_point(Value const value) const -> CardPoint {
-	if (!custom_pointer) { return default_card_point(value); }
+	if (!custom_pointer) { return default_card_point_v; }
 	return custom_pointer->to_card_point(value);
 }
 

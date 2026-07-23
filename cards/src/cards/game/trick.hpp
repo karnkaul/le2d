@@ -12,9 +12,11 @@ class Trick : public le::IDrawable {
 
 	void draw(le::IRenderer& renderer) const final;
 
+	[[nodiscard]] static auto get_target_position(Card const& card, Seat seat) -> glm::vec2;
+
 	[[nodiscard]] auto is_full() const -> bool { return m_draw_order.size() == m_cards.values.size(); }
 
-	void push_card(Card card);
+	void push_card(Card card, Seat seat);
 	[[nodiscard]] auto get_state() const -> State const& { return m_state; }
 	[[nodiscard]] auto transfer_round(Seat winner) -> Round;
 	void clear_round();

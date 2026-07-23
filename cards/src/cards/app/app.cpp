@@ -7,7 +7,7 @@
 namespace cards {
 namespace {
 constexpr auto context_ci = le::Context::CreateInfo{
-	.window = le::WindowInfo{.size = {800, 800}, .title = "cards"},
+	.window = le::WindowInfo{.size = {1024, 1024}, .title = "cards"},
 };
 } // namespace
 

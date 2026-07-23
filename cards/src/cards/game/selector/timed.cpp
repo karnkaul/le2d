@@ -5,7 +5,7 @@ Timed::Timed(gsl::not_null<le::Random*> random, gsl::not_null<Hand*> hand, gsl::
 	: Selector(hand, play_state), m_random(random) {}
 
 auto Timed::select_submit() -> std::optional<Card> {
-	if (m_hand->get_denominations().empty()) { return {}; }
+	if (m_hand->get_cards().empty()) { return {}; }
 
 	if (!m_submit_remain) {
 		set_submit_remain();

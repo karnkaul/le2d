@@ -54,12 +54,20 @@ class SuitGroup {
 
 struct Config {
 	[[nodiscard]] constexpr auto get_card_height() const -> float { return n_card_height * world_space_v.y; }
+	[[nodiscard]] constexpr auto get_select_offset() const -> float { return n_select_offset * get_card_height(); }
+	[[nodiscard]] constexpr auto get_hand_canvas_size() const -> glm::vec2 { return hand_n_canvas_length * world_space_v; }
 
-	glm::vec2 n_spacing{0.2f};
 	std::size_t cover_index{0uz};
 	std::size_t select_overlay_index{0uz};
-	float hand_n_canvas_width{1.0f};
+
+	float hand_n_canvas_length{0.5f};
 	float n_card_height{0.2f};
+	float n_select_offset{0.2f};
+
+	kvf::Seconds deal_rate{0.02s};
+	kvf::Seconds submit_ttl{0.2s};
+	kvf::Seconds discard_delay{2s};
+	kvf::Seconds discard_ttl{0.2s};
 };
 
 class Catalog {
