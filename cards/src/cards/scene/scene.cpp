@@ -9,8 +9,7 @@ void Scene::initialize_scene(gsl::not_null<scene::ICoordinator*> coordinator) {
 
 void Scene::tick_frame(kvf::Seconds const dt) { tick(dt); }
 
-void Scene::render_frame() {
-	auto& renderer = m_coordinator->get_context().begin_render(clear_color);
+void Scene::render_frame(le::IRenderer& renderer) {
 	renderer.set_viewport(le::viewport::Letterbox{.world_size = world_space_v});
 	render(renderer);
 }

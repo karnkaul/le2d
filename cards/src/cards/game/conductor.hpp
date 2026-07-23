@@ -83,6 +83,7 @@ class Conductor : public le::IDrawable {
 	void finish_discard();
 
 	gsl::not_null<IServices const*> m_services;
+	gsl::not_null<Timings const*> m_timings;
 
 	Board m_board;
 	PerSeat<std::unique_ptr<Selector>> m_selectors{};

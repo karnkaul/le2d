@@ -1,7 +1,9 @@
 #pragma once
 #include "cards/catalog/catalog.hpp"
+#include "cards/console.hpp"
 #include "cards/scene/factory.hpp"
 #include "cards/scene/scene.hpp"
+#include "le2d/asset/asset_map.hpp"
 #include "le2d/context.hpp"
 #include "le2d/file_data_loader.hpp"
 #include "le2d/input/router.hpp"
@@ -22,6 +24,7 @@ class App : public scene::ICoordinator {
 	auto enqueue_scene(std::string_view name) -> bool final { return m_scene_factory->set_next_scene(name); }
 
 	std::unique_ptr<le::Context> m_context{};
+	Console m_console{};
 	le::FileDataLoader m_data_loader{};
 	std::unique_ptr<le::input::Router> m_input_router{std::make_unique<le::input::Router>()};
 	std::optional<le::AssetMap> m_asset_map{};

@@ -1,4 +1,5 @@
 #include "cards/app/app.hpp"
+#include "cards/scene/create_terminal.hpp"
 #include "cards/scene/lab.hpp"
 #include "cards/scene/load_catalog.hpp"
 #include "le2d/util.hpp"
@@ -22,7 +23,8 @@ void App::run() {
 
 	m_scene_factory.emplace(this);
 	m_scene_factory->store_creator("Lab", [] { return std::make_unique<scene::Lab>(); });
-	m_scene_factory->store_creator("LoadCatalog", [this] { return std::make_unique<scene::LoadCatalog>(&m_catalog, &*m_asset_map, "Lab"); });
+	m_scene_factory->store_creator("LoadCatalog", [this] { return std::make_unique<scene::LoadCatalog>(&m_catalog, &*m_asset_map, "CreateTerminal"); });
+	m_scene_factory->store_creator("CreateTerminal", [this] { return std::make_unique<scene::CreateTerminal>(&m_console, &m_catalog, "Lab"); });
 
 	m_scene_factory->set_next_scene("LoadCatalog");
 
@@ -37,8 +39,13 @@ void App::run() {
 
 		m_input_router->dispatch(m_context->event_queue());
 
-		m_scene->tick_frame(m_context->get_frame_stats().total_dt);
-		m_scene->render_frame();
+		auto const dt = m_context->get_frame_stats().total_dt;
+		if (m_console.terminal) { m_console.terminal->tick(dt); }
+
+		m_scene->tick_frame(dt);
+		auto& renderer = m_context->begin_render(m_scene->clear_color);
+		m_scene->render_frame(renderer);
+		if (m_console.terminal) { m_console.terminal->draw(renderer); }
 
 		m_context->present();
 	}

@@ -6,7 +6,10 @@
 #include <imgui.h>
 
 namespace cards::game {
-Conductor::Conductor(gsl::not_null<IServices const*> services) : m_services(services), m_board(&services->get_catalog()) { create_selectors(); }
+Conductor::Conductor(gsl::not_null<IServices const*> services)
+	: m_services(services), m_timings(&services->get_catalog().get_config().timings), m_board(&services->get_catalog()) {
+	create_selectors();
+}
 
 void Conductor::draw(le::IRenderer& renderer) const {
 	m_board.draw(renderer);
@@ -48,7 +51,7 @@ void Conductor::start_game(GameInfo const& game_info) {
 	if (denominations.empty()) { denominations.append_range(util::standard_denominations_v); }
 	util::shuffle(denominations);
 
-	m_anim = Deal{.denominations = std::move(denominations), .remain = m_services->get_catalog().get_config().deal_rate};
+	m_anim = Deal{.denominations = std::move(denominations), .remain = m_timings->deal_rate};
 
 	m_board.trick.clear_round();
 	m_board.discarded.clear();
@@ -74,7 +77,7 @@ void Conductor::tick_deal(kvf::Seconds const dt) {
 		return;
 	}
 
-	deal.remain = m_services->get_catalog().get_config().deal_rate;
+	deal.remain = m_timings->deal_rate;
 	deal.next_seat = util::next_seat(deal.next_seat);
 }
 
@@ -89,7 +92,7 @@ void Conductor::tick_submit(kvf::Seconds const dt) {
 	auto& submit = std::get<Submit>(m_anim);
 
 	submit.elapsed += dt;
-	auto const alpha = submit.elapsed / m_services->get_catalog().get_config().submit_ttl;
+	auto const alpha = submit.elapsed / m_timings->submit_ttl;
 	if (alpha > 1.0f) {
 		finish_submit();
 		return;
@@ -105,7 +108,7 @@ void Conductor::tick_discard(kvf::Seconds const dt) {
 	if (m_discard.start_remain > 0s) { return; }
 
 	m_discard.elapsed += dt;
-	auto const alpha = m_discard.elapsed / m_services->get_catalog().get_config().discard_ttl;
+	auto const alpha = m_discard.elapsed / m_timings->discard_ttl;
 	if (alpha > 1.0f) {
 		finish_discard();
 		return;
@@ -190,7 +193,7 @@ void Conductor::start_discard() {
 	auto const card_size = discard.round.cards.values.front()->get_sprite().get_size();
 	auto const target_space = 0.5f * (world_space_v + (2.0f * card_size));
 	discard.dst = util::seat_direction(winner) * target_space;
-	discard.start_remain = m_services->get_catalog().get_config().discard_delay;
+	discard.start_remain = m_timings->discard_delay;
 	m_play_state.tally.triage(discard.round);
 	for (auto const seat : util::all_seats_v) { discard.offsets.at(seat) = discard.round.cards.at(seat)->instance().transform.position; }
 	m_anim = std::move(discard);

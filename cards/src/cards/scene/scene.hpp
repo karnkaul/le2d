@@ -8,7 +8,9 @@ class Scene : public klib::Polymorphic {
 
 	void tick_frame(kvf::Seconds dt);
 
-	void render_frame();
+	void render_frame(le::IRenderer& renderer);
+
+	kvf::Color clear_color{kvf::black_v};
 
   protected:
 	virtual void initialize() {}
@@ -16,8 +18,6 @@ class Scene : public klib::Polymorphic {
 	virtual void render([[maybe_unused]] le::IRenderer& renderer) const {}
 
 	[[nodiscard]] auto get_coordinator() const -> scene::ICoordinator& { return *m_coordinator; }
-
-	kvf::Color clear_color{kvf::black_v};
 
   private:
 	klib::Ptr<scene::ICoordinator> m_coordinator{};

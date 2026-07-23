@@ -1,5 +1,6 @@
 #include "cards/scene/load_catalog.hpp"
 #include "cards/catalog/catalog_parser.hpp"
+#include "cards/catalog/catalog_resources.hpp"
 #include "djson/json.hpp"
 #include "klib/string/fixed_string.hpp"
 #include <imgui.h>
@@ -15,9 +16,8 @@ void LoadCatalog::initialize() {
 	if (!json) { throw std::runtime_error{"Failed to load Catalog"}; }
 
 	parse_catalog(*m_catalog, json);
-	auto texture_uris = m_catalog->get_texture_uris();
 	auto manifest = le::AssetManifest{};
-	for (auto& uri : texture_uris) { manifest.add_entry<le::ITexture>(std::move(uri)); }
+	Catalog::Resources{*m_catalog}.populate_manifest(manifest);
 
 	m_asset_loader = coordinator.get_context().create_asset_loader(&coordinator.get_data_loader());
 	m_manifest_loader = le::IManifestLoader::create(&m_asset_loader);
@@ -33,7 +33,7 @@ void LoadCatalog::check_loaded() {
 	if (m_manifest_loader->get_state() == le::ManifestLoaderState::Loading) { return; }
 
 	m_manifest_loader->transfer_assets(*m_asset_map);
-	m_catalog->assign_textures(*m_asset_map);
+	Catalog::Resources{*m_catalog}.assign_assets(*m_asset_map);
 
 	get_coordinator().enqueue_scene(m_next_scene);
 }
