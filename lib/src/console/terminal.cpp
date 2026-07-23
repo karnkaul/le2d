@@ -318,37 +318,32 @@ class Terminal : public ITerminal {
 
 		if (!is_active()) { return false; }
 
-		auto ret = false;
 		if (key.mods == 0) {
 			if (key.action == GLFW_PRESS) {
-				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_ENTER: on_enter(); break;
 				case GLFW_KEY_ESCAPE: on_escape(); break;
-				default: ret = false; break;
 				}
 			}
 			if (key.action != GLFW_RELEASE) {
-				ret = true;
 				switch (key.key) {
 				case GLFW_KEY_UP: cycle_up(); break;
 				case GLFW_KEY_DOWN: cycle_down(); break;
 				case GLFW_KEY_TAB: autocomplete(); break;
 				case GLFW_KEY_PAGE_UP: page_up(); break;
 				case GLFW_KEY_PAGE_DOWN: page_down(); break;
-				default: ret = false; break;
 				}
 			}
 		}
-		ret |= m_input.consume_key(key);
-		return ret;
+		m_input.consume_key(key);
+		return true;
 	}
 
 	auto on_codepoint(event::Codepoint const codepoint) -> bool {
 		if (!is_active()) { return false; }
-		auto const ret = m_input.consume_codepoint(codepoint);
+		m_input.consume_codepoint(codepoint);
 		stop_cycling();
-		return ret;
+		return true;
 	}
 
 	auto on_cursor_move(event::CursorPos const& cursor_pos) -> bool {
