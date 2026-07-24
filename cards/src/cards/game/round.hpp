@@ -4,7 +4,7 @@
 
 namespace cards::game {
 struct Round {
-	PerSeat<std::optional<Card>> cards{};
+	PerSeat<Card> cards;
 	Seat first{};
 	Seat winner{};
 };

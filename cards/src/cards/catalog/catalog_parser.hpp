@@ -13,6 +13,7 @@ class Catalog::Parser {
 	void parse_images(dj::Json const& json);
 	void parse_suit(dj::Json const& json, Suit suit);
 	void parse_fonts(dj::Json const& json);
+	void parse_audio(dj::Json const& json);
 	void parse_config(dj::Json const& json);
 
 	Catalog& m_catalog;

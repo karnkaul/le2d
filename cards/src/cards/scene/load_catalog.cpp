@@ -39,12 +39,13 @@ void LoadCatalog::check_loaded() {
 }
 
 void LoadCatalog::tick_loading() {
-	if (!ImGui::IsPopupOpen("Loading")) { ImGui::OpenPopup("Loading"); }
+	static constexpr auto title_v = klib::CString{"Loading Catalog"};
+	if (!ImGui::IsPopupOpen(title_v.c_str())) { ImGui::OpenPopup(title_v.c_str()); }
 
 	ImGui::SetNextWindowSize({200.0f, 100.0f});
 	auto const center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2{0.5f, 0.5f});
-	if (!ImGui::BeginPopupModal("Loading")) { return; }
+	if (!ImGui::BeginPopupModal(title_v.c_str())) { return; }
 
 	auto const progress = m_manifest_loader->get_progress();
 	ImGui::TextUnformatted(klib::FixedString{"progress: {} / {}", progress.completed(), progress.total}.c_str());

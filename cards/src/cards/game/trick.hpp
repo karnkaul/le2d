@@ -14,7 +14,7 @@ class Trick : public le::IDrawable {
 
 	[[nodiscard]] static auto get_target_position(Card const& card, Seat seat) -> glm::vec2;
 
-	[[nodiscard]] auto is_full() const -> bool { return m_draw_order.size() == m_cards.values.size(); }
+	[[nodiscard]] auto is_full() const -> bool;
 
 	void push_card(Card card, Seat seat);
 	[[nodiscard]] auto get_state() const -> State const& { return m_state; }

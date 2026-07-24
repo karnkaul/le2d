@@ -8,7 +8,7 @@ auto Tally::to_card_point(Value const value) const -> CardPoint {
 
 void Tally::triage(Round const& round) {
 	auto round_points = 0;
-	for (auto const& card : round.cards.values) { round_points += int(to_card_point(card->get_denomination().value)); }
+	for (auto const& card : round.cards.values) { round_points += int(to_card_point(card.get_denomination().value)); }
 	auto& target = points.at(round.winner);
 	auto const total_points = int(target) + round_points;
 	target = CardPoint{total_points};

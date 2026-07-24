@@ -11,6 +11,7 @@ class Lab : public Scene {
 	void bind_mapping();
 	void rebuild_deck();
 
+	std::optional<game::Board> m_board{};
 	std::optional<game::Conductor> m_conductor{};
 
 	std::shared_ptr<le::input::IMapping> m_mapping{};

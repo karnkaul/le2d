@@ -10,7 +10,7 @@ void CreateTerminal::initialize() {
 	auto const mono_font = m_catalog->get_mono_font();
 	if (!mono_font) { return; }
 
-	log.info("mono font found, creating terminal");
+	log.info("mono font found, creating terminal (F1 to use)");
 	m_console->terminal = le::console::TerminalBuilder{}.build(mono_font);
 	get_coordinator().get_input_router().terminal_mapping = m_console->terminal->get_mapping();
 

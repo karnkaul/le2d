@@ -40,7 +40,11 @@ void Lab::initialize() {
 	bind_mapping();
 
 	clear_color = kvf::Color{0x114422ff};
-	m_conductor.emplace(&get_coordinator());
+	auto const pawn_builder = game::PlayerPawnBuilder{&get_coordinator()};
+	// auto const pawn_builder = game::Pawn::Builder{&get_coordinator()};
+
+	m_board.emplace(&get_coordinator().get_catalog(), pawn_builder);
+	m_conductor.emplace(&get_coordinator(), &*m_board);
 	rebuild_deck();
 }
 
