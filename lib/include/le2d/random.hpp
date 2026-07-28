@@ -1,6 +1,7 @@
 #pragma once
 #include "klib/random.hpp"
 #include <glm/vec2.hpp>
+#include <algorithm>
 
 namespace le {
 /// \brief Stateful random number generator.
@@ -49,6 +50,12 @@ class BasicRandom {
 	/// \returns Random signed vec2 with magnitude between [positive_lo, positive_hi].
 	[[nodiscard]] auto next_signed_vec2(float const positive_lo, float const positive_hi) -> glm::vec2 {
 		return next_signed_vec2(glm::vec2{positive_lo}, glm::vec2{positive_hi});
+	}
+
+	/// \brief Shuffle the elements of a random access range.
+	template <std::ranges::random_access_range RangeT>
+	void shuffle(RangeT&& range) {
+		std::ranges::shuffle(std::forward<RangeT>(range), m_gen);
 	}
 
   private:
