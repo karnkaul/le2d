@@ -8,26 +8,6 @@ template <typename... Ts>
 constexpr auto holds_any_of(Event const& e) {
 	return (... || std::holds_alternative<Ts>(e));
 }
-
-enum class Type : std::int8_t { None, Keyboard, Mouse };
-
-void invoke_if(Type const type, auto& func, auto const&... args) {
-	switch (type) {
-	default:
-	case Type::None: break;
-	case Type::Keyboard: {
-		if (ImGui::GetIO().WantCaptureKeyboard) { return; }
-		break;
-	}
-	case Type::Mouse: {
-		if (ImGui::GetIO().WantCaptureMouse) { return; }
-		break;
-	}
-	}
-
-	if (!func) { return; }
-	func(args...);
-}
 } // namespace
 
 void Router::push_mapping(std::shared_ptr<IMapping> const& mapping) {
@@ -108,7 +88,6 @@ void Router::dispatch_events(std::span<Event const> events) {
 	for (auto const& event : events) {
 		auto const imgui_wants = klib::Visitor{
 			[](auto const&) { return false; },
-			[](event::CursorPos const&) { return ImGui::GetIO().WantCaptureMouse; },
 			[](event::Codepoint const) { return ImGui::GetIO().WantCaptureKeyboard; },
 			[](event::Key const&) { return ImGui::GetIO().WantCaptureKeyboard; },
 			[](event::MouseButton const&) { return ImGui::GetIO().WantCaptureMouse; },

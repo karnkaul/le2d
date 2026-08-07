@@ -197,12 +197,12 @@ void FlipbookEditor::try_load_animation(Uri uri) {
 void FlipbookEditor::on_save() {
 	auto json = dj::Json{};
 	to_json(json, m_animation);
-	auto const uri = std::string{m_save_modal.uri_input.as_view()};
+	auto const uri = m_save_modal.uri_input;
 	if (!get_data_loader().save_string(to_string(json), uri)) {
-		raise_error(std::format("Failed to save Flipbook to: '{}'", m_save_modal.uri_input.as_view()));
+		raise_error(std::format("Failed to save Flipbook to: '{}'", m_save_modal.uri_input));
 		return;
 	}
-	m_uri.animation = std::string{m_save_modal.uri_input.as_view()};
+	m_uri.animation = m_save_modal.uri_input;
 	log.info("saved Flipbook: '{}'", m_uri.animation.get_string());
 	raise_dialog(std::format("Saved {}", m_uri.animation.get_string()), "Success");
 	set_title(m_uri.animation.get_string());

@@ -14,7 +14,7 @@ class SaveModal {
 	std::string_view root_dir{};
 
 	std::string title{"Save"};
-	imcpp::InputText uri_input{};
+	std::string uri_input{};
 
   private:
 	bool m_set_open{};
