@@ -1,4 +1,5 @@
 #include "imcpp.hpp"
+#include "klib/debug/assert.hpp"
 #include "kvf/is_positive.hpp"
 #include <array>
 #include <ranges>
@@ -32,11 +33,9 @@ auto InputText::on_callback(ImGuiInputTextCallbackData& data) -> int {
 }
 
 void InputText::resize_buffer(ImGuiInputTextCallbackData& data) {
-	assert(!m_buffer.empty());
-	m_buffer.resize(m_buffer.size() * 2);
-	data.BufSize = static_cast<int>(m_buffer.size());
+	KLIB_ASSERT(m_buffer.data() == data.Buf);
+	m_buffer.resize(std::size_t(data.BufTextLen));
 	data.Buf = m_buffer.data();
-	data.BufDirty = true;
 }
 
 void MultiSelect::sync_to_selection() {

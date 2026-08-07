@@ -6,6 +6,15 @@
 namespace le {
 namespace fs = std::filesystem;
 
+namespace {
+[[nodiscard]] auto create_parent_dirs(fs::path const& path) {
+	if (!path.has_parent_path()) { return true; }
+	auto const parent = path.parent_path();
+	if (fs::exists(parent)) { return fs::is_directory(parent); }
+	return fs::create_directories(parent);
+}
+} // namespace
+
 auto FileDataLoader::upfind(std::string_view const suffix, std::string_view leaf_dir) -> std::string {
 	for (auto dir = fs::absolute(leaf_dir); !dir.empty() && dir.parent_path() != dir; dir = dir.parent_path()) {
 		auto const ret = dir / suffix;
@@ -25,12 +34,16 @@ auto FileDataLoader::try_load_string(std::string& out, std::string_view const ur
 
 auto FileDataLoader::save_bytes(std::span<std::byte const> bytes, std::string_view const uri) const -> bool {
 	if (uri.empty()) { return false; }
-	return klib::write_bytes_to_file(bytes, get_path(uri));
+	auto const path = get_path(uri);
+	if (!create_parent_dirs(path)) { return false; }
+	return klib::write_bytes_to_file(bytes, path);
 }
 
 auto FileDataLoader::save_string(std::string_view text, std::string_view const uri) const -> bool {
 	if (uri.empty()) { return false; }
-	return klib::write_to_file(text, get_path(uri));
+	auto const path = get_path(uri);
+	if (!create_parent_dirs(path)) { return false; }
+	return klib::write_to_file(text, path);
 }
 
 auto FileDataLoader::set_root_dir(std::string_view root_dir) -> bool {
