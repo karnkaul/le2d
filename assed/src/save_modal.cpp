@@ -1,11 +1,12 @@
 #include "save_modal.hpp"
+#include <misc/cpp/imgui_stdlib.h>
 #include <filesystem>
 
 namespace le::assed {
 namespace fs = std::filesystem;
 
 void SaveModal::set_open(std::string_view const uri) {
-	uri_input.set_text(uri);
+	uri_input = uri;
 	m_set_open = true;
 	m_overwrite = false;
 }
@@ -18,10 +19,10 @@ auto SaveModal::update() -> Result {
 	auto ret = Result::None;
 	if (imcpp::begin_modal(title.c_str())) {
 		ImGui::SetNextItemWidth(300.0f);
-		uri_input.update("URI");
+		ImGui::InputText("URI", &uri_input);
 		ImGui::Separator();
-		auto disabled = uri_input.as_view().empty();
-		auto const path = fs::path{root_dir} / uri_input.as_view();
+		auto disabled = uri_input.empty();
+		auto const path = fs::path{root_dir} / uri_input;
 		if (fs::is_regular_file(path)) {
 			ImGui::Checkbox("overwrite existing?", &m_overwrite);
 			disabled |= !m_overwrite;

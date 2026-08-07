@@ -205,12 +205,12 @@ void TileSheetEditor::on_save() {
 	auto tile_set = TileSet{};
 	tile_set.set_tiles(m_tiles);
 	to_json(json["tile_set"], tile_set);
-	auto const uri = std::string{m_save_modal.uri_input.as_view()};
+	auto const uri = m_save_modal.uri_input;
 	if (!get_data_loader().save_string(to_string(json), uri)) {
-		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri_input.as_view()));
+		raise_error(std::format("Failed to save TileSheet to: '{}'", m_save_modal.uri_input));
 		return;
 	}
-	m_uri.tile_sheet = std::string{m_save_modal.uri_input.as_view()};
+	m_uri.tile_sheet = m_save_modal.uri_input;
 	log.info("saved TileSheet: '{}'", m_uri.tile_sheet.get_string());
 	raise_dialog(std::format("Saved {}", m_uri.tile_sheet.get_string()), "Success");
 	set_title(m_uri.tile_sheet.get_string());
