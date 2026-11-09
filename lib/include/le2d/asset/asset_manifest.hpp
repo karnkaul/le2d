@@ -29,7 +29,9 @@ struct AssetManifest {
 
 	template <std::derived_from<IAsset> AssetTypeT>
 	void add_entry(Uri uri) {
-		if (uri.get_string().empty()) { return; }
+		if (uri.get_string().empty()) {
+			return;
+		}
 		entries.push_back(Entry::create<AssetTypeT>(std::move(uri)));
 	}
 

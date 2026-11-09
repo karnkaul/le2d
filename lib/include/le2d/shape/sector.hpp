@@ -19,11 +19,15 @@ class Sector : public IGeometry {
 
 	static constexpr auto default_diameter_v = default_length_v;
 
-	explicit(false) Sector(float const diameter = default_diameter_v, SectorParams const& params = {}) { create(diameter, params); }
+	explicit(false) Sector(float const diameter = default_diameter_v, SectorParams const& params = {}) {
+		create(diameter, params);
+	}
 
 	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_verts.vertices; }
 	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return m_verts.indices; }
-	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleFan; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final {
+		return vk::PrimitiveTopology::eTriangleFan;
+	}
 
 	void create(float diameter = default_diameter_v, Params const& params = {});
 

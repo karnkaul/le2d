@@ -27,7 +27,9 @@ class ServiceLocator {
 	template <typename Type>
 	[[nodiscard]] auto find() const -> klib::Ptr<Type> {
 		auto const it = m_services.find(typeid(Type));
-		if (it == m_services.end()) { return nullptr; }
+		if (it == m_services.end()) {
+			return nullptr;
+		}
 		return static_cast<Type*>(it->second.get());
 	}
 

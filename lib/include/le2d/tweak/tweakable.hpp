@@ -48,7 +48,9 @@ class Tweakable : public ITweakable {
 	/// \returns true if successfully parsed.
 	auto assign(std::string_view const input) -> bool final {
 		auto value = Type{};
-		if (!Parser::parse(input, value)) { return false; }
+		if (!Parser::parse(input, value)) {
+			return false;
+		}
 		return set_value(std::move(value));
 	}
 
@@ -58,7 +60,9 @@ class Tweakable : public ITweakable {
 	/// \brief Set value and invoke OnChange (if not null).
 	/// \param value Value to set.
 	auto set_value(Type value) -> bool {
-		if (m_on_set && !m_on_set(value)) { return false; }
+		if (m_on_set && !m_on_set(value)) {
+			return false;
+		}
 		m_value = std::move(value);
 		m_as_string = Parser::to_string(m_value);
 		return true;

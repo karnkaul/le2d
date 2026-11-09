@@ -10,7 +10,8 @@ struct Trs {
 
 	explicit Trs(glm::vec2 const position, float const rotation, glm::vec2 const scale)
 		: t(glm::translate(Transform::identity_mat_v, glm::vec3{position, 0.0f})),
-		  r(glm::rotate(Transform::identity_mat_v, rotation, glm::vec3{0.0f, 0.0f, 1.0f})), s(glm::scale(Transform::identity_mat_v, glm::vec3{scale, 1.0f})) {}
+		  r(glm::rotate(Transform::identity_mat_v, rotation, glm::vec3{0.0f, 0.0f, 1.0f})),
+		  s(glm::scale(Transform::identity_mat_v, glm::vec3{scale, 1.0f})) {}
 };
 } // namespace
 
@@ -25,7 +26,9 @@ auto Transform::to_view() const -> glm::mat4 {
 }
 
 auto Transform::to_inverse_view() const -> glm::mat4 {
-	if (scale == glm::vec2{0.0f}) { return {}; }
+	if (scale == glm::vec2{0.0f}) {
+		return {};
+	}
 	auto const trs = Trs{position, orientation.to_radians(), 1.0f / scale};
 	return trs.t * trs.r * trs.s;
 }

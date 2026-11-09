@@ -15,7 +15,9 @@ class Circle : public IGeometry {
 
 	static constexpr auto default_diameter_v = default_length_v;
 
-	explicit(false) Circle(float const diameter = default_diameter_v, CircleParams const& params = {}) { create(diameter, params); }
+	explicit(false) Circle(float const diameter = default_diameter_v, CircleParams const& params = {}) {
+		create(diameter, params);
+	}
 
 	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_sector.get_vertices(); }
 	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return m_sector.get_indices(); }

@@ -20,7 +20,10 @@ namespace {
 } // namespace
 
 InputText::InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info)
-	: m_font(font), m_line_input(font, create_info.height), m_cursor_color(create_info.cursor_color), m_blink_period(create_info.blink_period) {
+	: m_font(font),
+	  m_line_input(font, create_info.height),
+	  m_cursor_color(create_info.cursor_color),
+	  m_blink_period(create_info.blink_period) {
 	auto& atlas = m_line_input.get_atlas();
 
 	auto layouts = std::vector<kvf::ttf::GlyphLayout>{};
@@ -33,7 +36,9 @@ InputText::InputText(gsl::not_null<IFont*> font, CreateInfo const& create_info)
 
 void InputText::set_interactive(bool const interactive) {
 	m_interactive = interactive;
-	if (is_interactive()) { reset_blink(); }
+	if (is_interactive()) {
+		reset_blink();
+	}
 }
 
 void InputText::set_string(std::string line) {
@@ -82,7 +87,9 @@ void InputText::set_cursor(int const cursor) {
 }
 
 auto InputText::consume_key(event::Key const& key) -> bool {
-	if (!is_interactive() || key.action == GLFW_RELEASE) { return false; }
+	if (!is_interactive() || key.action == GLFW_RELEASE) {
+		return false;
+	}
 
 	auto const ctrl = key.mods == GLFW_MOD_CONTROL;
 
@@ -109,13 +116,17 @@ auto InputText::consume_key(event::Key const& key) -> bool {
 }
 
 auto InputText::consume_codepoint(event::Codepoint const codepoint) -> bool {
-	if (!is_interactive()) { return false; }
+	if (!is_interactive()) {
+		return false;
+	}
 	write(char(codepoint));
 	return true;
 }
 
 void InputText::tick(kvf::Seconds const dt) {
-	if (!is_interactive()) { return; }
+	if (!is_interactive()) {
+		return;
+	}
 	m_elapsed += dt;
 	auto const angle = (m_elapsed / m_blink_period) * 2.0f * std::numbers::pi_v<float>;
 	m_cursor_alpha = 0.5f * (std::cos(angle) + 1.0f);
@@ -124,7 +135,9 @@ void InputText::tick(kvf::Seconds const dt) {
 void InputText::draw(IRenderer& renderer) const {
 	auto const line_primitive = m_line_input.to_primitive();
 	renderer.draw(line_primitive, {&instance, 1});
-	if (!is_interactive()) { return; }
+	if (!is_interactive()) {
+		return;
+	}
 
 	auto const cursor_primitive = Primitive{
 		.vertices = m_cursor.get_vertices(),

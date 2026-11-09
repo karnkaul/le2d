@@ -7,7 +7,8 @@
 
 namespace le::assed {
 TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_texture(get_context().get_resource_factory().create_default_texture()) {
+	: Applet(services),
+	  m_texture(get_context().get_resource_factory().create_default_texture()) {
 	m_save_modal.title = "Save TileSheet";
 	m_drop_types = FileDrop::Type::Json | FileDrop::Type::Image;
 	m_json_types = {json_type_name_v<TileSet>, json_type_name_v<ITileSheet>};
@@ -22,10 +23,14 @@ TileSheetEditor::TileSheetEditor(gsl::not_null<ServiceLocator const*> services)
 	};
 }
 
-void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) { m_cursor_pos = cursor.normalized.to_target(get_main_pass_size()); }
+void TileSheetEditor::on_cursor_pos(event::CursorPos const& cursor) {
+	m_cursor_pos = cursor.normalized.to_target(get_main_pass_size());
+}
 
 void TileSheetEditor::on_mouse_button(event::MouseButton const& button) {
-	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) { return; }
+	if (button.button != GLFW_MOUSE_BUTTON_1 || button.action != GLFW_RELEASE || button.mods != 0) {
+		return;
+	}
 	on_click();
 }
 
@@ -62,7 +67,9 @@ void TileSheetEditor::populate_file_menu() {
 		set_title();
 	}
 
-	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) { m_save_modal.set_open(m_uri.tile_sheet.get_string()); }
+	if (ImGui::MenuItem("Save...", nullptr, false, !m_tiles.empty())) {
+		m_save_modal.set_open(m_uri.tile_sheet.get_string());
+	}
 }
 
 void TileSheetEditor::inspect() {
@@ -76,9 +83,12 @@ void TileSheetEditor::inspect() {
 
 		ImGui::Separator();
 		ImGui::DragInt2("cols x rows", &m_split_dims.x, 1.0f, 1, 100);
-		if (ImGui::Button("generate")) { generate_tiles(); }
+		if (ImGui::Button("generate")) {
+			generate_tiles();
+		}
 
-		if (m_drawer.selected_tile && ImGui::TreeNodeEx("selected", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (m_drawer.selected_tile &&
+			ImGui::TreeNodeEx("selected", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
 			inspect_selected();
 			ImGui::TreePop();
 		}
@@ -178,7 +188,9 @@ void TileSheetEditor::generate_tiles() {
 }
 
 void TileSheetEditor::set_unsaved() {
-	if (m_unsaved) { return; }
+	if (m_unsaved) {
+		return;
+	}
 	m_unsaved = true;
 	set_title(m_uri.tile_sheet.get_string());
 }
@@ -186,7 +198,9 @@ void TileSheetEditor::set_unsaved() {
 void TileSheetEditor::on_click() {
 	auto const cursor_pos = m_cursor_pos / m_render_view.scale;
 	for (auto const [index, tile_frame] : std::views::enumerate(m_drawer.tile_frames)) {
-		if (!tile_frame.bounding_rect().contains(cursor_pos)) { continue; }
+		if (!tile_frame.bounding_rect().contains(cursor_pos)) {
+			continue;
+		}
 
 		if (m_drawer.selected_tile && *m_drawer.selected_tile == std::size_t(index)) {
 			m_drawer.selected_tile.reset();

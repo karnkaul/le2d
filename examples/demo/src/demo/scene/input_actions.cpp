@@ -16,12 +16,16 @@ void Player::inspect() { ImGui::DragFloat("speed", &speed); }
 
 void IController::initialize() {
 	auto mapping = std::make_shared<le::input::ActionMapping>();
-	mapping->bind_action(&get_movement_action(), [this](le::input::action::Value const& value) { m_delta_xy = value.get<glm::vec2>(); });
+	mapping->bind_action(&get_movement_action(), [this](le::input::action::Value const& value) {
+		m_delta_xy = value.get<glm::vec2>();
+	});
 	m_mapping = std::move(mapping);
 }
 
 void IController::tick(kvf::Seconds const dt) {
-	if (!m_player) { return; }
+	if (!m_player) {
+		return;
+	}
 
 	if (glm::length2(m_delta_xy) > 0.0f) {
 		auto const dxy = m_player->speed * m_delta_xy * dt.count();
@@ -37,7 +41,8 @@ void IController::unpossess() {
 	m_delta_xy = {};
 }
 
-InputActions::InputActions(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader) : Scene(context, data_loader, name_v) {
+InputActions::InputActions(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader)
+	: Scene(context, data_loader, name_v) {
 	create_controllers();
 }
 
@@ -54,7 +59,9 @@ void InputActions::create_controllers() {
 void InputActions::tick(kvf::Seconds const dt) {
 	m_router.dispatch(get_context().event_queue());
 
-	for (auto const& controller : m_controllers) { controller->tick(dt); }
+	for (auto const& controller : m_controllers) {
+		controller->tick(dt);
+	}
 
 	inspect();
 }

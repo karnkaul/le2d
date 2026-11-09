@@ -9,10 +9,14 @@ constexpr std::size_t rt_v{2};
 constexpr std::size_t lt_v{3};
 } // namespace
 
-auto IQuad::get_rect() const -> kvf::Rect<> { return kvf::Rect<>{.lt = m_vertices[lt_v].position, .rb = m_vertices[rb_v].position}; }
+auto IQuad::get_rect() const -> kvf::Rect<> {
+	return kvf::Rect<>{.lt = m_vertices[lt_v].position, .rb = m_vertices[rb_v].position};
+}
 
 void IQuad::create(glm::vec2 size) {
-	if (!kvf::is_positive(size)) { size = {}; }
+	if (!kvf::is_positive(size)) {
+		size = {};
+	}
 	create(kvf::Rect<>::from_size(size));
 }
 

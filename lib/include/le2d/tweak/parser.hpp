@@ -48,7 +48,9 @@ struct Parser<Type> {
 		}
 	}
 
-	[[nodiscard]] static auto parse(std::string_view const in, Type& out) -> bool { return klib::try_parse_to(out, in); }
+	[[nodiscard]] static auto parse(std::string_view const in, Type& out) -> bool {
+		return klib::try_parse_to(out, in);
+	}
 
 	[[nodiscard]] static auto to_string(Type const value) -> std::string { return std::format("{}", value); }
 };
@@ -67,13 +69,21 @@ struct Parser<glm::tvec2<Type>> {
 
 	[[nodiscard]] static auto parse(std::string_view const in, glm::tvec2<Type>& out) -> bool {
 		auto const i = in.find('x');
-		if (i == std::string_view::npos) { return false; }
-		if (!Parser<Type>::parse(in.substr(0, i), out.x)) { return false; }
-		if (!Parser<Type>::parse(in.substr(i + 1), out.y)) { return false; }
+		if (i == std::string_view::npos) {
+			return false;
+		}
+		if (!Parser<Type>::parse(in.substr(0, i), out.x)) {
+			return false;
+		}
+		if (!Parser<Type>::parse(in.substr(i + 1), out.y)) {
+			return false;
+		}
 		return true;
 	}
 
-	[[nodiscard]] static auto to_string(glm::tvec2<Type> const value) -> std::string { return std::format("{}x{}", value.x, value.y); }
+	[[nodiscard]] static auto to_string(glm::tvec2<Type> const value) -> std::string {
+		return std::format("{}x{}", value.x, value.y);
+	}
 };
 
 template <>

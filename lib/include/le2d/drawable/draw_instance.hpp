@@ -9,9 +9,13 @@ namespace le {
 template <std::derived_from<IDrawPrimitive> DrawPrimitiveT>
 class DrawInstance : public DrawPrimitiveT, public le::IDrawable {
   public:
-	void draw(le::IRenderer& renderer) const final { renderer.draw(this->get_geometry().to_primitive(this->get_texture()), {&instance, 1}); }
+	void draw(le::IRenderer& renderer) const final {
+		renderer.draw(this->get_geometry().to_primitive(this->get_texture()), {&instance, 1});
+	}
 
-	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> { return vertex_bounds(this->get_geometry().get_vertices(), instance.transform.to_model()); }
+	[[nodiscard]] auto bounding_rect() const -> kvf::Rect<> {
+		return vertex_bounds(this->get_geometry().get_vertices(), instance.transform.to_model());
+	}
 
 	le::RenderInstance instance{};
 };
@@ -20,7 +24,9 @@ class DrawInstance : public DrawPrimitiveT, public le::IDrawable {
 template <std::derived_from<IDrawPrimitive> DrawPrimitiveT>
 class DrawInstances : public DrawPrimitiveT, public le::IDrawable {
   public:
-	void draw(le::IRenderer& renderer) const final { renderer.draw(this->get_geometry().to_primitive(this->get_texture()), instances); }
+	void draw(le::IRenderer& renderer) const final {
+		renderer.draw(this->get_geometry().to_primitive(this->get_texture()), instances);
+	}
 
 	std::vector<le::RenderInstance> instances{};
 };

@@ -22,16 +22,20 @@ class IResourceFactory : public klib::Polymorphic {
 	/// \param bitmap Bitmap to write.
 	/// \param sampler TextureSampler to use.
 	/// \returns Concrete instance.
-	[[nodiscard]] virtual auto create_texture(kvf::Bitmap bitmap, TextureSampler sampler = {}) const -> std::unique_ptr<ITexture> = 0;
+	[[nodiscard]] virtual auto create_texture(kvf::Bitmap bitmap, TextureSampler sampler = {}) const
+		-> std::unique_ptr<ITexture> = 0;
 
 	/// \brief Create a 1x1 white texture.
 	/// \returns Concrete instance.
-	[[nodiscard]] auto create_default_texture(TextureSampler sampler = {}) const -> std::unique_ptr<ITexture> { return create_texture({}, sampler); }
+	[[nodiscard]] auto create_default_texture(TextureSampler sampler = {}) const -> std::unique_ptr<ITexture> {
+		return create_texture({}, sampler);
+	}
 
 	/// \param bitmap Bitmap to write.
 	/// \param sampler TextureSampler to use.
 	/// \returns Concrete instance.
-	[[nodiscard]] virtual auto create_tilesheet(kvf::Bitmap bitmap, TextureSampler sampler = {}) const -> std::unique_ptr<ITileSheet> = 0;
+	[[nodiscard]] virtual auto create_tilesheet(kvf::Bitmap bitmap, TextureSampler sampler = {}) const
+		-> std::unique_ptr<ITileSheet> = 0;
 
 	/// \param font_bytes Copy of TTF / OTF data as bytes.
 	/// \returns Concrete instance if successfully loaded.
@@ -40,7 +44,8 @@ class IResourceFactory : public klib::Polymorphic {
 	/// \param bytes Compressed audio bytes to decode.
 	/// \param encoding Encoding of audio data, if known.
 	/// \returns Concrete instance if successfully decoded.
-	[[nodiscard]] virtual auto create_audio_buffer(std::span<std::byte const> bytes, std::optional<capo::Encoding> encoding = {}) const
+	[[nodiscard]] virtual auto create_audio_buffer(std::span<std::byte const> bytes,
+												   std::optional<capo::Encoding> encoding = {}) const
 		-> std::unique_ptr<IAudioBuffer> = 0;
 };
 } // namespace le

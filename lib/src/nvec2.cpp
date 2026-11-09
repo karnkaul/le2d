@@ -5,7 +5,9 @@
 namespace le {
 auto nvec2::normal_or(glm::vec2 const xy, glm::vec2 const fallback) -> nvec2 {
 	auto const length = glm::length2(xy);
-	if (length == 0.0f) { return fallback; }
+	if (length == 0.0f) {
+		return fallback;
+	}
 	return nvec2{InPlace{}, xy / glm::sqrt(length)};
 }
 

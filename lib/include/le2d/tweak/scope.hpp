@@ -15,10 +15,14 @@ class Scope {
 	explicit Scope(gsl::not_null<IStore*> store) : m_store(store) {}
 
 	~Scope() {
-		for (auto const id : m_ids) { m_store->remove_tweakable(id); }
+		for (auto const id : m_ids) {
+			m_store->remove_tweakable(id);
+		}
 	}
 
-	void add_tweakable(std::string_view const id, gsl::not_null<ITweakable*> tweakable) { m_store->add_tweakable(id, tweakable); }
+	void add_tweakable(std::string_view const id, gsl::not_null<ITweakable*> tweakable) {
+		m_store->add_tweakable(id, tweakable);
+	}
 
   private:
 	gsl::not_null<IStore*> m_store;

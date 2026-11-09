@@ -25,13 +25,19 @@ void run() {
 	auto const asset_loader = context->create_asset_loader(&data_loader);
 
 	auto const font = asset_loader.load<le::IFont>("fonts/Vera.ttf");
-	if (!font) { throw std::runtime_error{"Failed to load Font."}; }
+	if (!font) {
+		throw std::runtime_error{"Failed to load Font."};
+	}
 
 	auto const texture = asset_loader.load<le::ITexture>("images/awesomeface.png");
-	if (!texture) { throw std::runtime_error{"Failed to load Texture."}; }
+	if (!texture) {
+		throw std::runtime_error{"Failed to load Texture."};
+	}
 
 	auto const audio_buffer = asset_loader.load<le::IAudioBuffer>("audio/explode.wav");
-	if (!audio_buffer) { throw std::runtime_error{"Failed to load Audio Buffer."}; }
+	if (!audio_buffer) {
+		throw std::runtime_error{"Failed to load Audio Buffer."};
+	}
 
 	// the waiter blocks on destruction until the context is idle,
 	// after which the loaded resources can be safely destroyed.

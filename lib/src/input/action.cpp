@@ -7,9 +7,13 @@
 namespace le::input::action {
 namespace {
 template <std::size_t Count>
-constexpr auto set_target_switch(Bits<Count>& state, std::array<int, Count> const& matches, int const actor, int const action) -> bool {
+constexpr auto
+set_target_switch(Bits<Count>& state, std::array<int, Count> const& matches, int const actor, int const action)
+	-> bool {
 	auto const it = std::ranges::find(matches, actor);
-	if (it == matches.end()) { return false; }
+	if (it == matches.end()) {
+		return false;
+	}
 	auto const index = std::distance(matches.begin(), it);
 	auto target = state[std::size_t(index)];
 	switch (action) {
@@ -36,14 +40,20 @@ void IDigital::disengage() {
 
 auto IDigital::should_dispatch() const -> bool { return std::exchange(m_changed, false); }
 
-auto IBinaryAxis1D::consume_input(int const actor, int const action) -> bool { return set_target_switch(m_state, std::array{lo, hi}, actor, action); }
+auto IBinaryAxis1D::consume_input(int const actor, int const action) -> bool {
+	return set_target_switch(m_state, std::array{lo, hi}, actor, action);
+}
 
 void IBinaryAxis1D::disengage() { m_state = {}; }
 
 auto IBinaryAxis1D::get_value() const -> action::Value {
 	auto ret = 0.0f;
-	if (m_state[0]) { ret -= 1.0f; }
-	if (m_state[1]) { ret += 1.0f; }
+	if (m_state[0]) {
+		ret -= 1.0f;
+	}
+	if (m_state[1]) {
+		ret += 1.0f;
+	}
 	return ret;
 }
 
@@ -55,12 +65,22 @@ void IBinaryAxis2D::disengage() { m_state = {}; }
 
 auto IBinaryAxis2D::get_value() const -> action::Value {
 	auto ret = glm::vec2{};
-	if (m_state[0]) { ret.x -= 1.0f; }
-	if (m_state[1]) { ret.x += 1.0f; }
-	if (m_state[2]) { ret.y -= 1.0f; }
-	if (m_state[3]) { ret.y += 1.0f; }
+	if (m_state[0]) {
+		ret.x -= 1.0f;
+	}
+	if (m_state[1]) {
+		ret.x += 1.0f;
+	}
+	if (m_state[2]) {
+		ret.y -= 1.0f;
+	}
+	if (m_state[3]) {
+		ret.y += 1.0f;
+	}
 	auto const length_sq = glm::length2(ret);
-	if (length_sq > 1.0f) { ret /= glm::sqrt(length_sq); }
+	if (length_sq > 1.0f) {
+		ret /= glm::sqrt(length_sq);
+	}
 	return ret;
 }
 

@@ -12,7 +12,9 @@
 namespace demo {
 auto App::run(int const argc, char const* const* const argv) -> int {
 	auto const parse_result = parse_args(argc, argv);
-	if (parse_result.should_early_exit()) { return parse_result.return_code(); }
+	if (parse_result.should_early_exit()) {
+		return parse_result.return_code();
+	}
 
 	create_context();
 	create_data_loader();
@@ -50,7 +52,9 @@ void App::create_context() {
 	auto context_ci = le::Context::CreateInfo{
 		.window = window_info,
 	};
-	if (m_params.force_x11) { context_ci.platform_flags |= le::PlatformFlag::ForceX11; }
+	if (m_params.force_x11) {
+		context_ci.platform_flags |= le::PlatformFlag::ForceX11;
+	}
 
 	m_context = le::Context::create(context_ci);
 	m_waiter = m_context->create_waiter();
@@ -88,12 +92,16 @@ void App::run_loop() {
 }
 
 void App::inspect_main_menu() {
-	if (!ImGui::BeginMainMenuBar()) { return; }
+	if (!ImGui::BeginMainMenuBar()) {
+		return;
+	}
 
 	auto selected = klib::Ptr<SceneInfo>{};
 	if (ImGui::BeginMenu("Scenes")) {
 		for (auto& info : m_scene_infos) {
-			if (ImGui::MenuItem(info.name.data())) { selected = &info; }
+			if (ImGui::MenuItem(info.name.data())) {
+				selected = &info;
+			}
 		}
 		ImGui::EndMenu();
 	}
@@ -103,7 +111,9 @@ void App::inspect_main_menu() {
 		m_context->wait_idle();
 		try {
 			set_active_scene(selected->factory());
-		} catch (le::Error const& error) { log.error("Failed to create scene: '{}': {}", selected->name, error.what()); }
+		} catch (le::Error const& error) {
+			log.error("Failed to create scene: '{}': {}", selected->name, error.what());
+		}
 	}
 }
 } // namespace demo

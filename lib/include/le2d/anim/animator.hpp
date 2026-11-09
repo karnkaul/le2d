@@ -26,20 +26,30 @@ class Animator {
 		}
 	}
 
-	[[nodiscard]] auto get_duration() const -> kvf::Seconds { return has_animation() ? m_animation->get_timeline().duration : 0s; }
+	[[nodiscard]] auto get_duration() const -> kvf::Seconds {
+		return has_animation() ? m_animation->get_timeline().duration : 0s;
+	}
 
 	[[nodiscard]] auto get_progress() const -> float {
 		auto const duration = get_duration();
-		if (duration == 0s) { return 0.0f; }
+		if (duration == 0s) {
+			return 0.0f;
+		}
 		return elapsed / duration;
 	}
 
 	void tick(kvf::Seconds dt) {
-		if (!has_animation()) { return; }
+		if (!has_animation()) {
+			return;
+		}
 		auto const duration = get_duration();
-		if (!repeat && elapsed > duration) { return; }
+		if (!repeat && elapsed > duration) {
+			return;
+		}
 		elapsed += dt;
-		if (repeat && elapsed > duration) { elapsed = {}; }
+		if (repeat && elapsed > duration) {
+			elapsed = {};
+		}
 		update_payload();
 	}
 

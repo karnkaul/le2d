@@ -6,7 +6,9 @@ void TextBase::set_string(IFont& font, std::string_view const line, Params const
 	m_glyph_layouts.clear();
 	m_size = {};
 
-	if (line.empty()) { return; }
+	if (line.empty()) {
+		return;
+	}
 
 	auto const& font_atlas = font.get_atlas(params.height);
 	m_texture = &font_atlas.get_texture();

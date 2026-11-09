@@ -16,22 +16,30 @@ FontViewer::FontViewer(gsl::not_null<ServiceLocator const*> services) : Applet(s
 		return true;
 	};
 	m_input_mapping->on_disengage = [this] {
-		if (m_input_text) { m_input_text->set_interactive(false); }
+		if (m_input_text) {
+			m_input_text->set_interactive(false);
+		}
 	};
 }
 
 void FontViewer::on_key(event::Key const& key) {
-	if (!m_input_text) { return; }
+	if (!m_input_text) {
+		return;
+	}
 	m_input_text->consume_key(key);
 }
 
 void FontViewer::on_codepoint(event::Codepoint const codepoint) {
-	if (!m_input_text) { return; }
+	if (!m_input_text) {
+		return;
+	}
 	m_input_text->consume_codepoint(codepoint);
 }
 
 void FontViewer::tick(kvf::Seconds const dt) {
-	if (m_input_text) { m_input_text->tick(dt); }
+	if (m_input_text) {
+		m_input_text->tick(dt);
+	}
 
 	inspect();
 }
@@ -55,17 +63,23 @@ void FontViewer::inspect() {
 	if (ImGui::Begin("Info")) {
 		if (ImGui::TreeNode("colors")) {
 			imcpp::color_edit("background", clear_color);
-			if (imcpp::color_edit("text", m_quad.instance.tint) && m_input_text) { m_input_text->instance.tint = m_quad.instance.tint; }
+			if (imcpp::color_edit("text", m_quad.instance.tint) && m_input_text) {
+				m_input_text->instance.tint = m_quad.instance.tint;
+			}
 			ImGui::TreePop();
 		}
 		if (m_font) {
 			auto text_height = int(m_text_height);
-			if (ImGui::DragInt("height", &text_height, 5.0f, int(TextHeight::Min), int(TextHeight::Max))) { set_text_height(TextHeight(text_height)); }
+			if (ImGui::DragInt("height", &text_height, 5.0f, int(TextHeight::Min), int(TextHeight::Max))) {
+				set_text_height(TextHeight(text_height));
+			}
 		}
 
 		ImGui::Separator();
 		inspect_display();
-		if (m_input_text && m_display == Display::InputText) { inspect_input_text(); }
+		if (m_input_text && m_display == Display::InputText) {
+			inspect_input_text();
+		}
 	}
 	ImGui::End();
 }
@@ -77,7 +91,9 @@ void FontViewer::inspect_display() {
 	};
 	if (m_input_text && ImGui::BeginCombo("Display", display_name_map.to_value(m_display)->c_str())) {
 		for (auto d = Display{}; d < Display::COUNT_; d = Display(int(d) + 1)) {
-			if (ImGui::Selectable(display_name_map.to_value(d)->c_str())) { set_display(d); }
+			if (ImGui::Selectable(display_name_map.to_value(d)->c_str())) {
+				set_display(d);
+			}
 		}
 		ImGui::EndCombo();
 	}
@@ -86,7 +102,9 @@ void FontViewer::inspect_display() {
 void FontViewer::inspect_input_text() {
 	ImGui::DragFloat2("position", &m_input_text->instance.transform.position.x);
 	auto interactive = m_input_text->is_interactive();
-	if (ImGui::Checkbox("interactive", &interactive)) { m_input_text->set_interactive(interactive); }
+	if (ImGui::Checkbox("interactive", &interactive)) {
+		m_input_text->set_interactive(interactive);
+	}
 }
 
 void FontViewer::try_load_font(Uri const& uri) {
@@ -106,7 +124,9 @@ void FontViewer::try_load_font(Uri const& uri) {
 }
 
 void FontViewer::set_text_height(TextHeight const height) {
-	if (!m_font) { return; }
+	if (!m_font) {
+		return;
+	}
 	m_text_height = std::clamp(height, TextHeight::Min, TextHeight::Max);
 	m_atlas = &m_font->get_atlas(m_text_height);
 	m_quad.texture = &m_atlas->get_texture();
@@ -115,7 +135,9 @@ void FontViewer::set_text_height(TextHeight const height) {
 }
 
 void FontViewer::create_input_text() {
-	if (!m_font) { return; }
+	if (!m_font) {
+		return;
+	}
 	auto text = std::string{};
 	auto position = glm::vec2{};
 	if (m_input_text) {
@@ -128,11 +150,15 @@ void FontViewer::create_input_text() {
 	m_input_text.emplace(m_font.get(), input_text_ci);
 	m_input_text->instance.tint = m_quad.instance.tint;
 	m_input_text->instance.transform.position = position;
-	if (!text.empty()) { m_input_text->set_string(std::move(text)); }
+	if (!text.empty()) {
+		m_input_text->set_string(std::move(text));
+	}
 }
 
 void FontViewer::set_display(Display const display) {
-	if (display == m_display) { return; }
+	if (display == m_display) {
+		return;
+	}
 	m_display = display;
 	m_input_text->set_interactive(m_display == Display::InputText);
 }

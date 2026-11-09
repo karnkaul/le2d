@@ -14,7 +14,9 @@ namespace {
 
 auto FileDrop::create(FileDataLoader const& loader, std::string_view const path) -> FileDrop {
 	auto ret = FileDrop{.uri = loader.get_uri(path)};
-	if (!ret) { return ret; }
+	if (!ret) {
+		return ret;
+	}
 
 	if (fs::is_directory(path)) {
 		ret.type = Type::Directory;
@@ -22,7 +24,9 @@ auto FileDrop::create(FileDataLoader const& loader, std::string_view const path)
 	}
 
 	ret.type = Type::Unknown;
-	if (!fs::is_regular_file(path)) { return ret; }
+	if (!fs::is_regular_file(path)) {
+		return ret;
+	}
 
 	ret.extension = fs::path{ret.uri.get_string()}.extension().string();
 

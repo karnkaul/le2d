@@ -18,11 +18,15 @@ class SuperEllipse : public IGeometry {
 
 	static constexpr auto default_size_v = glm::vec2{default_length_v};
 
-	explicit(false) SuperEllipse(glm::vec2 const size = default_size_v, Params const& params = {}) { create(size, params); }
+	explicit(false) SuperEllipse(glm::vec2 const size = default_size_v, Params const& params = {}) {
+		create(size, params);
+	}
 
 	[[nodiscard]] auto get_vertices() const -> std::span<Vertex const> final { return m_verts.vertices; }
 	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return m_verts.indices; }
-	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleFan; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final {
+		return vk::PrimitiveTopology::eTriangleFan;
+	}
 
 	void create(glm::vec2 size = default_size_v, Params const& params = {});
 

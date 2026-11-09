@@ -26,14 +26,20 @@ class Writer {
 		}
 
 		includes();
-		if (!m_config.ns.empty()) { begin_ns(m_config.ns); }
+		if (!m_config.ns.empty()) {
+			begin_ns(m_config.ns);
+		}
 		begin_ns({});
 		begin_array(code.size());
-		for (auto const byte : code) { write_next(byte); }
+		for (auto const byte : code) {
+			write_next(byte);
+		}
 		end_array();
 		end_ns({});
 		api();
-		if (!m_config.ns.empty()) { end_ns(m_config.ns); }
+		if (!m_config.ns.empty()) {
+			end_ns(m_config.ns);
+		}
 
 		return true;
 	}
@@ -80,20 +86,26 @@ class Writer {
 		m_symbol.clear();
 		std::format_to(std::back_inserter(m_symbol), "{}, ", symbol);
 		auto const total_size = m_buffer.size() + m_symbol.size();
-		if (total_size > std::size_t(m_config.col_width)) { flush_buffer(); }
+		if (total_size > std::size_t(m_config.col_width)) {
+			flush_buffer();
+		}
 		m_buffer.append(m_symbol);
 		++m_written;
 	}
 
 	void flush_buffer() {
-		if (m_buffer.empty()) { return; }
+		if (m_buffer.empty()) {
+			return;
+		}
 		std::println("{}", m_buffer);
 		m_buffer.clear();
 		indent();
 	}
 
 	void indent() {
-		for (std::int32_t i = 0; i < m_indent; ++i) { m_buffer += '\t'; }
+		for (std::int32_t i = 0; i < m_indent; ++i) {
+			m_buffer += '\t';
+		}
 	}
 
 	void api() {
@@ -136,7 +148,9 @@ auto run(int argc, char** argv) -> int {
 	};
 	auto parser = clap::Parser{std::move(spec)};
 	auto const parse_result = parser.parse_main(argc, argv);
-	if (parse_result.should_early_exit()) { return parse_result.return_code(); }
+	if (parse_result.should_early_exit()) {
+		return parse_result.return_code();
+	}
 
 	auto code = std::vector<std::uint32_t>{};
 	if (!klib::copy_file_bytes_to(code, path.data())) {
@@ -151,7 +165,9 @@ auto run(int argc, char** argv) -> int {
 	auto const stem = fs::path{path}.stem().generic_string();
 
 	auto writer = Writer{config};
-	if (!writer.write(code)) { return EXIT_FAILURE; }
+	if (!writer.write(code)) {
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }

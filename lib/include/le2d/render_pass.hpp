@@ -43,9 +43,12 @@ class IRenderPass : public IResource {
 	/// \brief Convert a raw_screenshot() result to a compressed image.
 	/// \returns Empty vector on failure.
 	/// Note: this operation is expensive.
-	[[nodiscard]] auto compressed_screenshot(kvf::Encoding encoding, glm::ivec2 custom_size = {}) const -> std::vector<std::byte> {
+	[[nodiscard]] auto compressed_screenshot(kvf::Encoding encoding, glm::ivec2 custom_size = {}) const
+		-> std::vector<std::byte> {
 		auto const bitmap = raw_screenshot(custom_size);
-		if (!bitmap) { return {}; }
+		if (!bitmap) {
+			return {};
+		}
 		return kvf::ImageWriter{.bitmap = bitmap->bitmap()}.write(encoding);
 	}
 };

@@ -6,7 +6,9 @@ namespace le {
 auto util::exe_path() -> std::string const& { return klib::env::exe_path(); }
 
 auto util::divide_into_tiles(int const rows, int const cols) -> std::vector<Tile> {
-	if (rows <= 0 || cols <= 0) { return {}; }
+	if (rows <= 0 || cols <= 0) {
+		return {};
+	}
 	auto const tile_size = glm::vec2{1.0f / float(cols), 1.0f / float(rows)};
 	auto ret = std::vector<Tile>{};
 	ret.reserve(std::size_t(rows * cols));
@@ -25,7 +27,9 @@ auto util::divide_into_tiles(int const rows, int const cols) -> std::vector<Tile
 }
 
 auto util::generate_flipbook_timeline(std::span<Tile const> tiles, kvf::Seconds duration) -> anim::Timeline<TileId> {
-	if (tiles.empty() || duration <= 0s) { return {}; }
+	if (tiles.empty() || duration <= 0s) {
+		return {};
+	}
 	auto ret = anim::Timeline<TileId>{.duration = duration};
 	ret.keyframes.reserve(tiles.size());
 	auto const tile_time = duration / tiles.size();

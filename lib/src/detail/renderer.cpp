@@ -13,7 +13,9 @@ struct Std430Instance {
 };
 
 struct Vbo {
-	[[nodiscard]] static auto create(kvf::FixedUsageBuffer const& buffer, std::span<Vertex const> vertices, std::span<std::uint32_t const> indices) -> Vbo {
+	[[nodiscard]] static auto create(kvf::FixedUsageBuffer const& buffer,
+									 std::span<Vertex const> vertices,
+									 std::span<std::uint32_t const> indices) -> Vbo {
 		auto const writes = std::array{
 			kvf::BufferWrite{vertices},
 			kvf::BufferWrite{indices},
@@ -41,8 +43,12 @@ struct Vbo {
 	std::uint32_t indices{};
 };
 
-constexpr auto triangle_count(std::size_t const vertices, std::size_t const indices, vk::PrimitiveTopology const topology) -> std::int64_t {
-	if (vertices == 0) { return 0; }
+constexpr auto triangle_count(std::size_t const vertices,
+							  std::size_t const indices,
+							  vk::PrimitiveTopology const topology) -> std::int64_t {
+	if (vertices == 0) {
+		return 0;
+	}
 	auto const target = indices == 0 ? std::int64_t(vertices) : std::int64_t(indices);
 	switch (topology) {
 	case vk::PrimitiveTopology::eTriangleList: return target / 3;
@@ -69,13 +75,17 @@ auto const scratch_buffer_layout = std::vector<vk::BufferUsageFlags>{
 } // namespace
 
 Renderer::Renderer(gsl::not_null<kvf::IRenderPass*> render_pass, gsl::not_null<IRenderResources*> resources)
-	: m_render_pass(render_pass), m_resources(resources),
+	: m_render_pass(render_pass),
+	  m_resources(resources),
 	  m_buffer_allocator(kvf::IRingBufferAllocator::create(&render_pass->get_render_device(), scratch_buffer_layout)),
-	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()), m_shader(&resources->get_default_shader()) {}
+	  m_descriptor_allocator(&render_pass->get_render_device().get_descriptor_allocator()),
+	  m_shader(&resources->get_default_shader()) {}
 
 auto Renderer::begin_render(vk::CommandBuffer const command_buffer, glm::ivec2 size, kvf::Color const clear) -> bool {
 	m_stats = {};
-	if (!command_buffer || is_rendering()) { return false; }
+	if (!command_buffer || is_rendering()) {
+		return false;
+	}
 
 	size = clamp_size(size);
 
@@ -117,14 +127,22 @@ void Renderer::draw(Primitive const& primitive, std::span<RenderInstance const> 
 
 void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::Std430 const> instances) {
 	auto const cmd = m_render_pass->get_command_buffer();
-	if (!cmd || primitive.vertices.empty() || instances.empty()) { return; }
+	if (!cmd || primitive.vertices.empty() || instances.empty()) {
+		return;
+	}
 
 	auto descriptor_sets = std::array<vk::DescriptorSet, 3>{};
-	if (!allocate_sets(descriptor_sets)) { return; }
+	if (!allocate_sets(descriptor_sets)) {
+		return;
+	}
 
 	auto const visitor = klib::Visitor{
-		[this](viewport::Dynamic const& v) { return m_render_pass->to_viewport(v.n_rect); },
-		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
+		[this](viewport::Dynamic const& v) {
+			return m_render_pass->to_viewport(v.n_rect);
+		},
+		[this](viewport::Letterbox const& v) {
+			return to_viewport(v, framebuffer_size());
+		},
 	};
 	m_vk_viewport = std::visit(visitor, m_viewport);
 	m_scissor = m_render_pass->to_scissor(scissor_rect);
@@ -150,15 +168,21 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	auto const user_texture_info = m_resources->descriptor_image(m_user_data.texture);
 
 	auto const descriptor_writes = std::array{
-		kvf::util::ubo_write(&view_info, descriptor_sets[0], 0),		   kvf::util::ssbo_write(&instance_info, descriptor_sets[1], 0),
-		kvf::util::image_write(&texture_info, descriptor_sets[1], 1),	   kvf::util::ssbo_write(&user_ssbo_info, descriptor_sets[2], 0),
+		kvf::util::ubo_write(&view_info, descriptor_sets[0], 0),
+		kvf::util::ssbo_write(&instance_info, descriptor_sets[1], 0),
+		kvf::util::image_write(&texture_info, descriptor_sets[1], 1),
+		kvf::util::ssbo_write(&user_ssbo_info, descriptor_sets[2], 0),
 		kvf::util::image_write(&user_texture_info, descriptor_sets[2], 1),
 	};
 	render_device.get_device().updateDescriptorSets(descriptor_writes, {});
 
 	m_render_pass->bind_graphics_shader(m_shader->get_kvf_shader());
 
-	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_resources->get_shader_layout().get_pipeline_layout(), 0, descriptor_sets, {});
+	cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+						   m_resources->get_shader_layout().get_pipeline_layout(),
+						   0,
+						   descriptor_sets,
+						   {});
 
 	cmd.setPrimitiveTopology(primitive.topology);
 	cmd.setPolygonModeEXT(polygon_mode);
@@ -172,7 +196,9 @@ void Renderer::draw_baked(Primitive const& primitive, std::span<RenderInstance::
 	m_stats.triangles += triangle_count(primitive.vertices.size(), primitive.indices.size(), primitive.topology);
 }
 
-auto Renderer::unprojector() const -> Unprojector { return Unprojector{m_viewport, m_view_transform, framebuffer_size()}; }
+auto Renderer::unprojector() const -> Unprojector {
+	return Unprojector{m_viewport, m_view_transform, framebuffer_size()};
+}
 
 void Renderer::refresh_view_matrices() {
 	refresh_view_matrix();
@@ -183,14 +209,22 @@ void Renderer::refresh_view_matrix() { m_view_matrices.mat_v = m_view_transform.
 
 void Renderer::refresh_projection_matrix() {
 	auto const viewport_visitor = klib::Visitor{
-		[this](viewport::Dynamic const& v) { return m_render_pass->to_viewport(v.n_rect); },
-		[this](viewport::Letterbox const& v) { return to_viewport(v, framebuffer_size()); },
+		[this](viewport::Dynamic const& v) {
+			return m_render_pass->to_viewport(v.n_rect);
+		},
+		[this](viewport::Letterbox const& v) {
+			return to_viewport(v, framebuffer_size());
+		},
 	};
 	m_vk_viewport = std::visit(viewport_visitor, m_viewport);
 
 	auto const render_area_visitor = klib::Visitor{
-		[](viewport::Letterbox const& v) { return v.world_size; },
-		[this](viewport::Dynamic const& /*v*/) { return glm::vec2{m_vk_viewport.width, -m_vk_viewport.height}; },
+		[](viewport::Letterbox const& v) {
+			return v.world_size;
+		},
+		[this](viewport::Dynamic const& /*v*/) {
+			return glm::vec2{m_vk_viewport.width, -m_vk_viewport.height};
+		},
 	};
 	auto const render_area = std::visit(render_area_visitor, m_viewport);
 	auto const half_extent = 0.5f * render_area;
@@ -203,10 +237,13 @@ auto Renderer::allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> boo
 	return m_descriptor_allocator->allocate_next(out_sets, set_layouts);
 }
 
-auto Renderer::bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const> {
+auto Renderer::bake_instances(std::span<RenderInstance const> instances) const
+	-> std::span<RenderInstance::Std430 const> {
 	m_resources->render_instance_buffer.clear();
 	m_resources->render_instance_buffer.reserve(instances.size());
-	for (auto const& in : instances) { m_resources->render_instance_buffer.push_back(in.to_std430()); }
+	for (auto const& in : instances) {
+		m_resources->render_instance_buffer.push_back(in.to_std430());
+	}
 	return m_resources->render_instance_buffer;
 }
 } // namespace le::detail

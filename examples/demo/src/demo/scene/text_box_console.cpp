@@ -4,7 +4,9 @@
 #include "le2d/input/listener_mapping.hpp"
 
 namespace demo::scene {
-TextBox::TextBox(gsl::not_null<le::IFont*> font, gsl::not_null<le::input::Router*> router) : m_router(router), m_input_text(font) {
+TextBox::TextBox(gsl::not_null<le::IFont*> font, gsl::not_null<le::input::Router*> router)
+	: m_router(router),
+	  m_input_text(font) {
 	create_quads();
 	create_mapping();
 	m_input_text.set_interactive(false);
@@ -37,26 +39,35 @@ void TextBox::create_quads() {
 void TextBox::create_mapping() {
 	// TextBox's mapping forwards relevant events to InputText.
 	auto mapping = std::make_shared<le::input::ListenerMapping>();
-	mapping->on_key = [this](le::event::Key const& key) { return m_input_text.consume_key(key); };
-	mapping->on_codepoint = [this](le::event::Codepoint const codepoint) { return m_input_text.consume_codepoint(codepoint); };
+	mapping->on_key = [this](le::event::Key const& key) {
+		return m_input_text.consume_key(key);
+	};
+	mapping->on_codepoint = [this](le::event::Codepoint const codepoint) {
+		return m_input_text.consume_codepoint(codepoint);
+	};
 	m_mapping = std::move(mapping);
 }
 
 void TextBox::activate() {
-	if (m_input_text.is_interactive()) { return; }
+	if (m_input_text.is_interactive()) {
+		return;
+	}
 	// Push mapping to consume relevant events.
 	m_router->push_mapping(m_mapping);
 	m_input_text.set_interactive(true);
 }
 
 void TextBox::deactivate() {
-	if (!m_input_text.is_interactive()) { return; }
+	if (!m_input_text.is_interactive()) {
+		return;
+	}
 	// Remove mapping and stop consuming events.
 	m_router->remove_mapping(m_mapping);
 	m_input_text.set_interactive(false);
 }
 
-TextBoxConsole::TextBoxConsole(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader)
+TextBoxConsole::TextBoxConsole(gsl::not_null<le::Context*> context,
+							   gsl::not_null<le::FileDataLoader const*> data_loader)
 	: Scene(context, data_loader, name_v) {
 	load_font();
 	create_terminal();
@@ -79,7 +90,9 @@ void TextBoxConsole::render_main_pass(le::IRenderer& renderer) const {
 void TextBoxConsole::load_font() {
 	static constexpr std::string_view font_uri{"fonts/mono.ttf"};
 	m_mono_font = get_asset_loader().load<le::IFont>(font_uri);
-	if (!m_mono_font) { throw le::Error{std::format("Failed to load font: '{}'", font_uri)}; }
+	if (!m_mono_font) {
+		throw le::Error{std::format("Failed to load font: '{}'", font_uri)};
+	}
 }
 
 void TextBoxConsole::create_terminal() {

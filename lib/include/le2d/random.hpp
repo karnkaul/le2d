@@ -34,9 +34,13 @@ class BasicRandom {
 	[[nodiscard]] auto next_sign() -> float { return next_bool() ? -1.0f : 1.0f; }
 
 	/// \returns Random vec2 in [lo, hi].
-	[[nodiscard]] auto next_vec2(glm::vec2 const lo, glm::vec2 const hi) -> glm::vec2 { return glm::vec2{next_float(lo.x, hi.x), next_float(lo.y, hi.y)}; }
+	[[nodiscard]] auto next_vec2(glm::vec2 const lo, glm::vec2 const hi) -> glm::vec2 {
+		return glm::vec2{next_float(lo.x, hi.x), next_float(lo.y, hi.y)};
+	}
 	/// \returns Random vec2 in [lo, hi].
-	[[nodiscard]] auto next_vec2(float const lo, float const hi) -> glm::vec2 { return next_vec2(glm::vec2{lo}, glm::vec2{hi}); }
+	[[nodiscard]] auto next_vec2(float const lo, float const hi) -> glm::vec2 {
+		return next_vec2(glm::vec2{lo}, glm::vec2{hi});
+	}
 
 	/// \returns Random signed float with magnitude between [positive_lo, positive_hi].
 	[[nodiscard]] auto next_signed_float(float const positive_lo, float const positive_hi) -> float {
@@ -45,7 +49,8 @@ class BasicRandom {
 
 	/// \returns Random signed vec2 with magnitude between [positive_lo, positive_hi].
 	[[nodiscard]] auto next_signed_vec2(glm::vec2 const positive_lo, glm::vec2 const positive_hi) -> glm::vec2 {
-		return glm::vec2{next_signed_float(positive_lo.x, positive_hi.x), next_signed_float(positive_lo.y, positive_hi.y)};
+		return glm::vec2{next_signed_float(positive_lo.x, positive_hi.x),
+						 next_signed_float(positive_lo.y, positive_hi.y)};
 	}
 	/// \returns Random signed vec2 with magnitude between [positive_lo, positive_hi].
 	[[nodiscard]] auto next_signed_vec2(float const positive_lo, float const positive_hi) -> glm::vec2 {

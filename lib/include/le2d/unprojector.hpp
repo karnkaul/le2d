@@ -8,7 +8,9 @@ class Unprojector {
   public:
 	Unprojector() = default;
 
-	explicit Unprojector(Transform const& view, glm::vec2 const target_size) : m_inverse_view(view.to_inverse_view()), m_target_size(target_size) {}
+	explicit Unprojector(Transform const& view, glm::vec2 const target_size)
+		: m_inverse_view(view.to_inverse_view()),
+		  m_target_size(target_size) {}
 
 	explicit Unprojector(Viewport const& viewport, Transform const& view, glm::vec2 framebuffer_size);
 
@@ -18,7 +20,9 @@ class Unprojector {
 
 	[[nodiscard]] auto unproject(ndc::vec2 const point) const -> glm::vec2 { return unproject(to_target(point)); }
 
-	[[nodiscard]] auto unproject(glm::vec2 const point) const -> glm::vec2 { return m_inverse_view * glm::vec4{point, 0.0f, 1.0f}; }
+	[[nodiscard]] auto unproject(glm::vec2 const point) const -> glm::vec2 {
+		return m_inverse_view * glm::vec4{point, 0.0f, 1.0f};
+	}
 
   private:
 	glm::mat4 m_inverse_view{1.0f};

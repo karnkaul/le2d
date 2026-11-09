@@ -22,7 +22,9 @@ struct Interpolator {
 /// \brief Interpolator specialization for glm::vec types.
 template <typename Type, glm::length_t Length>
 struct Interpolator<glm::vec<Length, Type>> {
-	constexpr auto operator()(glm::vec<Length, Type> const a, glm::vec<Length, Type> const b, float const t) const { return glm::mix(a, b, t); }
+	constexpr auto operator()(glm::vec<Length, Type> const a, glm::vec<Length, Type> const b, float const t) const {
+		return glm::mix(a, b, t);
+	}
 };
 
 /// \brief Interpolator specialization for Transform.

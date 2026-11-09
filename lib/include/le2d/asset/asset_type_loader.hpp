@@ -28,6 +28,8 @@ class IAssetTypeLoader : public detail::IAssetTypeLoaderBase {
   private:
 	[[nodiscard]] auto type_name() const -> std::string_view final { return klib::demangled_name<AssetTypeT>(); }
 	[[nodiscard]] auto type_index() const -> std::type_index final { return typeid(AssetTypeT); }
-	[[nodiscard]] auto load_base(std::string_view const uri) const -> std::unique_ptr<IAsset> final { return load_asset(uri); }
+	[[nodiscard]] auto load_base(std::string_view const uri) const -> std::unique_ptr<IAsset> final {
+		return load_asset(uri);
+	}
 };
 } // namespace le

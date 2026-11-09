@@ -7,8 +7,13 @@
 namespace demo {
 class Scene : public klib::Polymorphic {
   public:
-	explicit Scene(gsl::not_null<le::Context*> context, gsl::not_null<le::FileDataLoader const*> data_loader, std::string_view name)
-		: m_context(context), m_data_loader(data_loader), m_name(name), m_asset_loader(context->create_asset_loader(m_data_loader)) {}
+	explicit Scene(gsl::not_null<le::Context*> context,
+				   gsl::not_null<le::FileDataLoader const*> data_loader,
+				   std::string_view name)
+		: m_context(context),
+		  m_data_loader(data_loader),
+		  m_name(name),
+		  m_asset_loader(context->create_asset_loader(m_data_loader)) {}
 
 	[[nodiscard]] auto get_name() const -> std::string_view { return m_name; }
 

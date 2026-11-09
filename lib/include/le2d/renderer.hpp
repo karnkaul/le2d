@@ -29,7 +29,8 @@ class IRenderer : public klib::Polymorphic {
 	/// \param size Desired RenderTarget / framebuffer size.
 	/// \param clear Clear color (in sRGB space).
 	/// \returns false if already rendering.
-	virtual auto begin_render(vk::CommandBuffer command_buffer, glm::ivec2 size, kvf::Color clear = kvf::black_v) -> bool = 0;
+	virtual auto begin_render(vk::CommandBuffer command_buffer, glm::ivec2 size, kvf::Color clear = kvf::black_v)
+		-> bool = 0;
 	/// \brief End rendering.
 	virtual auto end_render() -> kvf::RenderTarget const& = 0;
 

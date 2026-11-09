@@ -60,8 +60,19 @@ struct Scroll : glm::vec2 {
 	using glm::vec2::vec2;
 };
 
-using Event = std::variant<WindowClose, WindowFocus, CursorFocus, SwapchainResize, WindowResize, WindowPos, WindowIconify, Drop, CursorPos, Codepoint, Key,
-						   MouseButton, Scroll>;
+using Event = std::variant<WindowClose,
+						   WindowFocus,
+						   CursorFocus,
+						   SwapchainResize,
+						   WindowResize,
+						   WindowPos,
+						   WindowIconify,
+						   Drop,
+						   CursorPos,
+						   Codepoint,
+						   Key,
+						   MouseButton,
+						   Scroll>;
 } // namespace event
 
 using Event = event::Event;

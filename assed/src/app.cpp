@@ -19,7 +19,9 @@ auto create_applet(gsl::not_null<ServiceLocator const*> services) -> std::unique
 }
 } // namespace
 
-App::App(FileDataLoader data_loader) : m_data_loader(std::move(data_loader)), m_context(Context::create(context_create_info_v)) {}
+App::App(FileDataLoader data_loader)
+	: m_data_loader(std::move(data_loader)),
+	  m_context(Context::create(context_create_info_v)) {}
 
 void App::run() {
 	m_waiter = m_context->create_waiter();
@@ -52,11 +54,15 @@ void App::create_factories() {
 }
 
 void App::swap_applet() {
-	if (m_next_applet.empty()) { return; }
+	if (m_next_applet.empty()) {
+		return;
+	}
 	auto const name = m_next_applet;
 	m_next_applet = {};
 
-	auto const it = std::ranges::find_if(m_factories, [name](Factory const& f) { return f.name.as_view() == name; });
+	auto const it = std::ranges::find_if(m_factories, [name](Factory const& f) {
+		return f.name.as_view() == name;
+	});
 	if (it == m_factories.end()) {
 		log.error("unrecognized applet: {}", name);
 		return;
@@ -93,7 +99,9 @@ void App::file_menu() {
 	if (ImGui::BeginMenu("File")) {
 		m_applet->populate_file_menu();
 		ImGui::Separator();
-		if (ImGui::MenuItem("Exit")) { try_exit(); }
+		if (ImGui::MenuItem("Exit")) {
+			try_exit();
+		}
 		ImGui::EndMenu();
 	}
 }
@@ -101,7 +109,9 @@ void App::file_menu() {
 void App::applet_menu() {
 	if (ImGui::BeginMenu("Applets")) {
 		for (auto const& factory : m_factories) {
-			if (ImGui::MenuItem(factory.name.c_str())) { m_next_applet = factory.name.as_view(); }
+			if (ImGui::MenuItem(factory.name.c_str())) {
+				m_next_applet = factory.name.as_view();
+			}
 		}
 		ImGui::EndMenu();
 	}

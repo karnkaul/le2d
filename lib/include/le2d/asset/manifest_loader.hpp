@@ -28,7 +28,9 @@ struct ManifestLoadProgress {
 	[[nodiscard]] constexpr auto completed() const -> std::int64_t { return loaded + failed; }
 
 	[[nodiscard]] constexpr auto normalized() const -> float {
-		if (total <= 0) { return 0.0f; }
+		if (total <= 0) {
+			return 0.0f;
+		}
 		return float(completed()) / float(total);
 	}
 
@@ -50,13 +52,16 @@ class IManifestLoader : public klib::Polymorphic {
 	using State = ManifestLoaderState;
 	using Progress = ManifestLoadProgress;
 
-	[[nodiscard]] static auto create(gsl::not_null<AssetLoader const*> loader, CreateInfo const& create_info = {}) -> std::unique_ptr<IManifestLoader>;
+	[[nodiscard]] static auto create(gsl::not_null<AssetLoader const*> loader, CreateInfo const& create_info = {})
+		-> std::unique_ptr<IManifestLoader>;
 
 	[[nodiscard]] virtual auto get_state() const -> State = 0;
 
 	/// \brief Start async asset loads.
 	auto start_loading(AssetManifest manifest) -> Progress {
-		if (manifest.entries.empty() || get_state() != State::Idle) { return {}; }
+		if (manifest.entries.empty() || get_state() != State::Idle) {
+			return {};
+		}
 		do_start_loading(std::move(manifest));
 		return get_progress();
 	}

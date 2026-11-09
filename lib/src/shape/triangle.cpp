@@ -5,7 +5,9 @@
 
 namespace le::shape {
 void Triangle::create(float radius, kvf::Color const color) {
-	if (!kvf::is_positive(radius)) { radius = 0.0f; }
+	if (!kvf::is_positive(radius)) {
+		radius = 0.0f;
+	}
 	auto angle = -30.0f;
 	for (auto& vertex : vertices) {
 		auto const cos = std::cos(glm::radians(angle));

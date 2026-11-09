@@ -9,5 +9,6 @@ namespace le::util {
 
 [[nodiscard]] auto divide_into_tiles(int rows, int cols) -> std::vector<Tile>;
 
-[[nodiscard]] auto generate_flipbook_timeline(std::span<Tile const> tiles, kvf::Seconds duration) -> anim::Timeline<TileId>;
+[[nodiscard]] auto generate_flipbook_timeline(std::span<Tile const> tiles, kvf::Seconds duration)
+	-> anim::Timeline<TileId>;
 } // namespace le::util
