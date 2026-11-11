@@ -29,7 +29,9 @@ class AssetLoader {
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto load(std::string_view const uri) const -> std::unique_ptr<AssetTypeT> {
 		auto ret = load_asset(typeid(AssetTypeT), uri);
-		if (!ret) { return {}; }
+		if (!ret) {
+			return {};
+		}
 		KLIB_ASSERT(dynamic_cast<AssetTypeT*>(ret.get()));
 		return std::unique_ptr<AssetTypeT>{dynamic_cast<AssetTypeT*>(ret.release())};
 	}

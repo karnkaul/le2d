@@ -2,7 +2,9 @@
 #include "le2d/text/util.hpp"
 
 namespace le {
-void TextGeometry::append_glyphs(std::span<kvf::ttf::GlyphLayout const> layouts, glm::vec2 const offset, kvf::Color const color) {
+void TextGeometry::append_glyphs(std::span<kvf::ttf::GlyphLayout const> layouts,
+								 glm::vec2 const offset,
+								 kvf::Color const color) {
 	util::write_glyphs(m_vertices, layouts, offset, color);
 }
 

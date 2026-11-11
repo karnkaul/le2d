@@ -25,7 +25,9 @@ class AssetMap : public klib::Pinned {
 	template <std::derived_from<IAsset> AssetTypeT>
 	[[nodiscard]] auto get_asset_if(Uri const& uri) const -> klib::Ptr<AssetTypeT> {
 		auto const it = m_map.find(uri);
-		if (it == m_map.end()) { return {}; }
+		if (it == m_map.end()) {
+			return {};
+		}
 		return dynamic_cast<AssetTypeT*>(it->second.get());
 	}
 

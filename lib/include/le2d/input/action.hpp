@@ -132,7 +132,10 @@ class GamepadAxis2D : public IGamepadAxis {
 	/// \param x Matching x axis.
 	/// \param y Matching y axis.
 	/// \param dead_zone Dead zone: values with magnitude below this are floored to 0.
-	explicit GamepadAxis2D(int const x, int const y, float const dead_zone = dead_zone_v) : IGamepadAxis(dead_zone), x(x), y(y) {}
+	explicit GamepadAxis2D(int const x, int const y, float const dead_zone = dead_zone_v)
+		: IGamepadAxis(dead_zone),
+		  x(x),
+		  y(y) {}
 
 	/// \brief Matching x axis.
 	int x{};

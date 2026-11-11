@@ -5,7 +5,9 @@
 namespace le::assed {
 namespace imcpp {
 void MultiSelect::sync_to_selection() {
-	for (auto const [index, entry] : std::views::enumerate(entries)) { selection.SetItemSelected(ImGuiID(index), entry.is_selected); }
+	for (auto const [index, entry] : std::views::enumerate(entries)) {
+		selection.SetItemSelected(ImGuiID(index), entry.is_selected);
+	}
 }
 
 void MultiSelect::update(klib::CString const label) {
@@ -32,7 +34,9 @@ auto imcpp::drag_tex_rect(kvf::UvRect& uv, glm::ivec2 const size) -> bool {
 	auto top_bottom = std::array{tex_rect.lt.y, tex_rect.rb.y};
 	auto modified = ImGui::DragInt2("left-right", left_right.data(), 1.0f, 0, size.x);
 	modified |= ImGui::DragInt2("top-bottom", top_bottom.data(), 1.0f, 0, size.y);
-	if (modified) { uv = kvf::UvRect{.lt = {left_right[0], top_bottom[0]}, .rb = {left_right[1], top_bottom[1]}} / size; }
+	if (modified) {
+		uv = kvf::UvRect{.lt = {left_right[0], top_bottom[0]}, .rb = {left_right[1], top_bottom[1]}} / size;
+	}
 	return modified;
 }
 

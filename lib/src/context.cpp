@@ -57,15 +57,21 @@ struct Display {
 };
 
 constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size) -> glm::vec2 {
-	if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
+	if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) {
+		return {};
+	}
 	return fb_size / w_size;
 }
 
 auto window_display(GLFWwindow* window) -> std::optional<Display> {
 	auto* monitor = glfwGetWindowMonitor(window);
-	if (monitor == nullptr) { return {}; }
+	if (monitor == nullptr) {
+		return {};
+	}
 	auto const* video_mode = glfwGetVideoMode(monitor);
-	if (video_mode == nullptr) { return {}; }
+	if (video_mode == nullptr) {
+		return {};
+	}
 	return Display{.monitor = monitor, .video_mode = video_mode};
 }
 
@@ -76,8 +82,12 @@ auto fastest_display() {
 	auto ret = std::optional<Display>{};
 	for (auto* monitor : monitors) {
 		auto const* video_mode = glfwGetVideoMode(monitor);
-		if (video_mode == nullptr) { continue; }
-		if (!ret || video_mode->refreshRate > ret->video_mode->refreshRate) { ret = Display{.monitor = monitor, .video_mode = video_mode}; }
+		if (video_mode == nullptr) {
+			continue;
+		}
+		if (!ret || video_mode->refreshRate > ret->video_mode->refreshRate) {
+			ret = Display{.monitor = monitor, .video_mode = video_mode};
+		}
 	}
 	return ret;
 }
@@ -86,13 +96,17 @@ auto target_display(GLFWmonitor* desired) -> std::optional<Display> {
 	GLFWvidmode const* video_mode{};
 	if (desired == nullptr) {
 		auto const fastest = fastest_display();
-		if (!fastest) { return {}; }
+		if (!fastest) {
+			return {};
+		}
 		desired = fastest->monitor;
 		video_mode = fastest->video_mode;
 	}
 	if (video_mode == nullptr) {
 		video_mode = glfwGetVideoMode(desired);
-		if (video_mode == nullptr) { return {}; }
+		if (video_mode == nullptr) {
+			return {};
+		}
 	}
 	return Display{.monitor = desired, .video_mode = video_mode};
 }
@@ -108,7 +122,9 @@ auto get_glfw_vec2(GLFWwindow* window, F glfw_func) -> glm::ivec2 {
 	auto ret = std::vector<Vsync>{};
 	auto const supported_present_modes = render_device.get_supported_present_modes();
 	ret.reserve(supported_present_modes.size());
-	for (auto const present_mode : supported_present_modes) { ret.push_back(to_vsync(present_mode)); }
+	for (auto const present_mode : supported_present_modes) {
+		ret.push_back(to_vsync(present_mode));
+	}
 	return ret;
 }
 
@@ -137,8 +153,10 @@ class ContextImpl : public Context {
 	explicit ContextImpl(CreateInfo const& create_info = {})
 		: m_window(create_window(create_info.platform_flags, create_info.window)),
 		  m_render_device(kvf::IRenderDevice::create(get_window(), sanitize(create_info.render_device))),
-		  m_resources(m_render_device.get(), create_info.sfx_buffers), m_render_pass(m_resources.create_render_pass(create_info.framebuffer_samples)),
-		  m_renderer(m_render_pass->create_renderer()), m_supported_vsync(build_supported_vsync(*m_render_device)) {
+		  m_resources(m_render_device.get(), create_info.sfx_buffers),
+		  m_render_pass(m_resources.create_render_pass(create_info.framebuffer_samples)),
+		  m_renderer(m_render_pass->create_renderer()),
+		  m_supported_vsync(build_supported_vsync(*m_render_device)) {
 		log.info("[{}] Context initialized, platform: {}", build_version_v, glfw_platform_str(glfwGetPlatform()));
 		m_on_destroy.reset(this);
 	}
@@ -146,7 +164,9 @@ class ContextImpl : public Context {
   private:
 	struct OnDestroy {
 		void operator()(Context* ptr) const noexcept {
-			if (!ptr) { return; }
+			if (!ptr) {
+				return;
+			}
 			log.info("Context shutting down");
 			ptr->wait_idle();
 		}
@@ -165,21 +185,29 @@ class ContextImpl : public Context {
 	};
 
 	static constexpr auto to_display_ratio(glm::vec2 const w_size, glm::vec2 const fb_size) -> glm::vec2 {
-		if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) { return {}; }
+		if (!kvf::is_positive(w_size) || !kvf::is_positive(fb_size)) {
+			return {};
+		}
 		return fb_size / w_size;
 	}
 
 	[[nodiscard]] auto get_window() const -> gsl::not_null<GLFWwindow*> final { return m_window.get(); }
 	[[nodiscard]] auto get_render_device() const -> kvf::IRenderDevice const& final { return *m_render_device; }
-	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final { return *m_resources.resource_factory; }
+	[[nodiscard]] auto get_resource_factory() const -> IResourceFactory const& final {
+		return *m_resources.resource_factory;
+	}
 	[[nodiscard]] auto get_audio_mixer() const -> IAudioMixer& final { return *m_resources.audio_mixer; }
-	[[nodiscard]] auto get_default_shader() const -> IShader const& final { return m_resources.render_resources->get_default_shader(); }
+	[[nodiscard]] auto get_default_shader() const -> IShader const& final {
+		return m_resources.render_resources->get_default_shader();
+	}
 	[[nodiscard]] auto get_renderer() const -> IRenderer const& final { return *m_renderer; }
 	[[nodiscard]] auto get_render_pass() const -> IRenderPass const& final { return *m_render_pass; }
 
 	[[nodiscard]] auto get_render_scale() const -> float final { return m_render_scale; }
 	auto set_render_scale(float scale) -> bool final {
-		if (scale < min_render_scale_v || scale > max_render_scale_v) { return false; }
+		if (scale < min_render_scale_v || scale > max_render_scale_v) {
+			return false;
+		}
 		m_render_scale = scale;
 		return true;
 	}
@@ -187,9 +215,13 @@ class ContextImpl : public Context {
 	[[nodiscard]] auto get_supported_vsync() const -> std::span<Vsync const> final { return m_supported_vsync; }
 	[[nodiscard]] auto get_vsync() const -> Vsync final { return to_vsync(m_render_device->get_present_mode()); }
 	auto set_vsync(Vsync vsync) -> bool final {
-		if (vsync == get_vsync()) { return true; }
+		if (vsync == get_vsync()) {
+			return true;
+		}
 		auto const supported = get_supported_vsync();
-		if (std::ranges::find(supported, vsync) == supported.end()) { return false; }
+		if (std::ranges::find(supported, vsync) == supported.end()) {
+			return false;
+		}
 		m_render_device->set_present_mode(to_mode(vsync));
 		return true;
 	}
@@ -197,10 +229,16 @@ class ContextImpl : public Context {
 	[[nodiscard]] auto get_supported_samples() const -> vk::SampleCountFlags final {
 		return m_render_device->get_gpu().properties.limits.framebufferColorSampleCounts;
 	}
-	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final { return m_requests.set_samples.value_or(m_render_pass->get_samples()); }
+	[[nodiscard]] auto get_samples() const -> vk::SampleCountFlagBits final {
+		return m_requests.set_samples.value_or(m_render_pass->get_samples());
+	}
 	auto set_samples(vk::SampleCountFlagBits const samples) -> bool final {
-		if (samples == get_samples()) { return true; }
-		if ((get_supported_samples() & samples) != samples) { return false; }
+		if (samples == get_samples()) {
+			return true;
+		}
+		if ((get_supported_samples() & samples) != samples) {
+			return false;
+		}
 		m_requests.set_samples = samples;
 		return true;
 	}
@@ -230,7 +268,9 @@ class ContextImpl : public Context {
 		m_render_device->render(m_render_pass->get_render_target());
 		m_cmd = vk::CommandBuffer{};
 
-		if (m_max_framerate > 0) { limit_framerate(); }
+		if (m_max_framerate > 0) {
+			limit_framerate();
+		}
 	}
 
 	[[nodiscard]] auto get_frame_stats() const -> FrameStats const& final { return m_frame_stats; }
@@ -240,13 +280,22 @@ class ContextImpl : public Context {
 	}
 
 	[[nodiscard]] auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader final {
-		auto builder = AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resources.resource_factory};
-		return builder.build<ShaderLoader, FontLoader, TextureLoader, TileSetLoader, TileSheetLoader, AudioBufferLoader, TransformAnimationLoader,
+		auto builder =
+			AssetLoaderBuilder{.data_loader = *data_loader, .resource_factory = *m_resources.resource_factory};
+		return builder.build<ShaderLoader,
+							 FontLoader,
+							 TextureLoader,
+							 TileSetLoader,
+							 TileSheetLoader,
+							 AudioBufferLoader,
+							 TransformAnimationLoader,
 							 FlipbookAnimationLoader>();
 	}
 
 	void process_requests() {
-		if (m_requests.is_empty()) { return; }
+		if (m_requests.is_empty()) {
+			return;
+		}
 
 		m_render_device->get_device().waitIdle();
 		if (m_requests.set_samples) {
@@ -274,37 +323,56 @@ class ContextImpl : public Context {
 		auto const min_frame_time = kvf::Seconds{1.0f / float(m_max_framerate)};
 		auto const frame_time = kvf::Clock::now() - m_frame_start;
 		auto const delta = min_frame_time - frame_time;
-		if (delta <= 0s) { return; }
+		if (delta <= 0s) {
+			return;
+		}
 		std::this_thread::sleep_for(delta);
 	}
 
-	[[nodiscard]] static auto self(GLFWwindow* window) -> ContextImpl& { return *static_cast<ContextImpl*>(glfwGetWindowUserPointer(window)); }
+	[[nodiscard]] static auto self(GLFWwindow* window) -> ContextImpl& {
+		return *static_cast<ContextImpl*>(glfwGetWindowUserPointer(window));
+	}
 
-	[[nodiscard]] auto create_window(PlatformFlag const platform_flags, WindowCreateInfo const& wci) -> kvf::UniqueWindow {
+	[[nodiscard]] auto create_window(PlatformFlag const platform_flags, WindowCreateInfo const& wci)
+		-> kvf::UniqueWindow {
 		set_platform_flags(platform_flags);
 		auto const visitor = klib::Visitor{
 			[](WindowInfo const& wi) {
 				using Hint = kvf::WindowHint;
 				auto const hints = std::array{
-					Hint{.hint = GLFW_RESIZABLE, .value = (wi.flags & WindowFlag::Resizeable) == WindowFlag::Resizeable ? GLFW_TRUE : GLFW_FALSE},
-					Hint{.hint = GLFW_DECORATED, .value = (wi.flags & WindowFlag::Decorated) == WindowFlag::Decorated ? GLFW_TRUE : GLFW_FALSE},
-					Hint{.hint = GLFW_VISIBLE, .value = (wi.flags & WindowFlag::Visible) == WindowFlag::Visible ? GLFW_TRUE : GLFW_FALSE},
-					Hint{.hint = GLFW_MAXIMIZED, .value = (wi.flags & WindowFlag::Maximized) == WindowFlag::Maximized ? GLFW_TRUE : GLFW_FALSE},
-					Hint{.hint = GLFW_FOCUS_ON_SHOW, .value = (wi.flags & WindowFlag::FocusOnShow) == WindowFlag::FocusOnShow ? GLFW_TRUE : GLFW_FALSE},
+					Hint{.hint = GLFW_RESIZABLE,
+						 .value =
+							 (wi.flags & WindowFlag::Resizeable) == WindowFlag::Resizeable ? GLFW_TRUE : GLFW_FALSE},
+					Hint{.hint = GLFW_DECORATED,
+						 .value = (wi.flags & WindowFlag::Decorated) == WindowFlag::Decorated ? GLFW_TRUE : GLFW_FALSE},
+					Hint{.hint = GLFW_VISIBLE,
+						 .value = (wi.flags & WindowFlag::Visible) == WindowFlag::Visible ? GLFW_TRUE : GLFW_FALSE},
+					Hint{.hint = GLFW_MAXIMIZED,
+						 .value = (wi.flags & WindowFlag::Maximized) == WindowFlag::Maximized ? GLFW_TRUE : GLFW_FALSE},
+					Hint{.hint = GLFW_FOCUS_ON_SHOW,
+						 .value =
+							 (wi.flags & WindowFlag::FocusOnShow) == WindowFlag::FocusOnShow ? GLFW_TRUE : GLFW_FALSE},
 					Hint{.hint = GLFW_SCALE_TO_MONITOR,
-						 .value = (wi.flags & WindowFlag::ScaleToMonitor) == WindowFlag::ScaleToMonitor ? GLFW_TRUE : GLFW_FALSE},
+						 .value = (wi.flags & WindowFlag::ScaleToMonitor) == WindowFlag::ScaleToMonitor ? GLFW_TRUE
+																										: GLFW_FALSE},
 					Hint{.hint = GLFW_SCALE_FRAMEBUFFER,
-						 .value = (wi.flags & WindowFlag::ScaleFramebuffer) == WindowFlag::ScaleFramebuffer ? GLFW_TRUE : GLFW_FALSE},
+						 .value = (wi.flags & WindowFlag::ScaleFramebuffer) == WindowFlag::ScaleFramebuffer
+									  ? GLFW_TRUE
+									  : GLFW_FALSE},
 				};
 				return kvf::create_window(wi.size, wi.title, hints);
 			},
-			[](FullscreenInfo const& fi) { return kvf::create_fullscreen_window(fi.title); },
+			[](FullscreenInfo const& fi) {
+				return kvf::create_fullscreen_window(fi.title);
+			},
 		};
 		auto ret = std::visit(visitor, wci);
 		KLIB_ASSERT(ret);
 		glfwSetWindowUserPointer(ret.get(), this);
 		set_glfw_callbacks(ret.get());
-		if (glfwRawMouseMotionSupported() == GLFW_TRUE) { glfwSetInputMode(get_window(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); }
+		if (glfwRawMouseMotionSupported() == GLFW_TRUE) {
+			glfwSetInputMode(get_window(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+		}
 		return ret;
 	}
 
@@ -315,31 +383,56 @@ class ContextImpl : public Context {
 			forcing_x11 = true;
 			log.info("-- Forcing X11");
 		}
-		if (!forcing_x11 && (flags & PlatformFlag::NoLibdecor) == PlatformFlag::NoLibdecor && glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
+		if (!forcing_x11 && (flags & PlatformFlag::NoLibdecor) == PlatformFlag::NoLibdecor &&
+			glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
 			glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
 			log.info("-- Disabling libdecor");
 		}
 	}
 
 	static void set_glfw_callbacks(GLFWwindow* window) {
-		static auto const push_event = [](GLFWwindow* window, Event const& event) { self(window).m_event_queue.push_back(event); };
-		glfwSetWindowCloseCallback(window, [](GLFWwindow* window) { push_event(window, event::WindowClose{}); });
-		glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) { push_event(window, to_focus<event::WindowFocus>(in_focus)); });
-		glfwSetCursorEnterCallback(window, [](GLFWwindow* window, int entered) { push_event(window, to_focus<event::CursorFocus>(entered)); });
+		static auto const push_event = [](GLFWwindow* window, Event const& event) {
+			self(window).m_event_queue.push_back(event);
+		};
+		glfwSetWindowCloseCallback(window, [](GLFWwindow* window) {
+			push_event(window, event::WindowClose{});
+		});
+		glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int in_focus) {
+			push_event(window, to_focus<event::WindowFocus>(in_focus));
+		});
+		glfwSetCursorEnterCallback(window, [](GLFWwindow* window, int entered) {
+			push_event(window, to_focus<event::CursorFocus>(entered));
+		});
 		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int /*scancode*/, int action, int mods) {
 			push_event(window, event::Key{.key = key, .action = action, .mods = mods});
 		});
-		glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) { push_event(window, event::Codepoint{codepoint}); });
-		glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowResize{x, y}); });
-		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::SwapchainResize{x, y}); });
-		glfwSetWindowPosCallback(window, [](GLFWwindow* window, int x, int y) { push_event(window, event::WindowPos{x, y}); });
-		glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int i) { push_event(window, to_focus<event::WindowIconify>(i)); });
-		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) { self(window).on_cursor_pos({x, y}); });
+		glfwSetCharCallback(window, [](GLFWwindow* window, std::uint32_t const codepoint) {
+			push_event(window, event::Codepoint{codepoint});
+		});
+		glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int x, int y) {
+			push_event(window, event::WindowResize{x, y});
+		});
+		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int x, int y) {
+			push_event(window, event::SwapchainResize{x, y});
+		});
+		glfwSetWindowPosCallback(window, [](GLFWwindow* window, int x, int y) {
+			push_event(window, event::WindowPos{x, y});
+		});
+		glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int i) {
+			push_event(window, to_focus<event::WindowIconify>(i));
+		});
+		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) {
+			self(window).on_cursor_pos({x, y});
+		});
 		glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
 			push_event(window, event::MouseButton{.button = button, .action = action, .mods = mods});
 		});
-		glfwSetScrollCallback(window, [](GLFWwindow* window, double x, double y) { push_event(window, event::Scroll{x, y}); });
-		glfwSetDropCallback(window, [](GLFWwindow* window, int const count, char const** paths) { self(window).on_drop(count, paths); });
+		glfwSetScrollCallback(window, [](GLFWwindow* window, double x, double y) {
+			push_event(window, event::Scroll{x, y});
+		});
+		glfwSetDropCallback(window, [](GLFWwindow* window, int const count, char const** paths) {
+			self(window).on_drop(count, paths);
+		});
 	}
 
 	void on_cursor_pos(window::vec2 pos) {
@@ -384,10 +477,14 @@ class ContextImpl : public Context {
 };
 } // namespace
 
-auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> { return std::make_unique<ContextImpl>(create_info); }
+auto Context::create(CreateInfo const& create_info) -> std::unique_ptr<Context> {
+	return std::make_unique<ContextImpl>(create_info);
+}
 
 auto Context::window_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetWindowSize); }
-auto Context::window_framebuffer_size() const -> glm::ivec2 { return get_glfw_vec2(get_window(), &glfwGetFramebufferSize); }
+auto Context::window_framebuffer_size() const -> glm::ivec2 {
+	return get_glfw_vec2(get_window(), &glfwGetFramebufferSize);
+}
 auto Context::swapchain_extent() const -> vk::Extent2D { return get_render_device().get_swapchain_image_extent(); }
 auto Context::main_pass_size() const -> glm::ivec2 { return glm::vec2{window_framebuffer_size()} * get_render_scale(); }
 auto Context::display_ratio() const -> glm::vec2 { return to_display_ratio(window_size(), window_framebuffer_size()); }
@@ -398,8 +495,12 @@ auto Context::get_title() const -> klib::CString { return glfwGetWindowTitle(get
 void Context::set_title(klib::CString const title) { glfwSetWindowTitle(get_window(), title.c_str()); }
 
 auto Context::get_refresh_rate() const -> std::int32_t {
-	if (auto const display = window_display(get_window())) { return display->video_mode->refreshRate; }
-	if (auto const display = fastest_display()) { return display->video_mode->refreshRate; }
+	if (auto const display = window_display(get_window())) {
+		return display->video_mode->refreshRate;
+	}
+	if (auto const display = fastest_display()) {
+		return display->video_mode->refreshRate;
+	}
 	return 0;
 }
 
@@ -408,7 +509,9 @@ auto Context::is_fullscreen() const -> bool { return glfwGetWindowMonitor(get_wi
 auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 	set_visible(true);
 	auto const display = target_display(target);
-	if (!display) { return false; }
+	if (!display) {
+		return false;
+	}
 	auto const vm = display->video_mode;
 	glfwSetWindowMonitor(get_window(), display->monitor, 0, 0, vm->width, vm->height, vm->refreshRate);
 	return true;
@@ -416,7 +519,9 @@ auto Context::set_fullscreen(klib::Ptr<GLFWmonitor> target) -> bool {
 
 void Context::set_windowed(glm::ivec2 const size) {
 	set_visible(true);
-	if (!kvf::is_positive(size)) { return; }
+	if (!kvf::is_positive(size)) {
+		return;
+	}
 	if (is_fullscreen()) {
 		glfwSetWindowMonitor(get_window(), nullptr, 0, 0, size.x, size.y, 0);
 	} else {

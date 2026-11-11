@@ -5,7 +5,9 @@
 namespace le {
 namespace {
 struct AtomicProgress {
-	[[nodiscard]] auto to_progress() const { return ManifestLoadProgress{.loaded = loaded.load(), .failed = failed.load(), .total = total}; }
+	[[nodiscard]] auto to_progress() const {
+		return ManifestLoadProgress{.loaded = loaded.load(), .failed = failed.load(), .total = total};
+	}
 
 	void reset_all() { loaded = failed = total = 0; }
 
@@ -16,13 +18,19 @@ struct AtomicProgress {
 
 class LoadTask : public klib::task::Task {
   public:
-	explicit LoadTask(gsl::not_null<AssetLoader const*> loader, gsl::not_null<AtomicProgress*> progress, AssetManifest::Entry entry)
-		: m_loader(loader), m_progress(progress), m_entry(std::move(entry)) {
+	explicit LoadTask(gsl::not_null<AssetLoader const*> loader,
+					  gsl::not_null<AtomicProgress*> progress,
+					  AssetManifest::Entry entry)
+		: m_loader(loader),
+		  m_progress(progress),
+		  m_entry(std::move(entry)) {
 		++m_progress->total;
 	}
 
 	void transfer(AssetMap& out_map) {
-		if (!m_asset) { return; }
+		if (!m_asset) {
+			return;
+		}
 		out_map.store_asset(std::move(m_entry.uri), std::move(m_asset));
 	}
 
@@ -51,7 +59,8 @@ class ManifestLoader : public IManifestLoader {
 	ManifestLoader& operator=(ManifestLoader&&) = delete;
 
 	explicit ManifestLoader(gsl::not_null<AssetLoader const*> loader, CreateInfo const& create_info)
-		: m_loader(loader), m_queue(klib::task::Queue::CreateInfo{.thread_count = create_info.thread_count}) {}
+		: m_loader(loader),
+		  m_queue(klib::task::Queue::CreateInfo{.thread_count = create_info.thread_count}) {}
 
 	~ManifestLoader() { cancel_impl(); }
 
@@ -59,7 +68,9 @@ class ManifestLoader : public IManifestLoader {
 	[[nodiscard]] auto get_state() const -> State final {
 		if (!m_enqueued_tasks.empty()) {
 			auto const progress = get_progress();
-			if (progress.loaded + progress.failed == progress.total) { return State::Loaded; }
+			if (progress.loaded + progress.failed == progress.total) {
+				return State::Loaded;
+			}
 			return State::Loading;
 		}
 
@@ -77,16 +88,22 @@ class ManifestLoader : public IManifestLoader {
 
 		m_load_tasks.clear();
 		m_load_tasks.reserve(manifest.entries.size());
-		for (auto& entry : manifest.entries) { m_load_tasks.push_back(std::make_unique<LoadTask>(m_loader, &m_progress, std::move(entry))); }
+		for (auto& entry : manifest.entries) {
+			m_load_tasks.push_back(std::make_unique<LoadTask>(m_loader, &m_progress, std::move(entry)));
+		}
 
 		m_enqueued_tasks.clear();
 		m_enqueued_tasks.reserve(m_load_tasks.size());
-		for (auto const& load_task : m_load_tasks) { m_enqueued_tasks.push_back(load_task.get()); }
+		for (auto const& load_task : m_load_tasks) {
+			m_enqueued_tasks.push_back(load_task.get());
+		}
 		m_queue.enqueue(m_enqueued_tasks);
 	}
 
 	void do_transfer_assets(AssetMap& out_map) final {
-		for (auto const& load_task : m_load_tasks) { load_task->transfer(out_map); }
+		for (auto const& load_task : m_load_tasks) {
+			load_task->transfer(out_map);
+		}
 		clear_all();
 	}
 
@@ -113,7 +130,8 @@ class ManifestLoader : public IManifestLoader {
 };
 } // namespace
 
-auto IManifestLoader::create(gsl::not_null<AssetLoader const*> loader, CreateInfo const& create_info) -> std::unique_ptr<IManifestLoader> {
+auto IManifestLoader::create(gsl::not_null<AssetLoader const*> loader, CreateInfo const& create_info)
+	-> std::unique_ptr<IManifestLoader> {
 	return std::make_unique<ManifestLoader>(loader, create_info);
 }
 } // namespace le

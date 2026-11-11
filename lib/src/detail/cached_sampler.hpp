@@ -5,7 +5,8 @@
 namespace le::detail {
 class CachedSampler {
   public:
-	explicit CachedSampler(gsl::not_null<ISamplerFactory*> sampler_factory, TextureSampler const& sampler = {}) : m_sampler_factory(sampler_factory) {
+	explicit CachedSampler(gsl::not_null<ISamplerFactory*> sampler_factory, TextureSampler const& sampler = {})
+		: m_sampler_factory(sampler_factory) {
 		set_sampler(sampler);
 	}
 

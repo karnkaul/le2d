@@ -53,17 +53,27 @@ void set_json_type(dj::Json& json) {
 
 template <typename Type, glm::length_t Length>
 void from_json(dj::Json const& json, glm::vec<Length, Type>& vec) {
-	if (!json.is_array()) { return; }
+	if (!json.is_array()) {
+		return;
+	}
 	from_json(json[0], vec.x);
-	if constexpr (Length > 1) { from_json(json[1], vec.y); }
-	if constexpr (Length > 2) { from_json(json[2], vec.z); }
+	if constexpr (Length > 1) {
+		from_json(json[1], vec.y);
+	}
+	if constexpr (Length > 2) {
+		from_json(json[2], vec.z);
+	}
 }
 
 template <typename Type, glm::length_t Length>
 void to_json(dj::Json& json, glm::vec<Length, Type> const& vec) {
 	to_json(json[0], vec.x);
-	if constexpr (Length > 1) { to_json(json[1], vec.y); }
-	if constexpr (Length > 2) { to_json(json[2], vec.z); }
+	if constexpr (Length > 1) {
+		to_json(json[1], vec.y);
+	}
+	if constexpr (Length > 2) {
+		to_json(json[2], vec.z);
+	}
 }
 
 template <typename Type>

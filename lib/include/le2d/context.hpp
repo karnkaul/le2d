@@ -196,8 +196,10 @@ class Context : public klib::Polymorphic {
 	[[nodiscard]] virtual auto get_frame_stats() const -> FrameStats const& = 0;
 
 	[[nodiscard]] auto create_waiter() -> Waiter;
-	[[nodiscard]] virtual auto create_render_pass(vk::SampleCountFlagBits samples) const -> std::unique_ptr<IRenderPass> = 0;
-	[[nodiscard]] virtual auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const -> AssetLoader = 0;
+	[[nodiscard]] virtual auto create_render_pass(vk::SampleCountFlagBits samples) const
+		-> std::unique_ptr<IRenderPass> = 0;
+	[[nodiscard]] virtual auto create_asset_loader(gsl::not_null<IDataLoader const*> data_loader) const
+		-> AssetLoader = 0;
 };
 
 /// \brief Calls Context::wait_idle() in its destructor.
@@ -214,7 +216,9 @@ class Context::Waiter {
   private:
 	struct Deleter {
 		void operator()(Context* ptr) const {
-			if (ptr) { ptr->wait_idle(); }
+			if (ptr) {
+				ptr->wait_idle();
+			}
 		}
 	};
 

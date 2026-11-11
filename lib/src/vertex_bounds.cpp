@@ -3,7 +3,9 @@
 #include <limits>
 
 auto le::vertex_bounds(std::span<Vertex const> vertices, glm::mat4 const& model) -> kvf::Rect<> {
-	if (vertices.empty()) { return {}; }
+	if (vertices.empty()) {
+		return {};
+	}
 	auto ret = kvf::Rect<>{};
 	ret.lt.x = ret.rb.y = std::numeric_limits<float>::max();
 	ret.lt.y = ret.rb.x = -std::numeric_limits<float>::max();

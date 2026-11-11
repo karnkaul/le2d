@@ -10,7 +10,9 @@ class TriggerBase {
 	explicit constexpr TriggerBase(int const actor) : m_actor(actor) {}
 
 	constexpr auto on_action(int const actor, int const action) -> bool {
-		if (actor != m_actor) { return false; }
+		if (actor != m_actor) {
+			return false;
+		}
 		switch (action) {
 		case GLFW_PRESS: m_engaged = true; return true;
 		case GLFW_RELEASE: m_engaged = false; return true;
@@ -51,6 +53,8 @@ class MouseButtonTrigger : public TriggerBase {
 	explicit constexpr MouseButtonTrigger(int const button) : TriggerBase(button) {}
 
 	/// \param button Mouse button event.
-	constexpr auto on_event(event::MouseButton const& button) -> bool { return on_action(button.button, button.action); }
+	constexpr auto on_event(event::MouseButton const& button) -> bool {
+		return on_action(button.button, button.action);
+	}
 };
 } // namespace le::input

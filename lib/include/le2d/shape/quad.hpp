@@ -35,7 +35,9 @@ class Quad : public IQuad {
 	using IQuad::IQuad;
 
 	[[nodiscard]] auto get_indices() const -> std::span<std::uint32_t const> final { return indices_v; }
-	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final { return vk::PrimitiveTopology::eTriangleList; }
+	[[nodiscard]] auto get_topology() const -> vk::PrimitiveTopology final {
+		return vk::PrimitiveTopology::eTriangleList;
+	}
 };
 
 /// \brief Line rectangle Geometry. (Quad outline.)

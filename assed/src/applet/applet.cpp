@@ -7,7 +7,9 @@ constexpr auto min_scale_v{0.1f};
 constexpr auto max_scale_v{10.0f};
 } // namespace
 
-Applet::Applet(gsl::not_null<ServiceLocator const*> services) : m_input_mapping(std::make_shared<input::ListenerMapping>()), m_services(services) {
+Applet::Applet(gsl::not_null<ServiceLocator const*> services)
+	: m_input_mapping(std::make_shared<input::ListenerMapping>()),
+	  m_services(services) {
 	m_input_mapping->on_drop = [this](event::Drop const& e) {
 		on_drop(e);
 		return true;
@@ -54,9 +56,13 @@ void Applet::on_drop(event::Drop const& drop) {
 	on_drop(file_drop);
 }
 
-auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> { return get_data_loader().load_bytes(uri.get_string()); }
+auto Applet::load_bytes(Uri const& uri) const -> std::vector<std::byte> {
+	return get_data_loader().load_bytes(uri.get_string());
+}
 
-auto Applet::load_string(Uri const& uri) const -> std::string { return get_data_loader().load_string(uri.get_string()); }
+auto Applet::load_string(Uri const& uri) const -> std::string {
+	return get_data_loader().load_string(uri.get_string());
+}
 
 auto Applet::load_json(Uri const& uri) const -> dj::Json { return get_data_loader().load_json(uri.get_string()); }
 
@@ -90,11 +96,15 @@ void Applet::do_tick(kvf::Seconds const dt) {
 		ImGui::OpenPopup(ConfirmExitDialog::label_v.c_str());
 	}
 	auto const result = m_confirm_exit();
-	if (result == ConfirmExitDialog::Result::Quit) { get_context().set_window_should_close(); }
+	if (result == ConfirmExitDialog::Result::Quit) {
+		get_context().set_window_should_close();
+	}
 }
 
 auto Applet::try_exit() -> bool {
-	if (!m_unsaved) { return true; }
+	if (!m_unsaved) {
+		return true;
+	}
 	m_open_confirm_exit = true;
 	return false;
 }
@@ -103,7 +113,9 @@ void Applet::Dialog::operator()() const {
 	if (imcpp::begin_modal(title.c_str())) {
 		ImGui::TextUnformatted(message.c_str());
 		ImGui::Separator();
-		if (ImGui::Button("Close")) { ImGui::CloseCurrentPopup(); }
+		if (ImGui::Button("Close")) {
+			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 }

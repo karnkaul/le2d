@@ -30,7 +30,10 @@ class App {
 	[[nodiscard]] auto create_scene_info() const -> SceneInfo {
 		return SceneInfo{
 			.name = SceneTypeT::name_v,
-			.factory = [this] { return std::make_unique<SceneTypeT>(m_context.get(), &*m_data_loader); },
+			.factory =
+				[this] {
+					return std::make_unique<SceneTypeT>(m_context.get(), &*m_data_loader);
+				},
 		};
 	}
 

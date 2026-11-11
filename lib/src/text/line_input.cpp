@@ -11,14 +11,18 @@ LineInput::LineInput(gsl::not_null<IFont*> font, TextHeight const height) : m_at
 auto LineInput::to_primitive() const -> Primitive { return m_geometry.to_primitive(m_atlas->get_texture()); }
 
 void LineInput::set_string(std::string line) {
-	if (m_line == line) { return; }
+	if (m_line == line) {
+		return;
+	}
 	m_line = std::move(line);
 	set_cursor(int(m_line.size()));
 	update();
 }
 
 void LineInput::append(std::string_view const str) {
-	if (str.empty()) { return; }
+	if (str.empty()) {
+		return;
+	}
 	m_line.append(str);
 	set_cursor(int(m_line.size()));
 	update();
@@ -32,7 +36,9 @@ void LineInput::write(char const ch) {
 }
 
 void LineInput::backward_delete() {
-	if (m_cursor == 0) { return; }
+	if (m_cursor == 0) {
+		return;
+	}
 	KLIB_ASSERT(m_cursor > 0 && m_cursor <= int(m_line.size()));
 	m_line.erase(std::size_t(m_cursor - 1), 1);
 	--m_cursor;
@@ -40,23 +46,37 @@ void LineInput::backward_delete() {
 }
 
 void LineInput::forward_delete() {
-	if (m_cursor == int(m_line.size())) { return; }
+	if (m_cursor == int(m_line.size())) {
+		return;
+	}
 	KLIB_ASSERT(m_cursor >= 0 && m_cursor <= int(m_line.size()));
 	m_line.erase(std::size_t(m_cursor), 1);
 	update();
 }
 
 void LineInput::forward_word() {
-	if (m_line.empty() || m_cursor == int(m_line.size())) { return; }
-	auto cursor = forward_from_if(m_cursor, [](char const c) { return !is_space(c); });
-	cursor = forward_from_if(cursor, [](char const c) { return is_space(c); });
+	if (m_line.empty() || m_cursor == int(m_line.size())) {
+		return;
+	}
+	auto cursor = forward_from_if(m_cursor, [](char const c) {
+		return !is_space(c);
+	});
+	cursor = forward_from_if(cursor, [](char const c) {
+		return is_space(c);
+	});
 	set_cursor(cursor);
 }
 
 void LineInput::backward_word() {
-	if (m_line.empty() || m_cursor == 0) { return; }
-	auto cursor = backward_from_if(m_cursor, [](char const c) { return is_space(c); });
-	cursor = backward_from_if(cursor, [](char const c) { return !is_space(c); });
+	if (m_line.empty() || m_cursor == 0) {
+		return;
+	}
+	auto cursor = backward_from_if(m_cursor, [](char const c) {
+		return is_space(c);
+	});
+	cursor = backward_from_if(cursor, [](char const c) {
+		return !is_space(c);
+	});
 	set_cursor(cursor);
 }
 
@@ -99,13 +119,17 @@ void LineInput::update_cursor_x() {
 
 template <typename PredT>
 auto LineInput::forward_from_if(int cursor, PredT pred) const -> int {
-	while (cursor < int(m_line.size()) && pred(m_line.at(std::size_t(cursor)))) { ++cursor; }
+	while (cursor < int(m_line.size()) && pred(m_line.at(std::size_t(cursor)))) {
+		++cursor;
+	}
 	return cursor;
 }
 
 template <typename PredT>
 auto LineInput::backward_from_if(int cursor, PredT pred) const -> int {
-	while (cursor > 0 && pred(m_line.at(std::size_t(cursor - 1)))) { --cursor; }
+	while (cursor > 0 && pred(m_line.at(std::size_t(cursor - 1)))) {
+		--cursor;
+	}
 	return cursor;
 }
 } // namespace le

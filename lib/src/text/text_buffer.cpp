@@ -3,11 +3,17 @@
 
 namespace le {
 TextBuffer::TextBuffer(gsl::not_null<IFontAtlas*> atlas, std::size_t const limit, float n_line_spacing)
-	: m_atlas(atlas), m_limit(limit), m_n_line_spacing(n_line_spacing) {}
+	: m_atlas(atlas),
+	  m_limit(limit),
+	  m_n_line_spacing(n_line_spacing) {}
 
 void TextBuffer::push_front(std::span<std::string> lines, kvf::Color color) {
-	for (auto& line : lines) { m_lines.push_front(Line{.text = std::move(line), .color = color}); }
-	while (m_lines.size() > m_limit) { m_lines.pop_back(); }
+	for (auto& line : lines) {
+		m_lines.push_front(Line{.text = std::move(line), .color = color});
+	}
+	while (m_lines.size() > m_limit) {
+		m_lines.pop_back();
+	}
 	refresh();
 }
 

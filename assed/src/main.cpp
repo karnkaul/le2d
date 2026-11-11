@@ -8,7 +8,9 @@
 namespace le::assed {
 namespace {
 void run(std::string assets_dir) {
-	if (assets_dir.empty()) { assets_dir = FileDataLoader::upfind("assets", util::exe_path()); }
+	if (assets_dir.empty()) {
+		assets_dir = FileDataLoader::upfind("assets", util::exe_path());
+	}
 	auto app = App{FileDataLoader{assets_dir}};
 	app.run();
 }
@@ -28,8 +30,12 @@ auto main(int argc, char** argv) -> int {
 		};
 		auto parser = clap::Parser{std::move(spec)};
 		auto const parse_result = parser.parse_main(argc, argv);
-		if (parse_result.should_early_exit()) { return parse_result.return_code(); }
-		if (force_x11) { glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); }
+		if (parse_result.should_early_exit()) {
+			return parse_result.return_code();
+		}
+		if (force_x11) {
+			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+		}
 		le::assed::run(assets_dir);
 	} catch (std::exception const& e) {
 		le::assed::log.error("PANIC: {}", e.what());

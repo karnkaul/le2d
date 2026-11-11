@@ -11,18 +11,24 @@ constexpr auto holds_any_of(Event const& e) {
 } // namespace
 
 void Router::push_mapping(std::shared_ptr<IMapping> const& mapping) {
-	if (!mapping || (!m_mappings.empty() && m_mappings.back().lock() == mapping)) { return; }
+	if (!mapping || (!m_mappings.empty() && m_mappings.back().lock() == mapping)) {
+		return;
+	}
 	disengage();
 	m_mappings.push_back(mapping);
 }
 
 void Router::pop_mapping() {
-	if (m_mappings.empty()) { return; }
+	if (m_mappings.empty()) {
+		return;
+	}
 	m_mappings.pop_back();
 }
 
 void Router::remove_mapping(std::shared_ptr<IMapping> const& mapping) {
-	if (!mapping) { return; }
+	if (!mapping) {
+		return;
+	}
 	auto const pred = [&](std::weak_ptr<IMapping> const& ptr) {
 		auto m = ptr.lock();
 		return !m || m == mapping;
@@ -31,7 +37,9 @@ void Router::remove_mapping(std::shared_ptr<IMapping> const& mapping) {
 }
 
 auto Router::contains_mapping(std::shared_ptr<IMapping> const& mapping) const -> bool {
-	return std::ranges::any_of(m_mappings, [&mapping](auto const& ptr) { return ptr.lock() == mapping; });
+	return std::ranges::any_of(m_mappings, [&mapping](auto const& ptr) {
+		return ptr.lock() == mapping;
+	});
 }
 
 void Router::dispatch(std::span<Event const> events) {
@@ -46,7 +54,9 @@ void Router::dispatch(std::span<Event const> events) {
 		}
 	}
 
-	if (m_gamepad_manager.update(nonzero_dead_zone)) { m_last_used_device = Device::Gamepad; }
+	if (m_gamepad_manager.update(nonzero_dead_zone)) {
+		m_last_used_device = Device::Gamepad;
+	}
 
 	pre_dispatch();
 	if (should_disengage) {
@@ -77,23 +87,39 @@ void Router::pre_dispatch() {
 	m_mappings_buffer.reserve(m_mappings.size() + 1);
 	std::erase_if(m_mappings, [this](auto const& ptr) {
 		auto mapping = ptr.lock();
-		if (!mapping) { return true; }
+		if (!mapping) {
+			return true;
+		}
 		m_mappings_buffer.push_back(std::move(mapping));
 		return false;
 	});
-	if (auto mapping = terminal_mapping.lock()) { m_mappings_buffer.push_back(std::move(mapping)); }
+	if (auto mapping = terminal_mapping.lock()) {
+		m_mappings_buffer.push_back(std::move(mapping));
+	}
 }
 
 void Router::dispatch_events(std::span<Event const> events) {
 	for (auto const& event : events) {
 		auto const imgui_wants = klib::Visitor{
-			[](auto const&) { return false; },
-			[](event::Codepoint const) { return ImGui::GetIO().WantCaptureKeyboard; },
-			[](event::Key const&) { return ImGui::GetIO().WantCaptureKeyboard; },
-			[](event::MouseButton const&) { return ImGui::GetIO().WantCaptureMouse; },
-			[](event::Scroll const&) { return ImGui::GetIO().WantCaptureMouse; },
+			[](auto const&) {
+				return false;
+			},
+			[](event::Codepoint const) {
+				return ImGui::GetIO().WantCaptureKeyboard;
+			},
+			[](event::Key const&) {
+				return ImGui::GetIO().WantCaptureKeyboard;
+			},
+			[](event::MouseButton const&) {
+				return ImGui::GetIO().WantCaptureMouse;
+			},
+			[](event::Scroll const&) {
+				return ImGui::GetIO().WantCaptureMouse;
+			},
 		};
-		if (std::visit(imgui_wants, event)) { continue; }
+		if (std::visit(imgui_wants, event)) {
+			continue;
+		}
 
 		auto disengage_remaining = false;
 
@@ -103,7 +129,11 @@ void Router::dispatch_events(std::span<Event const> events) {
 				continue;
 			}
 
-			disengage_remaining = std::visit([&mapping](auto const& e) { return mapping->consume_event(e); }, event);
+			disengage_remaining = std::visit(
+				[&mapping](auto const& e) {
+					return mapping->consume_event(e);
+				},
+				event);
 		}
 	}
 

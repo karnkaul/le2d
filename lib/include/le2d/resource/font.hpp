@@ -14,7 +14,10 @@ class IFontAtlas : public IResource {
 	[[nodiscard]] virtual auto get_texture() const -> ITexture const& = 0;
 	[[nodiscard]] virtual auto get_height() const -> TextHeight = 0;
 
-	virtual auto push_layouts(std::vector<GlyphLayout>& out, std::string_view text, float n_line_height = 1.5f, bool use_tofu = true) const -> glm::vec2 = 0;
+	virtual auto push_layouts(std::vector<GlyphLayout>& out,
+							  std::string_view text,
+							  float n_line_height = 1.5f,
+							  bool use_tofu = true) const -> glm::vec2 = 0;
 };
 
 /// \brief Opaque interface for a Font.

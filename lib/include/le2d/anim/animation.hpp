@@ -17,7 +17,9 @@ class Animation : public IAsset {
 
 	void set_timeline(Timeline<Payload> timeline) {
 		m_timeline = std::move(timeline);
-		std::ranges::sort(m_timeline.keyframes, [](Keyframe<Payload> const& a, Keyframe<Payload> const& b) { return a.timestamp < b.timestamp; });
+		std::ranges::sort(m_timeline.keyframes, [](Keyframe<Payload> const& a, Keyframe<Payload> const& b) {
+			return a.timestamp < b.timestamp;
+		});
 	}
 
 	[[nodiscard]] auto is_loaded() const -> bool { return !m_timeline.keyframes.empty(); }

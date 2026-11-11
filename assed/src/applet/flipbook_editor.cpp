@@ -5,7 +5,8 @@
 
 namespace le::assed {
 FlipbookEditor::FlipbookEditor(gsl::not_null<ServiceLocator const*> services)
-	: Applet(services), m_tile_sheet(get_context().get_resource_factory().create_tilesheet({})) {
+	: Applet(services),
+	  m_tile_sheet(get_context().get_resource_factory().create_tilesheet({})) {
 	m_drawer.quad.texture = m_tile_sheet.get();
 	m_save_modal.title = "Save Flipbook";
 	m_drop_types = FileDrop::Type::Json;
@@ -18,7 +19,9 @@ void FlipbookEditor::tick(kvf::Seconds const dt) {
 		auto const anim_dt = m_paused ? 0s : dt;
 		m_animator.tick(anim_dt);
 		auto const tile_id = m_animator.get_payload();
-		auto const it = std::ranges::lower_bound(tiles, tile_id, {}, [](Tile const& t) { return t.id; });
+		auto const it = std::ranges::lower_bound(tiles, tile_id, {}, [](Tile const& t) {
+			return t.id;
+		});
 		KLIB_ASSERT(it != tiles.end());
 		auto const index = std::size_t(std::distance(tiles.begin(), it));
 		KLIB_ASSERT(index < m_drawer.tile_frames.size());
@@ -63,7 +66,9 @@ void FlipbookEditor::populate_file_menu() {
 		set_title();
 	}
 
-	if (ImGui::MenuItem("Save...", nullptr, false, !m_animation.get_timeline().keyframes.empty())) { m_save_modal.set_open(m_uri.tile_sheet.get_string()); }
+	if (ImGui::MenuItem("Save...", nullptr, false, !m_animation.get_timeline().keyframes.empty())) {
+		m_save_modal.set_open(m_uri.tile_sheet.get_string());
+	}
 }
 
 void FlipbookEditor::inspect() {
@@ -99,7 +104,9 @@ void FlipbookEditor::inspect_display() {
 	auto const display_str = display_name_map.to_name(m_display);
 	if (ImGui::BeginCombo("Display", display_str.data())) {
 		for (auto const [index, str] : std::views::enumerate(display_name_map.as_span())) {
-			if (ImGui::Selectable(str.second.data(), str.second == display_str)) { m_display = Display(index); }
+			if (ImGui::Selectable(str.second.data(), str.second == display_str)) {
+				m_display = Display(index);
+			}
 		}
 		ImGui::EndCombo();
 	}
@@ -109,16 +116,22 @@ void FlipbookEditor::inspect_generate() {
 	ImGui::TextUnformatted("Select TileIds");
 	m_generate.select_tiles.update("TileIds");
 	ImGui::DragFloat("duration", &m_generate.duration, 0.25f, 0.0f, 9999.0f, "%.2fs");
-	if (!m_generate.select_tiles.entries.empty() && m_generate.duration > 0.0f && ImGui::Button("generate")) { generate_timeline(); }
+	if (!m_generate.select_tiles.entries.empty() && m_generate.duration > 0.0f && ImGui::Button("generate")) {
+		generate_timeline();
+	}
 }
 
 void FlipbookEditor::inspect_timeline() {
 	klib::CString const play_pause = m_paused ? "play" : "pause";
-	if (ImGui::Button(play_pause.c_str())) { m_paused = !m_paused; }
+	if (ImGui::Button(play_pause.c_str())) {
+		m_paused = !m_paused;
+	}
 	auto elapsed = m_animator.elapsed.count();
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(100.0f);
-	if (ImGui::DragFloat("elapsed", &elapsed, 0.1f, 0.0f, m_animator.get_duration().count())) { m_animator.elapsed = kvf::Seconds{elapsed}; }
+	if (ImGui::DragFloat("elapsed", &elapsed, 0.1f, 0.0f, m_animator.get_duration().count())) {
+		m_animator.elapsed = kvf::Seconds{elapsed};
+	}
 	ImGui::TextUnformatted(klib::FixedString{"duration: {:.1f}s", m_animation.get_timeline().duration.count()}.c_str());
 
 	if (ImGui::TreeNode("keyframes")) {
@@ -218,7 +231,9 @@ void FlipbookEditor::generate_timeline() {
 	auto timestamp = kvf::Seconds{0s};
 	auto const tiles = m_tile_sheet->tile_set.get_tiles();
 	for (auto const [index, tile_entry] : std::views::enumerate(m_generate.select_tiles.entries)) {
-		if (!tile_entry.is_selected) { continue; }
+		if (!tile_entry.is_selected) {
+			continue;
+		}
 		auto const tile_id = tiles[std::size_t(index)].id;
 		auto const keyframe = anim::Keyframe<TileId>{
 			.timestamp = timestamp,
@@ -232,7 +247,9 @@ void FlipbookEditor::generate_timeline() {
 
 	m_unsaved = true;
 	m_paused = false;
-	if (m_uri.animation.get_string().empty()) { m_uri.animation = "untitled_flipbook.json"; }
+	if (m_uri.animation.get_string().empty()) {
+		m_uri.animation = "untitled_flipbook.json";
+	}
 	set_title(m_uri.animation.get_string());
 }
 } // namespace le::assed

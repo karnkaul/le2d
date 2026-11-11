@@ -7,13 +7,17 @@ auto const log = klib::log::Typed<AssetLoader>{};
 } // namespace
 
 void AssetLoader::add_loader(std::unique_ptr<detail::IAssetTypeLoaderBase> loader) {
-	if (!loader) { return; }
+	if (!loader) {
+		return;
+	}
 	auto const index = loader->type_index();
 	m_map.insert_or_assign(index, std::move(loader));
 }
 
 auto AssetLoader::load_asset(std::type_index const type, std::string_view const uri) const -> std::unique_ptr<IAsset> {
-	if (uri.empty()) { return {}; }
+	if (uri.empty()) {
+		return {};
+	}
 
 	auto const it = m_map.find(type);
 	if (it == m_map.end()) {

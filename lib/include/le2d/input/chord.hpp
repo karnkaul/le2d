@@ -7,7 +7,10 @@ class ChordBase {
   public:
 	ChordBase() = default;
 
-	explicit constexpr ChordBase(int const actor, int const action, int const mods) : m_actor(actor), m_action(action), m_mods(mods) {}
+	explicit constexpr ChordBase(int const actor, int const action, int const mods)
+		: m_actor(actor),
+		  m_action(action),
+		  m_mods(mods) {}
 
 	[[nodiscard]] constexpr auto is_engaged(int const actor, int const action, int const mods) const -> bool {
 		return m_actor == actor && m_action == action && m_mods == mods;
@@ -28,10 +31,13 @@ class KeyChord : public ChordBase {
 	/// \param key Matching keyboard key (GLFW_KEY_*).
 	/// \param action Matching action (GLFW_PRESS, GLFW_REPEAT, GLFW_RELEASE).
 	/// \param mods Matching modifiers (GLFW_MOD_*).
-	explicit constexpr KeyChord(int const key, int const action = GLFW_PRESS, int const mods = 0) : ChordBase(key, action, mods) {}
+	explicit constexpr KeyChord(int const key, int const action = GLFW_PRESS, int const mods = 0)
+		: ChordBase(key, action, mods) {}
 
 	/// \returns true if key is a match for this chord.
-	[[nodiscard]] constexpr auto is_engaged(event::Key const& key) const -> bool { return ChordBase::is_engaged(key.key, key.action, key.mods); }
+	[[nodiscard]] constexpr auto is_engaged(event::Key const& key) const -> bool {
+		return ChordBase::is_engaged(key.key, key.action, key.mods);
+	}
 };
 
 /// \brief Combination of a mouse button action and key modifiers engage a chord.
@@ -43,7 +49,8 @@ class MouseButtonChord : public ChordBase {
 	/// \param button Matching mouse button (GLFW_MOUSE_BUTTON_*).
 	/// \param action Matching action (GLFW_PRESS, GLFW_REPEAT, GLFW_RELEASE).
 	/// \param mods Matching modifiers (GLFW_MOD_*).
-	explicit constexpr MouseButtonChord(int const button, int const action = GLFW_PRESS, int const mods = 0) : ChordBase(button, action, mods) {}
+	explicit constexpr MouseButtonChord(int const button, int const action = GLFW_PRESS, int const mods = 0)
+		: ChordBase(button, action, mods) {}
 
 	/// \returns true if button is a match for this chord.
 	[[nodiscard]] constexpr auto is_engaged(event::MouseButton const& button) const -> bool {

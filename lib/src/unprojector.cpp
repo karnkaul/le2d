@@ -3,7 +3,9 @@
 namespace le {
 namespace {
 [[nodiscard]] auto world_size(Viewport const& viewport, glm::vec2 const framebuffer_size) {
-	if (auto const* letterbox = std::get_if<viewport::Letterbox>(&viewport)) { return letterbox->unproject_target_space(framebuffer_size); }
+	if (auto const* letterbox = std::get_if<viewport::Letterbox>(&viewport)) {
+		return letterbox->unproject_target_space(framebuffer_size);
+	}
 	return framebuffer_size;
 }
 } // namespace

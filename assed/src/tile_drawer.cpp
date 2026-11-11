@@ -31,7 +31,9 @@ void TileDrawer::clear() {
 }
 
 void TileDrawer::update() {
-	if (selected_tile && *selected_tile >= tile_frames.size()) { selected_tile.reset(); }
+	if (selected_tile && *selected_tile >= tile_frames.size()) {
+		selected_tile.reset();
+	}
 
 	for (auto const [index, tile_frame] : std::views::enumerate(tile_frames)) {
 		if (selected_tile && *selected_tile == std::size_t(index)) {
@@ -54,18 +56,24 @@ void TileDrawer::draw(IRenderer& renderer) const {
 		}
 		tile_frame.draw(renderer);
 	}
-	if (selected) { selected->draw(renderer); }
+	if (selected) {
+		selected->draw(renderer);
+	}
 }
 
 void TileDrawer::inspect_style() {
 	if (imcpp::color_edit("frame color", style.frame_color)) {
 		for (auto [index, tile_frame] : std::views::enumerate(tile_frames)) {
-			if (selected_tile && *selected_tile == std::size_t(index)) { continue; }
+			if (selected_tile && *selected_tile == std::size_t(index)) {
+				continue;
+			}
 			tile_frame.instance.tint = style.frame_color;
 		}
 	}
 	if (imcpp::color_edit("selected color", style.selected_color)) {
-		if (selected_tile) { tile_frames.at(*selected_tile).instance.tint = style.selected_color; }
+		if (selected_tile) {
+			tile_frames.at(*selected_tile).instance.tint = style.selected_color;
+		}
 	}
 	ImGui::DragFloat("frame width", &style.frame_width, 0.5f, 1.0f, 100.0f);
 }

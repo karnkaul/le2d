@@ -15,8 +15,10 @@ class IAssetTypeLoaderCommon : public IAssetTypeLoader<AssetTypeT> {
   public:
 	using BaseType = IAssetTypeLoaderCommon;
 
-	explicit IAssetTypeLoaderCommon(gsl::not_null<IDataLoader const*> data_loader, gsl::not_null<IResourceFactory const*> resource_factory)
-		: m_data_loader(data_loader), m_resource_factory(resource_factory) {}
+	explicit IAssetTypeLoaderCommon(gsl::not_null<IDataLoader const*> data_loader,
+									gsl::not_null<IResourceFactory const*> resource_factory)
+		: m_data_loader(data_loader),
+		  m_resource_factory(resource_factory) {}
 
   protected:
 	template <std::derived_from<detail::IAssetTypeLoaderBase> T>

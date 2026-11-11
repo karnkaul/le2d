@@ -36,7 +36,9 @@ class Renderer : public IRenderer {
 
 	void set_user_data(UserDrawData const& user_data) final { m_user_data = user_data; }
 
-	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2 final { return kvf::util::to_glm_vec<int>(m_render_pass->get_extent()); }
+	[[nodiscard]] auto framebuffer_size() const -> glm::ivec2 final {
+		return kvf::util::to_glm_vec<int>(m_render_pass->get_extent());
+	}
 	[[nodiscard]] auto get_view() const -> Transform const& final { return m_view_transform; }
 	void set_view(Transform const& view) final;
 	[[nodiscard]] auto get_viewport() const -> Viewport const& final { return m_viewport; }
@@ -53,7 +55,8 @@ class Renderer : public IRenderer {
 
 	[[nodiscard]] auto allocate_sets(std::span<vk::DescriptorSet> out_sets) const -> bool;
 
-	[[nodiscard]] auto bake_instances(std::span<RenderInstance const> instances) const -> std::span<RenderInstance::Std430 const>;
+	[[nodiscard]] auto bake_instances(std::span<RenderInstance const> instances) const
+		-> std::span<RenderInstance::Std430 const>;
 
 	gsl::not_null<kvf::IRenderPass*> m_render_pass;
 	gsl::not_null<IRenderResources*> m_resources;

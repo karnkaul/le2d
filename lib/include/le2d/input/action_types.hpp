@@ -181,7 +181,9 @@ class MouseButtonBase : public BaseT {
 
   private:
 	auto consume_key(event::Key const& /*key*/) -> bool final { return false; }
-	auto consume_mouse_button(event::MouseButton const& button) -> bool final { return this->consume_input(button.button, button.action); }
+	auto consume_mouse_button(event::MouseButton const& button) -> bool final {
+		return this->consume_input(button.button, button.action);
+	}
 	auto consume_scroll(event::Scroll const& /*scroll*/) -> bool final { return false; }
 	auto consume_cursor_pos(event::CursorPos const& /*cursor_pos*/) -> bool final { return false; }
 	void update_gamepad(Gamepad const& /*gamepad*/) final {}

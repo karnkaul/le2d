@@ -21,7 +21,9 @@ auto Parser<std::string>::parse(std::string_view const in, std::string& out) -> 
 
 auto Parser<kvf::Color>::parse(std::string_view const in, kvf::Color& out) -> bool {
 	auto const result = kvf::util::color_from_hex(in);
-	if (!result) { return false; }
+	if (!result) {
+		return false;
+	}
 	out = *result;
 	return true;
 }
